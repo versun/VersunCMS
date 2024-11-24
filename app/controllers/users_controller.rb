@@ -7,20 +7,20 @@ class UsersController < ApplicationController
       @user = User.new
     end
   end
-  
+
   def edit
     @user = Current.user
   end
-  
+
   def update
     @user = Current.user
     if @user.update(user_params)
-      redirect_to admin_posts_path, alert: 'Account was successfully updated.'
+      redirect_to admin_posts_path, alert: "Account was successfully updated."
     else
       render :edit, status: :unprocessable_entity
     end
-  end 
-  
+  end
+
   def create
     @user = User.new(user_params)
     if @user.save

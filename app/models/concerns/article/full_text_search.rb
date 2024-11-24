@@ -20,8 +20,8 @@ module Article::FullTextSearch
     sql = ActiveRecord::Base.sanitize_sql_array(
       [
         "INSERT INTO article_fts (rowid, title, content) VALUES (?, ?, ?)",
-        id, 
-        title || "", 
+        id,
+        title || "",
         content.to_plain_text
       ]
     )

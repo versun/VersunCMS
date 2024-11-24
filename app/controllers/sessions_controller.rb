@@ -8,7 +8,7 @@ class SessionsController < ApplicationController
       redirect_to new_user_path
     end
   end
-  
+
   def create
     if user = User.authenticate_by(params.permit(:user_name, :password))
       start_new_session_for user
@@ -22,5 +22,4 @@ class SessionsController < ApplicationController
     terminate_session
     redirect_to root_path
   end
-
 end

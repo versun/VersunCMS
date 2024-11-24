@@ -31,7 +31,7 @@ class PasswordsController < ApplicationController
     rescue ActiveSupport::MessageVerifier::InvalidSignature
       redirect_to new_password_path, alert: "Password reset link is invalid or has expired."
     end
-  
+
     def ensure_authenticated_user
       unless authenticated? && (@user = Current.session&.user)
         redirect_to new_session_path, alert: "Please login first."

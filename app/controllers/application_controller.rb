@@ -18,7 +18,7 @@ class ApplicationController < ActionController::Base
   end
 
   private
-    
+
     def set_pages
       @navbar_items = Rails.cache.fetch("navbar_items", expires_in: 1.hour) do
         pages = Article.published_pages.order(page_order: :desc).select(:id, :title, :slug)

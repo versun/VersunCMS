@@ -1,6 +1,6 @@
 class Tools::BackupController < ApplicationController
   # before_action :authenticate_user!
-  
+
   def index
     @backup_setting = BackupSetting.first_or_initialize
     @backup_logs = BackupLog.order(created_at: :desc).limit(10)
@@ -8,16 +8,16 @@ class Tools::BackupController < ApplicationController
 
   def create
     @backup_setting = BackupSetting.first_or_initialize
-    
+
     # Generate SSH key pair if not present
     if @backup_setting.ssh_public_key.blank? || @backup_setting.ssh_private_key.blank?
       key_pair = BackupSetting.generate_ssh_key_pair
       params[:backup_setting][:ssh_public_key] = key_pair[:public_key]
       params[:backup_setting][:ssh_private_key] = key_pair[:private_key]
     end
-    
+
     if @backup_setting.update(backup_params)
-      redirect_to tools_backup_index_path, notice: 'Backup settings saved successfully.'
+      redirect_to tools_backup_index_path, notice: "Backup settings saved successfully."
     else
       render :index
     end
@@ -25,16 +25,16 @@ class Tools::BackupController < ApplicationController
 
   def update
     @backup_setting = BackupSetting.first_or_initialize
-    
+
     # Generate SSH key pair if not present
     if @backup_setting.ssh_public_key.blank? || @backup_setting.ssh_private_key.blank?
       key_pair = BackupSetting.generate_ssh_key_pair
       params[:backup_setting][:ssh_public_key] = key_pair[:public_key]
       params[:backup_setting][:ssh_private_key] = key_pair[:private_key]
     end
-    
+
     if @backup_setting.update(backup_params)
-      redirect_to tools_backup_index_path, notice: 'Backup settings saved successfully.'
+      redirect_to tools_backup_index_path, notice: "Backup settings saved successfully."
     else
       render :index
     end
@@ -42,7 +42,7 @@ class Tools::BackupController < ApplicationController
 
   def perform_backup
     BackupJob.perform_later
-    redirect_to tools_backup_index_path, notice: 'Backup process started.'
+    redirect_to tools_backup_index_path, notice: "Backup process started."
   end
 
   def backup_status
@@ -56,17 +56,17 @@ class Tools::BackupController < ApplicationController
   def regenerate_ssh_key
     @backup_setting = BackupSetting.first_or_initialize
     key_pair = BackupSetting.generate_ssh_key_pair
-    
+
     if @backup_setting.update(
       ssh_public_key: key_pair[:public_key],
       ssh_private_key: key_pair[:private_key]
     )
-      redirect_to tools_backup_index_path, notice: 'SSH key pair regenerated successfully.'
+      redirect_to tools_backup_index_path, notice: "SSH key pair regenerated successfully."
     else
-      redirect_to tools_backup_index_path, alert: 'Failed to regenerate SSH key pair.'
+      redirect_to tools_backup_index_path, alert: "Failed to regenerate SSH key pair."
     end
   end
-  
+
   private
 
   def backup_params
@@ -81,6 +81,4 @@ class Tools::BackupController < ApplicationController
       :ssh_private_key
     )
   end
-
-
 end

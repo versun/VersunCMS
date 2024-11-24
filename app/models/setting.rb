@@ -1,6 +1,6 @@
 class Setting < ApplicationRecord
   has_rich_text :footer
-  #after_initialize :set_default, if: :new_record?
+  # after_initialize :set_default, if: :new_record?
   before_save :generate_social_links
   SOCIAL_PLATFORMS = {
     github: {

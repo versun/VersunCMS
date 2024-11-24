@@ -317,8 +317,8 @@ articles.each do |article_data|
     page_order: article_data[:page_order] || 0
   )
   article.content = article_data[:content]
-  
-  
+
+
   # 直接插入 FTS 数据
   sql = ActiveRecord::Base.sanitize_sql_array(
     [

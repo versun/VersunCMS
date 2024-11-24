@@ -50,10 +50,10 @@ module Tools
         # 创建文章专属的媒体文件夹（如果有附件的话）
         article_media_dir = File.join(@media_dir, article.slug)
         attachments_data = []
-        
+
         if article.content.embeds.any?
           FileUtils.mkdir_p(article_media_dir)
-          
+
           # 处理并导出附件信息
           article.content.embeds.each do |embed|
             attachments_data << {
@@ -62,7 +62,7 @@ module Tools
               checksum: embed.blob.checksum,
               content_type: embed.blob.content_type
             }
-            
+
             # 导出附件文件
             filepath = File.join(article_media_dir, embed.blob.filename.to_s)
             File.open(filepath, "wb") do |file|
@@ -73,7 +73,7 @@ module Tools
 
         # 导出文章数据
         article.as_json(
-          except: [:id]
+          except: [ :id ]
         ).merge(
           content: article.content,
           attachments: attachments_data  # 修改为包含更多附件信息

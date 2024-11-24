@@ -2,7 +2,7 @@ class ArticlesController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ] # %i 是一种字面量符号数组的简写方式，表示[:index]
   before_action :set_article, only: %i[ show edit update destroy ]
   before_action :set_time_zone, only: [ :new, :edit ]
-  after_action :auto_backup, only: [:create, :update, :destroy]
+  after_action :auto_backup, only: [ :create, :update, :destroy ]
 
   # GET / or /articles.json
   def index
@@ -10,7 +10,7 @@ class ArticlesController < ApplicationController
       format.html {
         @page = params[:page].present? ? params[:page].to_i : 1
         @per_page = 10
-        
+
         @articles = if params[:q].present?
           Article.published_posts.full_text_search(
             input: params[:q],
@@ -19,7 +19,7 @@ class ArticlesController < ApplicationController
         else
           Article.published_posts.order(created_at: :desc)
         end
-      
+
         @total_count = @articles.count
         @articles = @articles.paginate(@page, @per_page)
       }

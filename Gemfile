@@ -62,5 +62,5 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem 'html_truncator'
+gem "html_truncator"
 # gem 'ruby-vips'

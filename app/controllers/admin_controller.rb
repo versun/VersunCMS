@@ -14,7 +14,7 @@ class AdminController < ApplicationController
     @path = admin_pages_path
     # render 'admin/article_list'
   end
-  
+
   private
 
   def fetch_articles(scope, sort_by: :created_at, is_page: false)
