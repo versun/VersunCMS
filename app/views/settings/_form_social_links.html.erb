@@ -1,0 +1,13 @@
+<b>Social Links</b>
+
+<% Setting::SOCIAL_PLATFORMS.each do |platform, config| %>
+  <div class="social-platform">
+    <span><%= platform.to_s.titleize %></span>
+    <%= form.fields_for :social_links do |social| %>
+      <%= social.url_field platform.to_s,
+      name: "setting[social_links][#{platform}][url]",
+      value: @setting.social_links&.dig(platform.to_s, 'url'),
+      placeholder: "Enter #{platform} URL" %>
+    <% end %>
+  </div>
+<% end %>

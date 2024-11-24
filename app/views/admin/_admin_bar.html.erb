@@ -1,0 +1,26 @@
+
+<p style="color: green"><%= notice %></p>
+<p style="color: red"><%= alert %></p>
+
+<table width="100%">
+  <tr>
+    <td>
+      <%= link_to "Posts", admin_posts_path, class: "admin-button" %> |
+      <%= link_to "Pages", admin_pages_path, class: "admin-button" %>
+    </td>
+    <td>
+      <%= link_to "Export", tools_export_index_path, class: "admin-button" %> |
+      <%= link_to "Import", tools_import_index_path, class: "admin-button" %> |
+      <%= link_to "Backup", tools_backup_index_path, class: "admin-button" %>
+    </td>
+    <td>
+      <%= link_to "Settings", edit_setting_path, class: "admin-button" %> |
+      <%= link_to "Account", edit_user_path(Current.user), class: "admin-button" %>
+    </td>
+
+    <td align="right">
+      <%= button_to "Logout", session_path, method: :delete, data: { turbo_method: :delete }, class: "admin-button" %>
+    </td>
+  </tr>
+</table>
+<hr>

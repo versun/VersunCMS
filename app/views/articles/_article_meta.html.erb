@@ -1,0 +1,10 @@
+<table width="100%">
+  <tr>
+    <td><h3><%= link_to article.title, article_path(article.slug) %></h3></td>
+    <td align="right" width="50%">
+      <small class="meta">
+        <%= article.created_at.to_date %>
+      </small>
+    </td>
+  </tr>
+</table>

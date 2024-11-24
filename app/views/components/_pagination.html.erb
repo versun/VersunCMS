@@ -1,0 +1,27 @@
+<% if @total_count > @per_page %>
+  <hr>
+  <div class="pagination">
+    <% total_pages = (@total_count.to_f / @per_page).ceil %>
+    <% if @page > 1 %>
+      <%= link_to "←", 
+          url_for(page: @page - 1, **local_assigns.fetch(:url_params, {})), 
+          class: "pagination-link" %>
+    <% end %>
+    
+    <% (1..total_pages).each do |page_num| %>
+      <% if page_num == @page %>
+        <span class="current pagination-link"><%= page_num %></span>
+      <% else %>
+        <%= link_to page_num, 
+            url_for(page: page_num, **local_assigns.fetch(:url_params, {})),
+            class: "pagination-link" %>
+      <% end %>
+    <% end %>
+    
+    <% if @page < total_pages %>
+      <%= link_to "→", 
+          url_for(page: @page + 1, **local_assigns.fetch(:url_params, {})),
+          class: "pagination-link" %>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,18 @@
+<nav> 
+  <h1><%= link_to site[:title], root_path %></h1>
+  <p class="description"><%= site[:description] %></p>
+  <div class="navbar-items">
+    <% if @navbar_items.present? %>
+      <% @navbar_items.each do |item| %>
+        <span class="navbar-item">
+          <%= link_to item.title, article_path(item) %>
+        </span> | 
+      <% end %>     
+    <% end %>
+
+    <%= form_tag root_path, method: :get, class: 'search-form' do %>
+          <%= search_field_tag :q, params[:q], placeholder: 'Search...' %>
+          <%= submit_tag 'Search' %>
+    <% end %>
+  </div>
+</nav>

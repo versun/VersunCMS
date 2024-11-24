@@ -1,0 +1,81 @@
+<%= form_with(model: article) do |form| %>
+  <% if article.errors.any? %>
+    <div style="color: red">
+      <h3><%= pluralize(article.errors.count, "error") %> prohibited this article from being saved:</h3>
+
+      <ul>
+        <% article.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div>
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Base</legend>
+        <%= form.label :title, "title:" %>
+        <%= form.text_field :title %><br/>
+        <%= form.label :slug, "slug:"%>
+        <%= form.text_field :slug %><br/>
+        
+        <%= form.hidden_field :is_page %>
+        <% if article.is_page? %>
+            <%= form.label :page_order, "page order:" %>
+            <%= form.number_field :page_order %>
+        <% end %>
+        
+      </fieldset>
+      
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Content</legend>
+        <%= form.rich_text_area :content %>
+      </fieldset>
+      
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Actions</legend>
+          <div>
+            <%= form.select :status, Article.statuses.keys, { prompt: 'choose a status' }, { id: 'status_select' } %>
+          </div>
+
+          <div class="scheduled-at" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
+            <%= form.datetime_field :scheduled_at %>
+            Current Date Time: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %>
+          </div>
+        
+          <div>
+          <%= form.submit "save" %>
+          <% if article.persisted? %>
+            <%= link_to "delete", article_path(article.slug), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
+          <% end %>
+        </div>
+      </fieldset>
+
+      
+  </div>
+
+<% end %>
+
+<%= javascript_tag do %>
+  function initializeScheduledAt() {
+    const statusSelect = document.getElementById('status_select');
+    const scheduledAtContainer = document.getElementById('scheduled_at');
+
+    // 初始检查状态
+    if (statusSelect.value === 'schedule') {
+      scheduledAtContainer.style.display = 'block';
+    }
+
+    // 添加change事件监听
+    statusSelect.addEventListener('change', function() {
+      if (this.value === 'schedule') {
+        scheduledAtContainer.style.display = 'block';
+      } else {
+        scheduledAtContainer.style.display = 'none';
+      }
+    });
+  }
+
+  // 同时支持传统加载和Turbo Drive加载
+  document.addEventListener("DOMContentLoaded", initializeScheduledAt);
+  document.addEventListener("turbo:load", initializeScheduledAt);
+<% end %>

@@ -1,0 +1,4 @@
+<%= render 'admin/admin_bar' %>
+<h3>Export Data</h3>
+<%= button_to "Export as ZIP", tools_export_index_path, method: :post, data: { turbo: false } %>
+

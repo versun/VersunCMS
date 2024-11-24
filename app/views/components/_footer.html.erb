@@ -1,0 +1,25 @@
+<footer>
+  
+<table width="100%">
+  <tr>
+    <td><%= @site.footer %></td>
+    <td align="right" width="50%">
+      <div class="social-links">
+        <a href="/rss" target="_blank" class="social-icon" rel="noopener">rss |
+        </a>
+          
+        <% if @site.social_links.present? %>
+          <% @site.social_links.each do |platform, data| %>
+            <% if data['url'].present? %>
+              <a href="<%= data['url'] %>" target="_blank" class="social-icon" rel="noopener">
+                <%= platform.to_s.downcase %> |
+              </a>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    </td>
+  </tr>
+</table>
+
+</footer>

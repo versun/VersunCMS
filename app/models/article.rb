@@ -1,0 +1,53 @@
+class Article < ApplicationRecord
+  has_rich_text :content
+  enum :status, [ :draft, :publish, :schedule, :trash ]
+
+  before_validation :generate_slug, if: :slug_empty?
+  validates :slug, presence: true, uniqueness: true
+  validates :scheduled_at, presence: true, if: :schedule?
+  validates :page_order, presence: true, if: :is_page?
+
+  scope :all_posts, -> { where(is_page: false) }
+  scope :all_pages, -> { where(is_page: true) }
+  scope :published_posts, -> { where(status: :publish, is_page: false) }
+  scope :published_pages, -> { where(status: :publish, is_page: true) }
+  scope :by_status, ->(status, is_page) { where(status: status, is_page: is_page) }
+  scope :paginate, ->(page, per_page) { offset((page - 1) * per_page).limit(per_page) }
+  scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
+
+  before_save :schedule_publication, if: :should_schedule?
+  
+  include Article::FullTextSearch
+  after_save :find_or_create_article_fts
+  
+  def to_param
+    slug
+  end
+
+  def publish_scheduled
+    update(status: :publish, scheduled_at: nil) if should_publish?
+  end
+
+  private
+
+  def generate_slug
+    self.slug = title.parameterize
+  end
+
+  def slug_empty?
+    slug.blank?
+  end
+
+  def should_publish?
+    schedule? && scheduled_at <= Time.current
+  end
+
+  def should_schedule?
+    schedule? && scheduled_at_changed?
+  end
+
+  def schedule_publication
+    Rails.logger.info "Scheduling publication for article #{id} at #{scheduled_at}"
+    PublishScheduledArticlesJob.schedule_at(self)
+  end
+end

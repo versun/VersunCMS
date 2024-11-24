@@ -1,0 +1,13 @@
+<div class="article-list">
+  <% articles.each do |article|%>
+    <%= render "articles/article_meta", article:article %>
+    <%= raw HTML_Truncator.truncate(article.content.to_s, 10) %>
+  <% end %>
+</div>
+
+<%= render "components/pagination", 
+    page: @page, 
+    per_page: @per_page, 
+    total_count: @total_count
+    %>
+

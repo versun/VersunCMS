@@ -1,0 +1,90 @@
+<h3>Backup Settings</h3>
+<div>
+  <%= link_to "Back to admin", admin_posts_path %>
+</div>
+
+
+
+<%= form_with(model: @backup_setting, url: tools_backup_index_path, method: :post, local: true) do |f| %>
+  <div class="form-group">
+    <%= f.label :repository_url, "Git Repository URL (SSH)" %>
+    <%= f.text_field :repository_url, class: "form-control", placeholder: "git@github.com:username/repo.git" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :branch_name %>
+    <%= f.text_field :branch_name, class: "form-control", value: @backup_setting.branch_name || 'main' %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :git_name, "Git User Name" %>
+    <%= f.text_field :git_name, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :git_email, "Git Email" %>
+    <%= f.email_field :git_email, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :auto_backup, "Enable Auto Backup" %>
+    <%= f.check_box :auto_backup %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :backup_interval, "Backup Interval (hours)" %>
+    <%= f.number_field :backup_interval, min: 1, class: "form-control" %>
+  </div>
+
+  <%= f.submit "Save Settings", class: "btn btn-primary" %>
+<% end %>
+
+<% if @backup_setting.persisted? %>
+  <div class="mt-4">
+    <h3>Actions</h3>
+    <div class="btn-group">
+      <%= button_to "Backup Now", perform_backup_tools_backup_index_path, method: :post, class: "btn btn-success" %>
+      <%= button_to "Regenerate SSH Key", regenerate_ssh_key_tools_backup_index_path, method: :post, class: "btn btn-warning", data: { confirm: "Are you sure? This will generate a new SSH key pair and you'll need to update your remote repository's deploy keys." } %>
+    </div>
+  </div>
+
+<% if @backup_setting.ssh_public_key.present? %>
+  <div class="mt-4">
+    <h3>SSH Public Key</h3>
+    <div class="alert alert-info">
+      <p>Add this public key to your Git repository's deploy keys:</p>
+      <pre class="mb-0"><%= @backup_setting.ssh_public_key %></pre>
+    </div>
+  </div>
+<% end %>
+
+<div class="mt-4">
+  <h3>Backup History</h3>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @backup_logs.each do |log| %>
+          <tr class="<%= log.status == 'failed' ? 'table-danger' : (log.status == 'completed' ? 'table-success' : '') %>">
+            <td><%= log.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
+            <td><span class="badge <%= log.status == 'failed' ? 'bg-danger' : (log.status == 'completed' ? 'bg-success' : 'bg-warning') %>">
+              <%= log.status.capitalize %>
+            </span></td>
+            <td><%= log.message %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  <% if @backup_setting.last_backup_at.present? %>
+    <p>Last backup: <%= @backup_setting.last_backup_at %></p>
+  <% end %>
+<% end %>

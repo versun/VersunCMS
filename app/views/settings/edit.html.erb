@@ -1,0 +1,60 @@
+<%= render 'admin/admin_bar' %>
+
+<%= form_with(model: @setting) do |form| %>
+  <% if @setting.errors.any? %>
+    <div style="color: red">
+      <h3><%= pluralize(@setting.errors.count, "error") %> prohibited this setting from being saved:</h3>
+      <ul>
+        <% @setting.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <b><%= form.label :title, 'Site Title' %></b>
+    <%= form.text_field :title %>
+  </div>
+
+  <div class="field">
+    <b><%= form.label :description, 'Site Description' %></b>
+    <%= form.text_area :description %>
+  </div>
+
+  <div class="field">
+    <b><%= form.label :author, 'Author' %></b>
+    <%= form.text_field :author %>
+  </div>
+
+  <div class="field">
+    <b><%= form.label :url, 'Site URL' %></b>
+    <%= form.text_field :url %>
+  </div>
+
+  <div class="field">
+    <b><%= form.label :time_zone, "Timezone" %></b>
+    <%= form.select :time_zone, 
+                 timezone_options,
+                 { selected: @setting.time_zone || "UTC" },
+                 { class: "form-select" } %>
+  </div>
+    
+  <div class="field">
+    <b><%= form.label :footer, 'Footer' %></b>
+    <%= form.rich_text_area :footer %>
+  </div>
+
+  <div class="field">
+    <b><%= form.label :custom_css, 'Custom CSS' %></b>
+    <%= form.text_area :custom_css %>
+  </div>
+    
+  <div class="field">
+    <%= render 'form_social_links', form:form %>
+  </div>
+          
+  <div class="actions">
+    <%= form.submit 'Save' %>
+  </div>
+<% end %>
