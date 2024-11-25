@@ -23,9 +23,10 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     
     <%= javascript_importmap_tags %>
-   
+    <%= raw @site[:head_code] %>
+
     <style>
-      <%= @site[:custom_css] %>
+      <%= @site.custom_css %>
     </style>
   </head>
 

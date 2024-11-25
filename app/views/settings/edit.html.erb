@@ -39,12 +39,17 @@
                  { selected: @setting.time_zone || "UTC" },
                  { class: "form-select" } %>
   </div>
-    
+
+  <div class="field">
+    <b><%= form.label :head_code, 'Head Code' %></b>
+    <%= form.text_area :head_code %>
+  </div>
+  
   <div class="field">
     <b><%= form.label :footer, 'Footer' %></b>
     <%= form.rich_text_area :footer %>
   </div>
-
+      
   <div class="field">
     <b><%= form.label :custom_css, 'Custom CSS' %></b>
     <%= form.text_area :custom_css %>

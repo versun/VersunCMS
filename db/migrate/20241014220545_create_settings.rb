@@ -6,6 +6,7 @@ class CreateSettings < ActiveRecord::Migration[8.0]
       t.string :author, null: true
       t.string :url, null: true
       t.string :time_zone, null: true, default: "UTC"
+      t.text :head_code, null: true
       t.text :custom_css, null: true
       t.json :social_links, null: true
 

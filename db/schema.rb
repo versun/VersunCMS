@@ -97,6 +97,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
     t.string "author"
     t.string "url"
     t.string "time_zone", default: "UTC"
+    t.text "head_code"
     t.text "custom_css"
     t.json "social_links"
     t.datetime "created_at", null: false
