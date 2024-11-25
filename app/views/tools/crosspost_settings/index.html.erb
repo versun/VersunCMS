@@ -1,0 +1,131 @@
+<h2>CrossPost Settings</h2>
+
+<div class="settings-container">
+  <div class="settings-section">
+    <h3>Mastodon Settings</h3>
+    <%= form_with(model: [:tools, @mastodon], scope: :crosspost_setting, local: true, class: 'settings-form') do |f| %>
+      <%= f.hidden_field :platform, value: 'mastodon' %>
+      
+      <div class="form-group">
+        <%= f.label :enabled, "Enable Mastodon CrossPost" %>
+        <%= f.check_box :enabled %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :server_url, "Mastodon Server URL" %>
+        <%= f.text_field :server_url, placeholder: "https://mastodon.social" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :access_token, "Access Token" %>
+        <%= f.text_field :access_token %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :client_id, "Client ID" %>
+        <%= f.text_field :client_id %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :client_secret, "Client Secret" %>
+        <%= f.text_field :client_secret %>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit "Save Mastodon Settings", class: 'btn btn-primary' %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="settings-section">
+    <h3>X Settings</h3>
+    <%= form_with(model: [:tools, @twitter], scope: :crosspost_setting, local: true, class: 'settings-form') do |f| %>
+      <%= f.hidden_field :platform, value: 'twitter' %>
+      
+      <div class="form-group">
+        <%= f.label :enabled, "Enable X CrossPost" %>
+        <%= f.check_box :enabled %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :access_token, "Access Token" %>
+        <%= f.text_field :access_token %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :client_id, "API Key" %>
+        <%= f.text_field :client_id %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :client_secret, "API Key Secret" %>
+        <%= f.text_field :client_secret %>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit "Save X Settings", class: 'btn btn-primary' %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<% content_for :styles do %>
+<style>
+.settings-container {
+  display: flex;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.settings-section {
+  flex: 1;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.settings-form {
+  margin-top: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-actions {
+  margin-top: 1.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: #0066cc;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0052a3;
+}
+</style>
+<% end %>

@@ -7,6 +7,8 @@ class CreateArticles < ActiveRecord::Migration[8.0]
       t.boolean :is_page, default: false, null: false
       t.integer :page_order, default: 0, null: false
       t.datetime :scheduled_at, null: true
+      t.boolean :crosspost_mastodon, default: false, null: false
+      t.boolean :crosspost_twitter, default: false, null: false
 
       t.timestamps
     end

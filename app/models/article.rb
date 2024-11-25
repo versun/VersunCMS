@@ -16,6 +16,7 @@ class Article < ApplicationRecord
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
 
   before_save :schedule_publication, if: :should_schedule?
+  after_save :handle_crosspost, if: :should_crosspost?
 
   include Article::FullTextSearch
   after_save :find_or_create_article_fts
@@ -49,5 +50,14 @@ class Article < ApplicationRecord
   def schedule_publication
     Rails.logger.info "Scheduling publication for article #{id} at #{scheduled_at}"
     PublishScheduledArticlesJob.schedule_at(self)
+  end
+
+  def should_crosspost?
+    publish? && (saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter?) &&
+      (crosspost_mastodon? || crosspost_twitter?)
+  end
+
+  def handle_crosspost
+    CrosspostArticleJob.perform_later(id) if should_crosspost?
   end
 end

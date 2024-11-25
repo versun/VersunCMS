@@ -56,6 +56,8 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
     t.boolean "is_page", default: false, null: false
     t.integer "page_order", default: 0, null: false
     t.datetime "scheduled_at"
+    t.boolean "crosspost_mastodon", default: false, null: false
+    t.boolean "crosspost_twitter", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_articles_on_slug", unique: true
@@ -80,6 +82,19 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
     t.datetime "last_backup_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "crosspost_settings", force: :cascade do |t|
+    t.string "platform", null: false
+    t.string "server_url"
+    t.string "access_token"
+    t.string "client_id"
+    t.string "client_secret"
+    t.boolean "enabled", default: false, null: false
+    t.text "settings"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["platform"], name: "index_crosspost_settings_on_platform", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|

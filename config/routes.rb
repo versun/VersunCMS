@@ -22,6 +22,8 @@ Rails.application.routes.draw do
         post :regenerate_ssh_key
       end
     end
+    resources :crosspost_settings, only: [:index]
+    resource :crosspost_setting, only: [:update]
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
