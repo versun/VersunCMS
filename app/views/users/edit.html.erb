@@ -1,36 +1,34 @@
-<div>
-  <h3>Account Settings</h3>
+<%= render 'admin/admin_bar' %>
+<h3>Account Settings</h3>
 
-  <%= form_with(model: @user, method: :patch) do |form| %>
-    <% if @user.errors.any? %>
-      <div style="color: red">
-        <h3><%= pluralize(@user.errors.count, "error") %> prohibited this update:</h3>
-        <ul>
-          <% @user.errors.each do |error| %>
-            <li><%= error.full_message %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
-
-    <div>
-      <%= form.label :user_name, "Username" %>
-      <%= form.text_field :user_name %>
-    </div>
-
-    <div>
-      <%= form.label :password, "New Password" %>
-      <%= form.password_field :password %>
-    </div>
-
-    <div>
-      <%= form.label :password_confirmation, "Confirm New Password" %>
-      <%= form.password_field :password_confirmation %>
-    </div>
-
-    <div>
-      <%= form.submit "Update Account", class: "admin-button" %>
-      <%= link_to "Back", :back, class: "admin-button" %>
+<%= form_with(model: @user, method: :patch) do |form| %>
+  <% if @user.errors.any? %>
+    <div style="color: red">
+      <h3><%= pluralize(@user.errors.count, "error") %> prohibited this update:</h3>
+      <ul>
+        <% @user.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
     </div>
   <% end %>
-</div>
+
+  <div>
+    <%= form.label :user_name, "Username" %>
+    <%= form.text_field :user_name %>
+  </div>
+
+  <div>
+    <%= form.label :password, "New Password" %>
+    <%= form.password_field :password %>
+  </div>
+
+  <div>
+    <%= form.label :password_confirmation, "Confirm New Password" %>
+    <%= form.password_field :password_confirmation %>
+  </div>
+
+  <div>
+    <%= form.submit "Update Account", class: "admin-button" %>
+  </div>
+<% end %>

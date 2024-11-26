@@ -33,14 +33,19 @@
       
       <fieldset class="bordered-container bordered-fieldset">
         <legend>CrossPost</legend>
-        <div>
-          <%= form.check_box :crosspost_mastodon %>
-          <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
-        </div>
-        <div>
-          <%= form.check_box :crosspost_twitter %>
-          <%= form.label :crosspost_twitter, "Post to X" %>
-        </div>
+        <% if CrosspostSetting.find_by(platform: 'mastodon')&.enabled? %>
+          <div>
+            <%= form.check_box :crosspost_mastodon %>
+            <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
+          </div>
+        <% end %>
+        <% if CrosspostSetting.find_by(platform: 'twitter')&.enabled? %>
+          <div>
+            <%= form.check_box :crosspost_twitter %>
+            <%= form.label :crosspost_twitter, "Post to X" %>
+          </div>
+        <% end %>
+        <%= link_to "Go to Cross Post Settings", tools_crosspost_settings_path %>
       </fieldset>
       
       <fieldset class="bordered-container bordered-fieldset">

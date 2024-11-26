@@ -1,10 +1,5 @@
+<%= render 'admin/admin_bar' %>
 <h3>Backup Settings</h3>
-<div>
-  <%= link_to "Back to admin", admin_posts_path %>
-</div>
-
-
-
 <%= form_with(model: @backup_setting, url: tools_backup_index_path, method: :post, local: true) do |f| %>
   <div class="form-group">
     <%= f.label :repository_url, "Git Repository URL (SSH)" %>
