@@ -9,6 +9,7 @@ class CreateArticles < ActiveRecord::Migration[8.0]
       t.datetime :scheduled_at, null: true
       t.boolean :crosspost_mastodon, default: false, null: false
       t.boolean :crosspost_twitter, default: false, null: false
+      t.json :crosspost_urls, default: {}, null: false
 
       t.timestamps
     end

@@ -16,7 +16,7 @@ class Article < ApplicationRecord
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
 
   before_save :schedule_publication, if: :should_schedule?
-  after_save :handle_crosspost, if: :should_crosspost?
+  after_save :handle_crosspost
 
   include Article::FullTextSearch
   after_save :find_or_create_article_fts
@@ -62,27 +62,12 @@ class Article < ApplicationRecord
     new_record? || crosspost_settings_changed || became_published
 
   end
-  # def should_crosspost?
-  #   # 当是新记录且状态为 publish 时
-  #   new_record_condition = new_record? && 
-  #     publish? && 
-  #     (crosspost_mastodon? || crosspost_twitter?)
-    
-  #   # 当 crosspost 设置改变且为 publish 状态时
-  #   current_crosspost_condition = publish? && 
-  #     (saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter?) &&
-  #     (crosspost_mastodon? || crosspost_twitter?)
-    
-  #   # 当状态改为 publish 且有 crosspost 选项被勾选时
-  #   status_change_condition = saved_change_to_status? && 
-  #     status_previously_was != 'publish' && 
-  #     publish? &&
-  #     (crosspost_mastodon? || crosspost_twitter?)
-    
-  #   current_crosspost_condition || status_change_condition
-  # end
 
   def handle_crosspost
-    CrosspostArticleJob.perform_later(id) if should_crosspost?
+    if should_crosspost?
+      CrosspostArticleJob.perform_later(id)
+    else
+      update_column(:crosspost_urls, {})
+    end
   end
 end

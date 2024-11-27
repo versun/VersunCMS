@@ -4,14 +4,23 @@ class CrosspostArticleJob < ApplicationJob
   def perform(article_id)
     article = Article.find_by(id: article_id)
     return unless article
-
+  
+    crosspost_urls = {}
+  
     if article.crosspost_mastodon?
-      post_to_mastodon(article)
+      if mastodon_url = post_to_mastodon(article)
+        crosspost_urls['mastodon'] = mastodon_url
+      end
     end
-
+  
     if article.crosspost_twitter?
-      post_to_twitter(article)
+      if twitter_url = post_to_twitter(article)
+        crosspost_urls['twitter'] = twitter_url
+      end
     end
+  
+    # Update article with all crosspost URLs at once
+    article.update_column(:crosspost_urls, crosspost_urls) unless crosspost_urls.empty?
   end
 
   private
@@ -41,8 +50,9 @@ class CrosspostArticleJob < ApplicationJob
     status += "\n\nRead more: #{post_url}"
 
     begin
-      client.create_status(status)
-      Rails.logger.info "Successfully posted article #{article.id} to Mastodon"
+        response = client.create_status(status)
+        Rails.logger.info "Successfully posted article #{article.id} to Mastodon"
+        response.url
     rescue => e
       Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{e.message}"
     end
@@ -68,8 +78,10 @@ class CrosspostArticleJob < ApplicationJob
     status = "#{article.title}\n\n#{post_url}"
 
     begin
-      client.post(text: status)
-      Rails.logger.info "Successfully posted article #{article.id} to X"
+        response = client.post(text: status)
+        Rails.logger.info "Successfully posted article #{article.id} to X"
+        # 假设response包含tweet的URL
+        response.url
     rescue => e
       Rails.logger.error "Failed to post article #{article.id} to X: #{e.message}"
     end

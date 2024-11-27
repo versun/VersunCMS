@@ -58,6 +58,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
     t.datetime "scheduled_at"
     t.boolean "crosspost_mastodon", default: false, null: false
     t.boolean "crosspost_twitter", default: false, null: false
+    t.json "crosspost_urls", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_articles_on_slug", unique: true

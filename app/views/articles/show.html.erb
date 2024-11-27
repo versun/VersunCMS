@@ -4,3 +4,14 @@
     <%= @article.content %>
   </div>
 </article>
+
+<% if @article.crosspost_urls.present? %>
+<br>
+<b>Discussion on </b>
+    <% if @article.crosspost_urls['mastodon'].present? %>
+      <%= link_to ' Mastodon', @article.crosspost_urls['mastodon'], target: '_blank' %>
+    <% end %>
+    <% if @article.crosspost_urls['twitter'].present? %>
+      <%= link_to ' X', @article.crosspost_urls['twitter'], target: '_blank' %>
+    <% end %>
+<% end %>

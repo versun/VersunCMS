@@ -2,7 +2,7 @@
   
 <%= render 'admin_bar' %>
 <%= render 'article_status', scope: @posts %>
-【<%= link_to "New", admin_posts_new_path(is_page: false) %>】
+<%= link_to "New", admin_posts_new_path(is_page: false) %>
 <% if @posts %>
 <%= render 'article_list', articles: @posts %>
 <% else %>

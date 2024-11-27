@@ -2,7 +2,7 @@
 <h3>CrossPost Settings</h3>
 <fieldset>
   <legend>Mastodon</legend>
-  <p class="text-muted">First, create an application in your Mastodon instance's settings to obtain the credentials.</p>
+  <p class="text-muted">Get credentials: Open Mastodon -> Preferences -> Development -> New application | Scope: profile,write:statuses</p>
   <%= form_with(model: @mastodon, url: tools_crosspost_setting_path(@mastodon.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'mastodon' %>
     
