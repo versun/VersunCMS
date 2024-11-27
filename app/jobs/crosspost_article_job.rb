@@ -31,7 +31,14 @@ class CrosspostArticleJob < ApplicationJob
       article.slug, 
       host: Setting.first.url.sub(%r{https?://}, '')
     )
-    status = "#{article.title}\n\n#{post_url}"
+    # Extract text content from rich text
+    content_text = article.content.body.to_plain_text
+
+    # Create status with title, content and URL
+    # Mastodon has a 500 character limit, so we'll truncate if needed
+    max_content_length = 500 - post_url.length - 30
+    status = "#{article.title}\n\n#{content_text[0...max_content_length]}\n..."
+    status += "\n\nRead more: #{post_url}"
 
     begin
       client.create_status(status)

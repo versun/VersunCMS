@@ -71,15 +71,6 @@
   <% end %>
 </fieldset>
 
-<% content_for :head do %>
-  <style>
-    .form-actions {
-      display: flex;
-      gap: 10px;
-    }
-  </style>
-<% end %>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const verifyButtons = document.querySelectorAll('.verify-btn');
@@ -95,8 +86,9 @@ document.addEventListener('DOMContentLoaded', function() {
           method: 'POST',
           headers: {
             'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json'
           },
-          body: formData
+          body: JSON.stringify(Object.fromEntries(formData)) 
         });
         
         const data = await response.json();

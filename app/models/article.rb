@@ -53,9 +53,34 @@ class Article < ApplicationRecord
   end
 
   def should_crosspost?
-    publish? && (saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter?) &&
-      (crosspost_mastodon? || crosspost_twitter?)
+    has_crosspost_enabled = crosspost_mastodon? || crosspost_twitter?
+    return false unless publish? && has_crosspost_enabled
+    
+    crosspost_settings_changed = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter?
+    became_published = saved_change_to_status? && status_previously_was != 'publish'
+    
+    new_record? || crosspost_settings_changed || became_published
+
   end
+  # def should_crosspost?
+  #   # 当是新记录且状态为 publish 时
+  #   new_record_condition = new_record? && 
+  #     publish? && 
+  #     (crosspost_mastodon? || crosspost_twitter?)
+    
+  #   # 当 crosspost 设置改变且为 publish 状态时
+  #   current_crosspost_condition = publish? && 
+  #     (saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter?) &&
+  #     (crosspost_mastodon? || crosspost_twitter?)
+    
+  #   # 当状态改为 publish 且有 crosspost 选项被勾选时
+  #   status_change_condition = saved_change_to_status? && 
+  #     status_previously_was != 'publish' && 
+  #     publish? &&
+  #     (crosspost_mastodon? || crosspost_twitter?)
+    
+  #   current_crosspost_condition || status_change_condition
+  # end
 
   def handle_crosspost
     CrosspostArticleJob.perform_later(id) if should_crosspost?
