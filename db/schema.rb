@@ -89,6 +89,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
     t.string "platform", null: false
     t.string "server_url"
     t.string "access_token"
+    t.string "access_token_secret"
     t.string "client_id"
     t.string "client_secret"
     t.boolean "enabled", default: false, null: false

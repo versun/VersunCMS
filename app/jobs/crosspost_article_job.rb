@@ -68,7 +68,7 @@ class CrosspostArticleJob < ApplicationJob
       api_key: settings.client_id,
       api_key_secret: settings.client_secret,
       access_token: settings.access_token,
-      access_token_secret: settings.settings['access_token_secret']
+      access_token_secret: settings.access_token_secret
     )
 
     post_url = Rails.application.routes.url_helpers.article_url(

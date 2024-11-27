@@ -51,17 +51,28 @@ module Tools
       Rails.logger.error "Mastodon verification failed: #{e.message}"
       false
     end
-
+  
     def verify_twitter(setting)
       return false if setting.client_id.blank? || setting.client_secret.blank? || setting.access_token.blank?
-      
-      client = Twitter::REST::Client.new do |config|
-        config.consumer_key = setting.client_id
-        config.consumer_secret = setting.client_secret
-        config.access_token = setting.access_token
+
+      require 'x'
+
+      client = X::Client.new(
+        api_key: setting.client_id,
+        api_key_secret: setting.client_secret,
+        access_token: setting.access_token,
+        access_token_secret: setting.access_token_secret
+      )
+
+      # Try to post a test tweet to verify credentials
+      test_response = client.get("users/me")
+      if test_response && test_response["data"] && test_response["data"]["id"]
+        Rails.logger.info "Twitter credentials verified successfully! #{test_response}"
+        true
+      else
+        Rails.logger.error "Twitter verification failed: #{test_response}"
       end
-      client.verify_credentials
-      true
+
     rescue => e
       Rails.logger.error "Twitter verification failed: #{e.message}"
       false
@@ -69,7 +80,7 @@ module Tools
 
     def crosspost_setting_params
       params.require(:crosspost_setting).permit(
-        :platform, :server_url, :access_token, 
+        :platform, :server_url, :access_token, :access_token_secret,
         :client_id, :client_secret, :enabled
       )
     end
