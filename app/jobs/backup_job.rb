@@ -1,28 +1,28 @@
 class BackupJob < ApplicationJob
   queue_as :default
-  require 'git'
-  require_relative '../models/tools/export'
+  require "git"
+  require_relative "../models/tools/export"
 
   def perform
     settings = BackupSetting.first
     return unless settings
-  
+
     log = BackupLog.create!(status: :started, message: "Starting backup...")
-  
+
     begin
       setup_ssh(settings) do
         # Create zip backup first
         export = Tools::Export.new
         if export.generate
-          timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-          zip_dir = Rails.root.join('storage', 'backup', 'zip')
+          timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+          zip_dir = Rails.root.join("storage", "backup", "zip")
           FileUtils.mkdir_p(zip_dir)
           backup_zip = File.join(zip_dir, "backup_#{timestamp}.zip")
           FileUtils.mv(export.zip_path, backup_zip)
-          
+
           # Now perform git backup which will include the zip file
           perform_git_backup(settings)
-          
+
           log.update!(status: :completed, message: "Backup completed successfully with zip file: #{backup_zip}")
         else
           log.update!(status: :failed, message: "Zip export failed: #{export.error_message}")
@@ -38,20 +38,20 @@ class BackupJob < ApplicationJob
   private
 
   def setup_ssh(settings)
-    require 'tempfile'
-    
+    require "tempfile"
+
     # Create a temporary file for the private key
-    private_key_file = Tempfile.new('git_private_key')
+    private_key_file = Tempfile.new("git_private_key")
     begin
       private_key_file.write(settings.ssh_private_key)
       private_key_file.close
-      
+
       # Set proper permissions
       FileUtils.chmod(0600, private_key_file.path)
-      
+
       # Configure Git to use this key
-      ENV['GIT_SSH_COMMAND'] = "ssh -i #{private_key_file.path} -o StrictHostKeyChecking=no"
-      
+      ENV["GIT_SSH_COMMAND"] = "ssh -i #{private_key_file.path} -o StrictHostKeyChecking=no"
+
       yield if block_given?
     ensure
       # Clean up the temporary file
@@ -71,7 +71,7 @@ class BackupJob < ApplicationJob
     else
       Git.init(backup_path)
       git = Git.open(backup_path)
-      git.add_remote('origin', settings.repository_url)
+      git.add_remote("origin", settings.repository_url)
       git
     end
 
@@ -86,8 +86,8 @@ class BackupJob < ApplicationJob
     export_database_content(backup_path, attachments_dir)
 
     # Git operations
-    git.config('user.name', 'Backup Job')
-    git.config('user.email', 'backup@job')
+    git.config("user.name", "Backup Job")
+    git.config("user.email", "backup@job")
 
     # Add all changes
     git.add(all: true)
@@ -95,12 +95,12 @@ class BackupJob < ApplicationJob
     # Only commit if there are changes
     if git.status.changed.any? || git.status.added.any? || git.status.deleted.any?
       git.commit("Backup #{Time.current}")
-      
+
       # Fetch to ensure we have the latest state
       git.fetch
-      
+
       # Push to the specified branch
-      git.push('origin', settings.branch_name, force: true)
+      git.push("origin", settings.branch_name, force: true)
     end
   end
 
@@ -123,14 +123,14 @@ class BackupJob < ApplicationJob
     # Export articles
     articles_data = Article.all.map do |article|
       article_data = article.as_json
-      
+
       if article.content.present?
         article_data["content"] = {
           html: article.content.body.to_html,
           attachments: backup_attachments(article.content, attachments_dir)
         }
       end
-      
+
       article_data
     end
 
@@ -167,7 +167,7 @@ class BackupJob < ApplicationJob
 
       filename = attachment.file.filename.to_s
       path = File.join(attachments_dir, filename)
-      
+
       File.binwrite(path, attachment.file.download)
       filename
     end.compact
@@ -182,7 +182,7 @@ class BackupJob < ApplicationJob
       timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
       zip_filename = "backup_#{timestamp}.zip"
       zip_path = File.join(zip_dir, zip_filename)
-      
+
       FileUtils.mv(export.zip_path, zip_path)
       Rails.logger.info "Created ZIP backup: #{zip_path}"
     else
@@ -196,6 +196,6 @@ class BackupJob < ApplicationJob
     ssh_dir = File.join(Dir.home, ".ssh")
     FileUtils.rm_f(File.join(ssh_dir, "backup_id_rsa"))
     FileUtils.rm_f(File.join(ssh_dir, "backup_id_rsa.pub"))
-    ENV.delete('GIT_SSH_COMMAND')
+    ENV.delete("GIT_SSH_COMMAND")
   end
 end

@@ -35,7 +35,7 @@ module Tools
       articles_data = Article.all.map do |article|
         # 创建文章专属的媒体文件夹（如果有附件的话）
         article_media_dir = File.join(@media_dir, article.slug)
-        
+
         # 检查是否有附件
         has_embeds = article.content.embeds.any? rescue false
         FileUtils.mkdir_p(article_media_dir) if has_embeds

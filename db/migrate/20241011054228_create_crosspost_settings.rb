@@ -12,7 +12,7 @@ class CreateCrosspostSettings < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
+
     add_index :crosspost_settings, :platform, unique: true
   end
 end

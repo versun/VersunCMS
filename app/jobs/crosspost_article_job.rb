@@ -4,21 +4,21 @@ class CrosspostArticleJob < ApplicationJob
   def perform(article_id)
     article = Article.find_by(id: article_id)
     return unless article
-  
+
     crosspost_urls = {}
-  
+
     if article.crosspost_mastodon?
       if mastodon_url = post_to_mastodon(article)
-        crosspost_urls['mastodon'] = mastodon_url
+        crosspost_urls["mastodon"] = mastodon_url
       end
     end
-  
+
     if article.crosspost_twitter?
       if twitter_url = post_to_twitter(article)
-        crosspost_urls['twitter'] = twitter_url
+        crosspost_urls["twitter"] = twitter_url
       end
     end
-  
+
     # Update article with all crosspost URLs at once
     article.update_column(:crosspost_urls, crosspost_urls) unless crosspost_urls.empty?
   end
@@ -29,16 +29,16 @@ class CrosspostArticleJob < ApplicationJob
     settings = CrosspostSetting.mastodon
     return unless settings&.enabled?
 
-    require 'mastodon'
-    
+    require "mastodon"
+
     client = Mastodon::REST::Client.new(
       base_url: settings.server_url,
       bearer_token: settings.access_token
     )
 
     post_url = Rails.application.routes.url_helpers.article_url(
-      article.slug, 
-      host: Setting.first.url.sub(%r{https?://}, '')
+      article.slug,
+      host: Setting.first.url.sub(%r{https?://}, "")
     )
     # Extract text content from rich text
     content_text = article.content.body.to_plain_text
@@ -63,8 +63,8 @@ class CrosspostArticleJob < ApplicationJob
     settings = CrosspostSetting.twitter
     return unless settings&.enabled?
 
-    require 'x'
-    
+    require "x"
+
     client = X::Client.new(
       api_key: settings.client_id,
       api_key_secret: settings.client_secret,
@@ -73,8 +73,8 @@ class CrosspostArticleJob < ApplicationJob
     )
 
     post_url = Rails.application.routes.url_helpers.article_url(
-      article.slug, 
-      host: Setting.first.url.sub(%r{https?://}, '')
+      article.slug,
+      host: Setting.first.url.sub(%r{https?://}, "")
     )
     # Extract text content from rich text
     content_text = article.content.body.to_plain_text

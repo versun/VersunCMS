@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 ## for blog
-#gem "reverse_markdown"
+# gem "reverse_markdown"
 ##
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
@@ -43,11 +43,11 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
-gem 'git'
+gem "git"
 
 # Social media integration
-gem 'mastodon-api', require: 'mastodon'
-gem 'x'
+gem "mastodon-api", require: "mastodon"
+gem "x"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

@@ -55,12 +55,11 @@ class Article < ApplicationRecord
   def should_crosspost?
     has_crosspost_enabled = crosspost_mastodon? || crosspost_twitter?
     return false unless publish? && has_crosspost_enabled
-    
-    crosspost_settings_changed = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter?
-    became_published = saved_change_to_status? && status_previously_was != 'publish'
-    
-    new_record? || crosspost_settings_changed || became_published
 
+    crosspost_settings_changed = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter?
+    became_published = saved_change_to_status? && status_previously_was != "publish"
+
+    new_record? || crosspost_settings_changed || became_published
   end
 
   def handle_crosspost
