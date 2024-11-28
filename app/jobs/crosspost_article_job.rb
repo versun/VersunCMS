@@ -46,7 +46,7 @@ class CrosspostArticleJob < ApplicationJob
     # Create status with title, content and URL
     # Mastodon has a 500 character limit, so we'll truncate if needed
     max_content_length = 500 - post_url.length - 30
-    status = "#{article.title}\n\n#{content_text[0...max_content_length]}\n..."
+    status = "#{article.title}\n#{content_text[0...max_content_length]}\n..."
     status += "\n\nRead more: #{post_url}"
 
     begin
@@ -55,6 +55,7 @@ class CrosspostArticleJob < ApplicationJob
         response.url
     rescue => e
       Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{e.message}"
+      nil
     end
   end
 
@@ -81,7 +82,7 @@ class CrosspostArticleJob < ApplicationJob
     # Create status with title, content and URL
     # Twitter has a 140 character limit, so we'll truncate if needed
     max_content_length =  140 - post_url.length - 30
-    tweet = "#{article.title}\n\n#{content_text[0...max_content_length]}\n..."
+    tweet = "#{article.title}\n#{content_text[0...max_content_length]}\n..."
     tweet += "\n\nRead more: #{post_url}"
 
     begin
@@ -91,9 +92,10 @@ class CrosspostArticleJob < ApplicationJob
 
         Rails.logger.info "Successfully posted article #{article.id} to X"
         id = response["data"]["id"] if response && response["data"] && response["data"]["id"]
-        "https://x.com/#{username}/status/#{id}"
+        "https://x.com/#{username}/status/#{id}" if username && id
     rescue => e
       Rails.logger.error "Failed to post article #{article.id} to X: #{e.message}"
+      nil
     end
   end
 end

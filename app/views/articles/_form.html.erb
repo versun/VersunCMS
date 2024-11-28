@@ -37,12 +37,18 @@
           <div>
             <%= form.check_box :crosspost_mastodon %>
             <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
+            <% if article.crosspost_urls&.dig('mastodon').present? %>
+              (<%= link_to article.crosspost_urls['mastodon'], article.crosspost_urls['mastodon'], target: "_blank" %>)
+            <% end %>
           </div>
         <% end %>
         <% if CrosspostSetting.find_by(platform: 'twitter')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_twitter %>
             <%= form.label :crosspost_twitter, "Post to X" %>
+            <% if article.crosspost_urls&.dig('twitter').present? %>
+              (<%= link_to article.crosspost_urls['twitter'], article.crosspost_urls['twitter'], target: "_blank" %>)
+            <% end %>
           </div>
         <% end %>
         <%= link_to "Go to Cross Post Settings", tools_crosspost_settings_path %>
