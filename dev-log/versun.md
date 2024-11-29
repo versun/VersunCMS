@@ -1,3 +1,6 @@
+# 2024-11-28
+添加了cross post to twitter功能，本来还想加上reddit等平台，但目前我暂时用不到reddit等平台，所以等以后再加吧
+
 # 2024-11-27
 添加了cross post功能，完成mastodon的cross post
 
