@@ -125,7 +125,7 @@ class ArticlesController < ApplicationController
   end
 
   def set_time_zone
-    Time.zone = SettingsService.time_zone
+    Time.zone = SettingsService.time_zone rescue "UTC"
   end
 
   def auto_backup
