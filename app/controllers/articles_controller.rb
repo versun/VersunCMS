@@ -33,6 +33,10 @@ class ArticlesController < ApplicationController
 
   # GET /1 or /1.json
   def show
+    unless @article
+      redirect_to root_path, notice: "Article Not found."
+      return
+    end
   end
 
   # GET /articles/new
@@ -54,11 +58,10 @@ class ArticlesController < ApplicationController
   def create
     @article = Article.new(article_params)
     path_after_create = @article.is_page ? admin_pages_path : admin_posts_path
+
     respond_to do |format|
       if @article.save
-        if @article.is_page
-          refresh_pages
-        end
+        refresh_pages if @article.is_page
         format.html { redirect_to path_after_create, notice: "Created successfully." }
         format.json { render :show, status: :created, location: @article }
       else
@@ -74,9 +77,7 @@ class ArticlesController < ApplicationController
 
     respond_to do |format|
       if @article.update(article_params)
-        if @article.is_page
-          refresh_pages
-        end
+        refresh_pages if @article.is_page
         format.html { redirect_to path_after_create, notice: "Updated successfully." }
         format.json { render :show, status: :ok, location: @article }
       else
@@ -101,38 +102,34 @@ class ArticlesController < ApplicationController
       format.json { head :no_content }
     end
   end
-  ###############################################################
+
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_article
-      @article = Article.find_by(slug: params[:slug])
-      unless @article
-        redirect_to root_path, notice: "Article Not found."
-      end
-    end
 
-    def set_time_zone
-      Time.zone = @site.time_zone
-    end
+  def set_article
+    @article = Article.find_by(slug: params[:slug])
+  end
 
-    def auto_backup
-      return unless BackupSetting.first&.auto_backup
-      BackupJob.perform_later
-    end
+  def article_params
+    params.require(:article).permit(
+      :title,
+      :content,
+      :status,
+      :slug,
+      :is_page,
+      :page_order,
+      :scheduled_at,
+      :crosspost_mastodon,
+      :crosspost_twitter,
+      :crosspost_urls
+    )
+  end
 
-    # Only allow a list of trusted parameters through.
-    def article_params
-      params.require(:article).permit(
-        :title,
-        :content,
-        :status,
-        :slug,
-        :is_page,
-        :page_order,
-        :scheduled_at,
-        :crosspost_mastodon,
-        :crosspost_twitter,
-        :crosspost_urls
-      )
-    end
+  def set_time_zone
+    Time.zone = SettingsService.time_zone
+  end
+
+  def auto_backup
+    return unless BackupSetting.first&.auto_backup
+    BackupJob.perform_later
+  end
 end

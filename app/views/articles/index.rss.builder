@@ -1,19 +1,19 @@
 xml.instruct! :xml, version: "1.0"
 xml.rss version: "2.0" do
   xml.channel do
-    xml.title @site[:title]
-    xml.description @site[:description]
-    xml.link @site[:url]
-    xml.author @site[:author]
+    xml.title site_settings[:title]
+    xml.description site_settings[:description]
+    xml.link site_settings[:url]
+    xml.author site_settings[:author]
 
     @articles.each do |article|
       xml.item do
         xml.title article.title
         xml.description article.content
         xml.pubDate article.created_at.rfc822
-        xml.link "#{@site[:url]}/blog/#{article.slug}"
-        xml.guid "#{@site[:url]}/blog/#{article.slug}"
-        xml.author @site[:author]
+        xml.link "#{site_settings[:url]}/blog/#{article.slug}"
+        xml.guid "#{site_settings[:url]}/blog/#{article.slug}"
+        xml.author site_settings[:author]
       end
     end
   end

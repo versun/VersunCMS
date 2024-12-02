@@ -2,7 +2,7 @@
 <html>
   <head>
     
-    <title><%= @site.title %></title>
+    <title><%= site_settings[:title] %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -17,22 +17,22 @@
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
-    <link rel="alternate" type="application/rss+xml" title="<%= @site[:title] %>" href="/blog.rss">
+    <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/blog.rss">
     
     <%# Includes all stylesheet files in app/views/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     
     <%= javascript_importmap_tags %>
-    <%= raw @site[:head_code] %>
+    <%= raw site_settings[:head_code] %>
 
     <style>
-      <%= @site.custom_css %>
+      <%= site_settings[:custom_css] %>
     </style>
   </head>
 
   <body>
     <header>
-      <%= render 'components/nav_bar', navbar_items:@navbar_items, site:@site %>
+      <%= render 'components/nav_bar', navbar_items: navbar_items, site_settings: site_settings %>
     </header>
 
     <hr>
@@ -43,6 +43,6 @@
     
     <hr>
 
-    <%= render 'components/footer', site:@site %>
+    <%= render 'components/footer', site_settings: site_settings %>
   </body>
 </html>
