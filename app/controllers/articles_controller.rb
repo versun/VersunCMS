@@ -115,6 +115,7 @@ class ArticlesController < ApplicationController
       :content,
       :status,
       :slug,
+      :description,
       :is_page,
       :page_order,
       :scheduled_at,

@@ -52,6 +52,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
   create_table "articles", force: :cascade do |t|
     t.string "title"
     t.string "slug"
+    t.string "description"
     t.integer "status", null: false
     t.boolean "is_page", default: false, null: false
     t.integer "page_order", default: 0, null: false

@@ -1,5 +1,6 @@
 xml.instruct! :xml, version: "1.0"
-xml.rss version: "2.0" do
+xml.rss version: "2.0",
+        "xmlns:content" => "http://purl.org/rss/1.0/modules/content/" do
   xml.channel do
     xml.title site_settings[:title]
     xml.description site_settings[:description]
@@ -9,7 +10,8 @@ xml.rss version: "2.0" do
     @articles.each do |article|
       xml.item do
         xml.title article.title
-        xml.description article.content
+        xml.description article.description
+        xml.tag!('content:encoded') { xml.cdata! article.content.to_html }
         xml.pubDate article.created_at.rfc822
         xml.link "#{site_settings[:url]}/blog/#{article.slug}"
         xml.guid "#{site_settings[:url]}/blog/#{article.slug}"

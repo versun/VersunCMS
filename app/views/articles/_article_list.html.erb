@@ -1,7 +1,11 @@
 <div class="article-list">
   <% articles.each do |article|%>
     <%= render "articles/article_meta", article:article %>
-    <%= raw HTML_Truncator.truncate(article.content.to_s, 10) %>
+    <% if article.description? %>
+      <%= article.description %>
+    <% else %>
+      <%= raw HTML_Truncator.truncate(article.content.to_s, 10) %>
+    <% end %>
   <% end %>
 </div>
 

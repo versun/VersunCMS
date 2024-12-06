@@ -41,7 +41,7 @@ class CrosspostArticleJob < ApplicationJob
       host: Setting.first.url.sub(%r{https?://}, "")
     )
     # Extract text content from rich text
-    content_text = article.content.body.to_plain_text
+    content_text = article.description || article.content.body.to_plain_text
 
     # Create status with title, content and URL
     # Mastodon has a 500 character limit, so we'll truncate if needed
@@ -77,7 +77,7 @@ class CrosspostArticleJob < ApplicationJob
       host: Setting.first.url.sub(%r{https?://}, "")
     )
     # Extract text content from rich text
-    content_text = article.content.body.to_plain_text
+    content_text = article.description || article.content.body.to_plain_text
 
     # Create status with title, content and URL
     # Twitter has a 140 character limit, so we'll truncate if needed

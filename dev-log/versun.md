@@ -1,3 +1,6 @@
+# 2024-12-07
+给文章添加了 description 字段，这样首页可以直接显示description，还有交叉发布时，也是首选description，然后是content
+
 # 2024-12-03
 准备开始写功能测试，方便ai重构时能保证功能正常。
 写了测试才知道，好多功能耦合度太高了，比如settings，把它改为一个service，降低耦合度
