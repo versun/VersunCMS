@@ -8,11 +8,11 @@ Rails.application.config.after_initialize do
     next unless ActiveRecord::Base.connection.table_exists?("settings")
 
     Setting.first_or_create! do |setting|
-      setting.title = "John Doe's Blog"
+      setting.title = "My Blog"
       setting.description = "A blog about my life."
-      setting.author = "John Doe"
+      setting.author = "Your Name"
       setting.time_zone = "UTC"
-      setting.footer = "Powered by NanoBlog"
+      setting.footer = "Powered by <a href=\"https://github.com/versun/nanoblog\" target=\"_blank\" rel=\"noopener\">Nanoblog</a>"
 
       # 设置 URL
       if ENV["SITE_URL"].present?

@@ -9,15 +9,17 @@ class SettingsService
     def site_info
       Rails.cache.fetch("settings:site_info", expires_in: 1.hour) do
         setting = Setting.first
+        return {} unless setting
+        
         {
-          title: setting&.title || "My Blog",
-          description: setting&.description || "A simple blog",
-          author: setting&.author || "Anonymous",
-          url: setting&.url || "http://localhost:3000",
-          head_code: setting&.head_code || "",
-          footer: setting&.footer || "",
-          custom_css: setting&.custom_css || "",
-          social_links: setting&.social_links || {}
+          title: setting&.title,
+          description: setting&.description,
+          author: setting&.author,
+          url: setting&.url,
+          head_code: setting&.head_code,
+          footer: setting&.footer,
+          custom_css: setting&.custom_css,
+          social_links: setting&.social_links
         }
       end
     end
