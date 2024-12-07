@@ -15,6 +15,7 @@ class SettingsService
           author: setting&.author || "Anonymous",
           url: setting&.url || "http://localhost:3000",
           head_code: setting&.head_code || "",
+          footer: setting&.footer || "",
           custom_css: setting&.custom_css || "",
           social_links: setting&.social_links || {}
         }
