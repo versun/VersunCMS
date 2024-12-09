@@ -1,11 +1,41 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  title: MyString
-  content: MyText
-  slug: MyString
+published_post_1:
+  title: Published Post
+  slug: published-post
+  status: publish
+  is_page: false
+  page_order: 0
+  scheduled_at: null
 
-two:
-  title: MyString
-  content: MyText
-  slug: MyString
+draft_post_1:
+  title: Draft Post
+  slug: draft-post
+  status: draft
+  is_page: false
+  page_order: 0
+  scheduled_at: null
+
+published_page_1:
+  title: Published Page
+  slug: published-page
+  status: publish
+  is_page: true
+  page_order: 1
+  scheduled_at: null
+
+scheduled_post_1:
+  title: Scheduled Post
+  slug: scheduled-post
+  status: schedule
+  is_page: false
+  page_order: 0
+  scheduled_at: <%= 1.day.from_now %>
+
+trashed_post_1:
+  title: Trashed Post
+  slug: trashed-post
+  status: trash
+  is_page: false
+  page_order: 0
+  scheduled_at: null

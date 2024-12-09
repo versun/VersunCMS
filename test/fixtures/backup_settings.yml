@@ -1,0 +1,9 @@
+one:
+  repository_url: "git@github.com:user/repo.git"
+  branch_name: "main"
+  git_name: "Test User"
+  git_email: "test@example.com"
+  auto_backup: true
+  backup_interval: 24
+  ssh_public_key: "ssh-rsa AAAAB3NzaC1..."
+  ssh_private_key: "-----BEGIN RSA PRIVATE KEY-----\nMIIEpA..."
