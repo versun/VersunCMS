@@ -10,7 +10,7 @@ class SettingsService
       Rails.cache.fetch("settings:site_info", expires_in: 1.hour) do
         setting = Setting.first
         return {} unless setting
-        
+
         {
           title: setting&.title,
           description: setting&.description,

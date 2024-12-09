@@ -72,4 +72,4 @@ group :test do
 end
 
 gem "html_truncator"
-gem 'ruby-vips'
+gem "ruby-vips"

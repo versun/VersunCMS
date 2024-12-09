@@ -13,7 +13,7 @@ class Tools::BackupControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create backup setting" do
-    assert_difference('BackupSetting.count', 1) do
+    assert_difference("BackupSetting.count", 1) do
       post tools_backup_index_url, params: {
         backup_setting: {
           repository_url: "git@github.com:user/repo.git",
@@ -53,7 +53,7 @@ class Tools::BackupControllerTest < ActionDispatch::IntegrationTest
   test "should get backup status" do
     get backup_status_tools_backup_index_url
     assert_response :success
-    
+
     response_json = JSON.parse(response.body)
     assert_includes response_json.keys, "last_backup"
     assert_includes response_json.keys, "status"
@@ -62,12 +62,12 @@ class Tools::BackupControllerTest < ActionDispatch::IntegrationTest
 
   test "should regenerate ssh key pair" do
     old_public_key = @backup_setting.ssh_public_key
-    
+
     post regenerate_ssh_key_tools_backup_index_url
-    
+
     assert_redirected_to tools_backup_index_path
     assert_equal "SSH key pair regenerated successfully.", flash[:notice]
-    
+
     @backup_setting.reload
     assert_not_equal old_public_key, @backup_setting.ssh_public_key
     assert_not_nil @backup_setting.ssh_private_key
@@ -75,9 +75,9 @@ class Tools::BackupControllerTest < ActionDispatch::IntegrationTest
 
   test "should handle failed ssh key regeneration" do
     BackupSetting.any_instance.stubs(:update).returns(false)
-    
+
     post regenerate_ssh_key_tools_backup_index_url
-    
+
     assert_redirected_to tools_backup_index_path
     assert_equal "Failed to regenerate SSH key pair.", flash[:alert]
   end

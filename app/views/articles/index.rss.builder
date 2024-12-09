@@ -11,7 +11,7 @@ xml.rss version: "2.0",
       xml.item do
         xml.title article.title
         xml.description article.description
-        xml.tag!('content:encoded') { xml.cdata! article.content.to_s }
+        xml.tag!("content:encoded") { xml.cdata! article.content.to_s }
         xml.pubDate article.created_at.rfc822
         xml.link "#{site_settings[:url]}/blog/#{article.slug}"
         xml.guid "#{site_settings[:url]}/blog/#{article.slug}"

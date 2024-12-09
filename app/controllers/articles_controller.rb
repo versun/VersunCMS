@@ -35,7 +35,7 @@ class ArticlesController < ApplicationController
   def show
     unless @article
       redirect_to root_path, notice: "Article Not found."
-      return
+      nil
     end
   end
 

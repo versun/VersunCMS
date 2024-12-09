@@ -154,7 +154,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   test "should move to trash when authenticated" do
     sign_in_as(users(:admin))
     delete article_url(@published_post)
-    
+
     @published_post.reload
     assert_equal "trash", @published_post.status
     assert_redirected_to admin_posts_path
@@ -164,7 +164,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   test "should permanently delete from trash when authenticated" do
     sign_in_as(users(:admin))
     @published_post.update!(status: "trash")
-    
+
     assert_difference("Article.count", -1) do
       delete article_url(@published_post)
     end
