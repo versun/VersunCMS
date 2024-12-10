@@ -1,7 +1,7 @@
 <%= render 'admin/admin_bar' %>
 <h3>CrossPost Settings</h3>
 <fieldset>
-  <legend>Mastodon</legend>
+  <legend><h4>Mastodon</h4></legend>
   <p class="text-muted">Get credentials: Open Mastodon -> Preferences -> Development -> New application | Scope: profile,write:statuses</p>
   <%= form_with(model: @mastodon, url: tools_crosspost_setting_path(@mastodon.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'mastodon' %>
@@ -39,7 +39,7 @@
 </fieldset>
 
 <fieldset>
-  <legend>X</legend>
+  <legend><h4>X</h4></legend>
   <p class="text-muted">First, obtain X credentials from <a href="https://developer.x.com">https://developer.x.com</a>.</p>
   <%= form_with(model: @twitter, url: tools_crosspost_setting_path(@twitter.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'twitter' %>
@@ -76,6 +76,39 @@
   <% end %>
 </fieldset>
 
+<fieldset>
+  <legend><h4>Bluesky</h4></legend>
+  <p class="text-muted">Get credentials: Log in to your Bluesky account and generate an App Password in settings.</p>
+  <%= form_with(model: @bluesky, url: tools_crosspost_setting_path(@bluesky.platform), method: :patch) do |f| %>
+    <%= f.hidden_field :platform, value: 'bluesky' %>
+
+    <div class="form-group">
+      <%= f.label :enabled, "Enable Bluesky CrossPost" %>
+      <%= f.check_box :enabled %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :access_token, "Username" %>
+      <%= f.text_field :access_token, placeholder: "your.handle" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :access_token_secret, "App Password" %>
+      <%= f.text_field :access_token_secret %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :server_url, "Server URL" %>
+      <%= f.text_field :server_url, placeholder: "https://bsky.app" %>
+    </div>
+
+    <div class="form-actions">
+      <%= f.submit "Save", class: 'btn btn-primary' %>
+      <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'bluesky' } %>
+    </div>
+  <% end %>
+</fieldset>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const verifyButtons = document.querySelectorAll('.verify-btn');
@@ -95,10 +128,13 @@ document.addEventListener('DOMContentLoaded', function() {
           },
           body: JSON.stringify(Object.fromEntries(formData)) 
         });
-        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         alert(data.message);
       } catch (error) {
+        console.error('Verification error:', error);
         alert('Failed to verify credentials. Please try again.');
       }
     });

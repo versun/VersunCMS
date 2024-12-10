@@ -1,5 +1,5 @@
 class CrosspostSetting < ApplicationRecord
-  PLATFORMS = %w[mastodon twitter].freeze
+  PLATFORMS = %w[mastodon twitter bluesky].freeze
 
   validates :platform, presence: true,
                       uniqueness: true,
@@ -9,6 +9,7 @@ class CrosspostSetting < ApplicationRecord
 
   scope :mastodon, -> { find_or_create_by(platform: "mastodon") }
   scope :twitter, -> { find_or_create_by(platform: "twitter") }
+  scope :bluesky, -> { find_or_create_by(platform: "bluesky") }
 
   def mastodon?
     platform == "mastodon"
@@ -16,6 +17,10 @@ class CrosspostSetting < ApplicationRecord
 
   def twitter?
     platform == "twitter"
+  end
+
+  def bluesky?
+    platform == "bluesky"
   end
 
   def enabled?
