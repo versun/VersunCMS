@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
+ActiveRecord::Schema[8.0].define(version: 2024_11_20_125653) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -66,13 +66,6 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
     t.index ["slug"], name: "index_articles_on_slug", unique: true
   end
 
-  create_table "backup_logs", force: :cascade do |t|
-    t.integer "status", default: 0, null: false
-    t.text "message"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "backup_settings", force: :cascade do |t|
     t.string "repository_url", null: false
     t.string "branch_name", default: "main", null: false
@@ -83,6 +76,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125654) do
     t.boolean "auto_backup", default: false
     t.integer "backup_interval", default: 24
     t.datetime "last_backup_at"
+    t.json "log"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

@@ -1,4 +1,4 @@
-class CreateBackupSettings < ActiveRecord::Migration[7.1]
+class CreateBackupSettings < ActiveRecord::Migration[8.0]
   def change
     create_table :backup_settings do |t|
       t.string :repository_url, null: false
@@ -10,6 +10,7 @@ class CreateBackupSettings < ActiveRecord::Migration[7.1]
       t.boolean :auto_backup, default: false
       t.integer :backup_interval, default: 24
       t.datetime :last_backup_at
+      t.json :log
 
       t.timestamps
     end
