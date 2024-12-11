@@ -3,7 +3,7 @@ class TwitterService
     @article = article
     @settings = CrosspostSetting.twitter
   end
-  
+
   def verify(settings)
     return false if settings.client_id.blank? || settings.client_secret.blank? || setting.access_token.blank?
 
@@ -29,19 +29,19 @@ class TwitterService
     Rails.logger.error "Twitter verification failed: #{e.message}"
     false
   end
-  
+
   def post(article)
     return unless @settings&.enabled?
 
     require "x"
     client = create_client
     tweet = build_tweet
-    
+
     begin
       user = client.get("users/me")
       username = user["data"]["username"] if user && user["data"]
       response = client.post("tweets", { text: tweet }.to_json)
-      
+
       id = response["data"]["id"] if response && response["data"] && response["data"]["id"]
       "https://x.com/#{username}/status/#{id}" if username && id
     rescue => e
@@ -65,7 +65,7 @@ class TwitterService
     post_url = build_post_url
     content_text = @article.description || @article.content.body.to_plain_text
     max_content_length = 140 - post_url.length - 30
-    
+
     "#{@article.title}\n#{content_text[0...max_content_length]}\n...\n\nRead more: #{post_url}"
   end
 

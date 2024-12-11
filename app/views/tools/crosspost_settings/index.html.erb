@@ -99,7 +99,7 @@
 
     <div class="form-group">
       <%= f.label :server_url, "Server URL" %>
-      <%= f.text_field :server_url, placeholder: "https://bsky.app" %>
+      <%= f.text_field :server_url, placeholder: "https://bsky.social/xrpc" %>
     </div>
 
     <div class="form-actions">
@@ -114,29 +114,57 @@ document.addEventListener('DOMContentLoaded', function() {
   const verifyButtons = document.querySelectorAll('.verify-btn');
   
   verifyButtons.forEach(button => {
-    button.addEventListener('click', async function() {
+    button.addEventListener('click', function() {
       const platform = this.dataset.platform;
       const form = this.closest('form');
       const formData = new FormData(form);
+      const button = this;
       
-      try {
-        const response = await fetch(`/tools/crosspost_settings/${platform}/verify`, {
-          method: 'POST',
-          headers: {
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(Object.fromEntries(formData)) 
-        });
+      // Convert FormData to JSON object
+      const jsonData = {};
+      formData.forEach((value, key) => {
+        if (key.startsWith('crosspost_setting')) {
+          const cleanKey = key.replace('crosspost_setting[', '').replace(']', '');
+          jsonData[cleanKey] = value;
+        }
+      });
+      
+      // Disable button and show loading state
+      button.disabled = true;
+      const originalText = button.innerHTML;
+      button.innerHTML = 'Verifying...';
+      
+      fetch(`/tools/crosspost_settings/${platform}/verify`, {
+        method: 'POST',
+        body: JSON.stringify({ crosspost_setting: jsonData }),
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+      })
+      .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
-        alert(data.message);
-      } catch (error) {
-        console.error('Verification error:', error);
-        alert('Failed to verify credentials. Please try again.');
-      }
+        return response.json();
+      })
+      .then(data => {
+        if (data.status === 'success') {
+          alert(data.message);
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        alert('An error occurred during verification.');
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        // Re-enable button and restore original text
+        button.disabled = false;
+        button.innerHTML = originalText;
+      });
     });
   });
 });

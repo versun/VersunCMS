@@ -14,4 +14,7 @@
     <% if @article.crosspost_urls['twitter'].present? %>
       <%= link_to ' X', @article.crosspost_urls['twitter'], target: '_blank' %>
     <% end %>
+    <% if @article.crosspost_urls['bluesky'].present? %>
+      <%= link_to ' Bluesky', @article.crosspost_urls['bluesky'], target: '_blank' %>
+    <% end %>
 <% end %>

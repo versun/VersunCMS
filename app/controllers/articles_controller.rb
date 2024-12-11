@@ -121,6 +121,7 @@ class ArticlesController < ApplicationController
       :scheduled_at,
       :crosspost_mastodon,
       :crosspost_twitter,
+      :crosspost_bluesky,
       :crosspost_urls
     )
   end

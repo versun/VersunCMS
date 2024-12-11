@@ -17,14 +17,14 @@ class MastodonService
     Rails.logger.error "Mastodon verification failed: #{e.message}"
     false
   end
-  
+
   def post(article)
     return unless @settings&.enabled?
 
     require "mastodon"
     client = create_client
     status = build_status
-    
+
     begin
       response = client.create_status(status)
       Rails.logger.info "Successfully posted article #{@article.id} to Mastodon"
@@ -48,7 +48,7 @@ class MastodonService
     post_url = build_post_url
     content_text = @article.description || @article.content.body.to_plain_text
     max_content_length = 500 - post_url.length - 30
-    
+
     "#{@article.title}\n#{content_text[0...max_content_length]}\n...\n\nRead more: #{post_url}"
   end
 

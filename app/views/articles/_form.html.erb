@@ -56,6 +56,15 @@
             <% end %>
           </div>
         <% end %>
+        <% if CrosspostSetting.find_by(platform: 'bluesky')&.enabled? %>
+          <div>
+            <%= form.check_box :crosspost_bluesky %>
+            <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
+            <% if article.crosspost_urls&.dig('bluesky').present? %>
+              (<%= link_to article.crosspost_urls['bluesky'], article.crosspost_urls['bluesky'], target: "_blank" %>)
+            <% end %>
+          </div>
+        <% end %>
         <%= link_to "Go to Cross Post Settings", tools_crosspost_settings_path %>
       </fieldset>
       

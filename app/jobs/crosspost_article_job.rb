@@ -8,19 +8,24 @@ class CrosspostArticleJob < ApplicationJob
     crosspost_urls = {}
 
     if article.crosspost_mastodon?
-      if mastodon_url = MastodonService.post(article)
+      if mastodon_url = MastodonService.new(article).post(article)
         crosspost_urls["mastodon"] = mastodon_url
       end
     end
 
     if article.crosspost_twitter?
-      if twitter_url = TwitterService.post(article)
+      if twitter_url = TwitterService.new(article).post(article)
         crosspost_urls["twitter"] = twitter_url
+      end
+    end
+
+    if article.crosspost_bluesky?
+      if bluesky_url = BlueskyService.new(article).post(article)
+        crosspost_urls["bluesky"] = bluesky_url
       end
     end
 
     # Update article with all crosspost URLs at once
     article.update_column(:crosspost_urls, crosspost_urls) unless crosspost_urls.empty?
   end
-
 end

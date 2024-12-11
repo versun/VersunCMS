@@ -9,7 +9,7 @@ module Tools
     def update
       @settings = CrosspostSetting.find_or_create_by(platform: params[:id])
       Rails.logger.info "Updating CrosspostSetting: #{params[:id]}"
-      Rails.logger.info "Params: #{params.inspect}"
+      # Rails.logger.info "Params: #{params.inspect}"
 
       if @settings.update(crosspost_setting_params)
         Rails.logger.info "Successfully updated CrosspostSetting"
@@ -23,23 +23,36 @@ module Tools
     def verify
       Rails.logger.info "Verifying #{params[:id]} platform"
       Rails.logger.info "Params: #{params.inspect}"
-      
-      @settings = CrosspostSetting.find_by!(platform: params[:id])
 
-      success = case @settings.platform
-      when "mastodon"
-        
-        MastodonService.verify(@settings)
-      when "twitter"
-        TwitterService.verify(@settings)
-      when "bluesky"
-        BlueskyService.verify(@settings)
-      end
+      begin
+        crosspost_setting = params[:crosspost_setting]
 
-      if success
-        render json: { status: "success", message: "#{@settings.platform.capitalize} credentials verified successfully!" }
-      else
-        render json: { status: "error", message: "Failed to verify #{@settings.platform.capitalize} credentials." }
+        unless crosspost_setting[:platform] == params[:id]
+          raise "Platform mismatch: #{crosspost_setting[:platform]} != #{params[:id]}"
+        end
+
+        success = case crosspost_setting[:platform]
+        when "mastodon"
+          MastodonService.new(nil).verify(crosspost_setting)
+        when "twitter"
+          TwitterService.new(nil).verify(crosspost_setting)
+        when "bluesky"
+          # Set default server_url if not provided
+          crosspost_setting[:server_url] = "https://bsky.social/xrpc" if crosspost_setting[:server_url].blank?
+          BlueskyService.new(nil).verify(crosspost_setting)
+        else
+          raise "Unknown platform: #{crosspost_setting[:platform]}"
+        end
+
+        if success
+          render json: { status: "success", message: "#{crosspost_setting[:platform].capitalize} credentials verified successfully!" }
+        else
+          render json: { status: "error", message: "Failed to verify #{crosspost_setting[:platform].capitalize} credentials." }
+        end
+      rescue => e
+        Rails.logger.error "Verification error for #{params[:id]}: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        render json: { status: "error", message: "Error: #{e.message}" }, status: :unprocessable_entity
       end
     end
 

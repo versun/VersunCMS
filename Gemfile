@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 ## for blog
 gem "git"
-gem "html_truncator"
+# gem "html_truncator"
 gem "ruby-vips"
 gem "mastodon-api", require: "mastodon"
 gem "x"
