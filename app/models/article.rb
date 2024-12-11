@@ -2,6 +2,8 @@ class Article < ApplicationRecord
   has_rich_text :content
   enum :status, [ :draft, :publish, :schedule, :trash ]
 
+  # serialize :crosspost_urls, Hash, default: {}
+
   before_validation :generate_slug, if: :slug_empty?
   validates :slug, presence: true, uniqueness: true
   validates :scheduled_at, presence: true, if: :schedule?
