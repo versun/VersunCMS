@@ -1,0 +1,29 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+bluesky:
+  platform: bluesky
+  enabled: true
+  access_token: test_username
+  access_token_secret: test_password
+  server_url: https://bsky.social/xrpc
+  client_id: test_client_id
+  client_secret: test_client_secret
+  settings: '{}'
+
+mastodon:
+  platform: mastodon
+  enabled: true
+  access_token: test_mastodon_token
+  server_url: https://mastodon.social
+  client_id: test_mastodon_client_id
+  client_secret: test_mastodon_client_secret
+  settings: '{}'
+
+twitter:
+  platform: twitter
+  enabled: true
+  access_token: test_twitter_token
+  access_token_secret: test_twitter_secret
+  client_id: test_twitter_client_id
+  client_secret: test_twitter_client_secret
+  settings: '{}'

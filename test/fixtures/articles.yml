@@ -7,6 +7,7 @@ published_post_1:
   is_page: false
   page_order: 0
   scheduled_at: null
+  crosspost_urls: {}
 
 draft_post_1:
   title: Draft Post
@@ -15,6 +16,7 @@ draft_post_1:
   is_page: false
   page_order: 0
   scheduled_at: null
+  crosspost_urls: {}
 
 published_page_1:
   title: Published Page
@@ -23,6 +25,7 @@ published_page_1:
   is_page: true
   page_order: 1
   scheduled_at: null
+  crosspost_urls: {}
 
 scheduled_post_1:
   title: Scheduled Post
@@ -31,6 +34,7 @@ scheduled_post_1:
   is_page: false
   page_order: 0
   scheduled_at: <%= 1.day.from_now %>
+  crosspost_urls: {}
 
 trashed_post_1:
   title: Trashed Post
@@ -39,3 +43,4 @@ trashed_post_1:
   is_page: false
   page_order: 0
   scheduled_at: null
+  crosspost_urls: {}
