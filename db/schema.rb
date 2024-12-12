@@ -113,6 +113,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125653) do
     t.text "head_code"
     t.text "custom_css"
     t.json "social_links"
+    t.json "static_files", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

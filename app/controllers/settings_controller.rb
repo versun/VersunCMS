@@ -13,6 +13,18 @@ class SettingsController < ApplicationController
     end
   end
 
+  def static_file
+    @setting = Setting.first
+    file_name = params[:file_name]
+
+    if Setting::STATIC_FILES.key?(file_name)
+      content = @setting.static_files&.dig(file_name) || Setting::STATIC_FILES[file_name][:placeholder]
+      render plain: content, content_type: "text/plain"
+    else
+      head :not_found
+    end
+  end
+
   private
 
   def setting_params
@@ -25,7 +37,8 @@ class SettingsController < ApplicationController
       :custom_css,
       :time_zone,
       :head_code,
-      social_links: {}
+      social_links: {},
+      static_files: {}
     )
   end
 end

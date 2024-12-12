@@ -2,6 +2,10 @@ class Setting < ApplicationRecord
   has_rich_text :footer
   # after_initialize :set_default, if: :new_record?
   before_save :generate_social_links
+
+  # Handle static_files as JSON
+  # attribute :static_files, :json, default: {}
+
   SOCIAL_PLATFORMS = {
     github: {
       icon_path: "fontawesome/github.svg"
@@ -35,6 +39,21 @@ class Setting < ApplicationRecord
     }
   }.freeze
 
+  STATIC_FILES = {
+    "robots.txt" => {
+      placeholder: "User-agent: *\nDisallow: /admin"
+    },
+    "humans.txt" => {
+      placeholder: "/* TEAM */\nAuthor: Your Name\nSite: your-site.com\nLocation: Your City, Country"
+    },
+    "security.txt" => {
+      placeholder: "Contact: mailto:security@your-site.com\nExpires: 2025-12-31T23:59:59.000Z\nPreferred-Languages: en, zh"
+    },
+    "ads.txt" => {
+      placeholder: "google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0"
+    }
+  }.freeze
+
   private
 
   def generate_social_links
@@ -42,7 +61,6 @@ class Setting < ApplicationRecord
 
     social_links.each do |platform, data|
       next if data["url"].blank? || !SOCIAL_PLATFORMS[platform.to_sym]
-      # data["platform"] = platform
       data["icon_path"] = SOCIAL_PLATFORMS[platform.to_sym][:icon_path]
     end
   end

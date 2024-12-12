@@ -9,6 +9,7 @@ class CreateSettings < ActiveRecord::Migration[8.0]
       t.text :head_code, null: true
       t.text :custom_css, null: true
       t.json :social_links, null: true
+      t.json :static_files, null: true, default: {}
 
       t.timestamps
     end

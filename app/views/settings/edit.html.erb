@@ -54,6 +54,10 @@
     <b><%= form.label :custom_css, 'Custom CSS' %></b><br>
     <%= form.text_area :custom_css %>
   </div>
+
+  <div class="field">
+    <%= render 'form_static_files', form:form %>
+  </div>
     
   <div class="field">
     <%= render 'form_social_links', form:form %>
