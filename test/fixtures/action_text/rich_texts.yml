@@ -25,5 +25,5 @@ four:
 five:
   record: trashed_post_1 (Article)
   name: content
-  body: <p>Exploring the world of DevOps: Learn about continuous integration, deployment pipelines, and infrastructure as code.</p>
+  body: <p>Exploring the world of DevOps Learn about continuous integration, deployment pipelines, and infrastructure as code.</p>
 
