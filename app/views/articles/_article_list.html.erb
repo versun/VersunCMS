@@ -1,11 +1,13 @@
 <div class="article-list">
   <% articles.each do |article|%>
+  <hr>
     <%= render "articles/article_meta", article:article %>
     <% if article.description.present? %>
       <%= article.description %>
     <% else %>
       <%= article.content %>
     <% end %>
+    
   <% end %>
 </div>
 

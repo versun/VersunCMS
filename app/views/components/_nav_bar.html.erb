@@ -9,10 +9,5 @@
         </span> | 
       <% end %>     
     <% end %>
-
-    <%= form_tag root_path, method: :get, class: 'search-form' do %>
-          <%= search_field_tag :q, params[:q], placeholder: 'Search...' %>
-          <%= submit_tag 'Search' %>
-    <% end %>
   </div>
 </nav>
