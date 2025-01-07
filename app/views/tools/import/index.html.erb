@@ -2,7 +2,7 @@
 <h3>Import Data</h3>
 <%= form_tag from_db_tools_import_index_path, multipart: true do %>
   <%= file_field_tag :file, accept: 'application/zip', required: true %><br>
-  <%= submit_tag "Import From Zip", class: "admin-button" %>
+  <%= submit_tag "Import From DB", class: "admin-button" %>
 <% end %>
 <br>
 <%= form_tag from_wordpress_tools_import_index_path, multipart: true do %>
