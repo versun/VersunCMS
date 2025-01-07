@@ -49,7 +49,7 @@ class BackupSetting < ApplicationRecord
 
   def s3_client
     return nil unless s3_enabled
-
+    require "aws-sdk-s3"
     endpoint = if s3_endpoint.present?
                 s3_endpoint.start_with?("http") ? s3_endpoint : "https://#{s3_endpoint}"
     else
@@ -81,71 +81,44 @@ class BackupSetting < ApplicationRecord
     return false unless s3_enabled && s3_client
 
     begin
+      Rails.logger.info "Starting backup restore from key: #{backup_key}"
+
       # Download backup file
       temp_dir = Rails.root.join("storage", "backup", "temp")
       FileUtils.mkdir_p(temp_dir)
       temp_zip = File.join(temp_dir, "restore_backup.zip")
 
+      Rails.logger.info "Downloading backup file to: #{temp_zip}"
       s3_client.get_object(
         bucket: s3_bucket,
         key: backup_key,
         response_target: temp_zip
       )
 
-      # Extract database file from zip
-      db_path = Rails.configuration.database_configuration[Rails.env]["database"]
-      temp_db = File.join(temp_dir, "temp.sqlite3")
-
-      # Find and extract the database file
-      db_found = false
-      Zip::File.open(temp_zip) do |zip_file|
-        zip_file.each do |entry|
-          if entry.name == "production.sqlite3"
-            entry.extract(temp_db)
-            db_found = true
-            break
-          end
-        end
-      end
-
-      unless db_found
-        raise "Database file not found in backup archive"
-      end
-
-      # Create a backup of the current database
-      backup_time = Time.current.strftime("%Y%m%d_%H%M%S")
-      db_backup = "#{db_path}.backup_#{backup_time}"
-      FileUtils.cp(db_path, db_backup) if File.exist?(db_path)
-
-      # Close current database connections
-      ActiveRecord::Base.connection.disconnect!
-
-      begin
-        # Replace the current database with the restored one
-        FileUtils.mv(temp_db, db_path)
-
-        # Reconnect to the database
-        ActiveRecord::Base.establish_connection
-
+      # Use Tools::Import to restore
+      importer = Tools::Import.new
+      if importer.restore(temp_zip)
         ActivityLog.create!(
           action: "restore",
           target: "backup",
           level: :info,
-          description: "Successfully restored backup from #{backup_key}"
+          description: "Successfully restored all databases from #{backup_key}"
         )
 
         # Refresh all settings cache after restore
         SettingsService.refresh_all
 
         true
-      rescue StandardError => e
-        # If something goes wrong, try to restore the backup
-        if File.exist?(db_backup)
-          FileUtils.mv(db_backup, db_path)
-          ActiveRecord::Base.establish_connection
-        end
-        raise e
+      else
+        ActivityLog.create!(
+          action: "restore",
+          target: "backup",
+          level: :error,
+          description: "Failed to restore backup: #{importer.error_message}"
+        )
+        false
       end
+
     rescue StandardError => e
       ActivityLog.create!(
         action: "restore",
@@ -157,8 +130,83 @@ class BackupSetting < ApplicationRecord
     ensure
       # Clean up temporary files
       FileUtils.rm_f(temp_zip)
-      FileUtils.rm_f(temp_db)
+      FileUtils.rm_rf(temp_dir) if Dir.exist?(temp_dir)
     end
+  end
+
+  def create_zip_backup(timestamp)
+    export = Tools::Export.new
+    if export.generate
+      zip_dir = Rails.root.join("storage", "backup", "temp")
+      FileUtils.mkdir_p(zip_dir)
+      backup_zip = File.join(zip_dir, "backup_#{timestamp}.zip")
+      FileUtils.mv(export.zip_path, backup_zip)
+      backup_zip
+    else
+      ActivityLog.create!(
+        action: "backup",
+        target: "backup",
+        level: :error,
+        description: "Zip export failed: #{export.error_message}"
+      )
+      nil
+    end
+  end
+
+  def upload_to_s3(backup_zip, timestamp)
+    return unless s3_enabled && s3_client
+
+    File.open(backup_zip, "rb") do |file|
+      key = File.join(
+        s3_prefix,
+        timestamp[0..3],  # Year
+        timestamp[4..5],  # Month
+        File.basename(backup_zip)
+      )
+
+      s3_client.put_object(
+        bucket: s3_bucket,
+        key: key,
+        body: file,
+        content_type: "application/zip",
+        metadata: {
+          "backup-date" => Time.current.iso8601,
+          "backup-type" => "full"
+        }
+      )
+
+      ActivityLog.create!(
+        action: "backup",
+        target: "backup",
+        level: :info,
+        description: "Uploaded to S3: #{key}"
+      )
+    end
+  end
+
+  def cleanup_old_backups
+    return unless s3_enabled && s3_client && backup_retention_days.present?
+
+    prefix = s3_prefix.present? ? "#{s3_prefix}/" : ""
+    objects = s3_client.list_objects_v2(bucket: s3_bucket, prefix: prefix)
+
+    retention_date = Time.current - backup_retention_days.days
+    objects.contents.each do |obj|
+      if obj.last_modified < retention_date
+        s3_client.delete_object(bucket: s3_bucket, key: obj.key)
+        ActivityLog.create!(
+          action: "backup",
+          target: "backup",
+          level: :info,
+          description: "Deleted old backup: #{obj.key}"
+        )
+      end
+    end
+  end
+
+  def cleanup_temp_files
+    temp_dir = Rails.root.join("storage", "backup", "temp")
+    FileUtils.rm_rf(temp_dir) if Dir.exist?(temp_dir)
   end
 
   private
