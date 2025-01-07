@@ -95,8 +95,8 @@ class BackupSetting < ApplicationRecord
         response_target: temp_zip
       )
 
-      # Use Tools::Import to restore
-      importer = Tools::Import.new
+      # Use Tools::DBImport to restore
+      importer = Tools::DBImport.new
       if importer.restore(temp_zip)
         ActivityLog.create!(
           action: "restore",

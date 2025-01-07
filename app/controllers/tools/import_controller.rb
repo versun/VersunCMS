@@ -20,7 +20,7 @@ module Tools
         return
       end
 
-      @import = Tools::Import.new
+      @import = Tools::DBImport.new
       if @import.restore(params[:file].tempfile.path)
         redirect_to tools_import_index_path, notice: "Database restored successfully"
       else
