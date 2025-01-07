@@ -10,15 +10,25 @@ module Tools
     end
 
     def from_zip
-      @import = Tools::ZipImport.new(params[:file])
-      if @import.process
-        redirect_to tools_import_index_path, notice: "Import completed successfully"
+      if params[:file].nil?
+        redirect_to tools_import_index_path, alert: "Please select a backup file"
+        return
+      end
+
+      unless params[:file].content_type == "application/zip"
+        redirect_to tools_import_index_path, alert: "Invalid file type. Please upload a zip file"
+        return
+      end
+
+      @import = Tools::Import.new
+      if @import.restore(params[:file].tempfile.path)
+        redirect_to tools_import_index_path, notice: "Database restored successfully"
       else
-        redirect_to tools_import_index_path, alert: "Import failed: #{@import.error_message}"
+        redirect_to tools_import_index_path, alert: "Restore failed: #{@import.error_message}"
       end
     rescue StandardError => e
-      Rails.logger.error "ZipImport process error: #{e.message}"
-      redirect_to tools_import_index_path, alert: "An unexpected error occurred during import, please contact the administrator"
+      Rails.logger.error "Database restore error: #{e.message}"
+      redirect_to tools_import_index_path, alert: "An unexpected error occurred during restore"
     ensure
       refresh_pages
       refresh_settings
@@ -40,114 +50,9 @@ module Tools
     end
   end
 
-  class ZipImport
-    attr_reader :error_message
-
-    def initialize(file)
-      @file = file
-      @error_message = nil
-      @temp_dir = Rails.root.join("tmp", "zip_import_#{Time.now.to_i}")
-      @content_dir = File.join(@temp_dir, "content")
-      @media_dir = File.join(@temp_dir, "media")
-    end
-
-    def process
-      FileUtils.mkdir_p([ @content_dir, @media_dir ])
-      extract_zip
-      import_articles
-      true
-    rescue StandardError => e
-      @error_message = e.message
-      Rails.logger.error "Zip Import Error: #{e.message}"
-      false
-    ensure
-      FileUtils.rm_rf(@temp_dir)
-    end
-
-    private
-
-    def extract_zip
-      Zip::File.open(@file.path) do |zip_file|
-        zip_file.each do |entry|
-          entry_path = File.join(@temp_dir, entry.name)
-          FileUtils.mkdir_p(File.dirname(entry_path))
-          entry.extract(entry_path)
-        end
-      end
-    end
-
-    def import_articles
-      articles_json = File.read(File.join(@content_dir, "articles.json"))
-      articles_data = JSON.parse(articles_json)
-
-      articles_data.each do |article_data|
-        # 处理标签
-        # tags = article_data.delete("tags").map do |tag_name|
-        #   Tag.find_or_create_by!(name: tag_name)
-        # end
-
-        # 获取附件信息
-        attachments_data = article_data.delete("attachments") || []
-
-        # 查找现有文章
-        existing_article = Article.find_by(slug: article_data["slug"])
-
-        # 如果文章存在，删除它及其附件
-        if existing_article
-          existing_article.content.embeds.purge if existing_article.content&.embeds&.attached?
-          existing_article.destroy
-        end
-
-        # 创建新文章
-        article = Article.new(article_data.except("content"))
-        content_html = article_data["content"]
-
-        # 处理附件
-        if attachments_data.any?
-          article_media_dir = File.join(@media_dir, article.slug)
-
-          attachments_data.each do |attachment_info|
-            filename = attachment_info["filename"]
-            file_path = File.join(article_media_dir, filename)
-
-            if File.exist?(file_path)
-              File.open(file_path, "rb") do |io|
-                blob = ActiveStorage::Blob.create_and_upload!(
-                  io: io,
-                  filename: filename,
-                  content_type: attachment_info["content_type"]
-                )
-                # 附加到article
-                article.content.embeds.attach(blob)
-
-                # 生成新的blob url和sgid
-                new_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-                new_sgid = blob.attachable_sgid
-                # 替换content中的所有相关URL
-                encoded_filename = URI.encode_uri_component(filename)
-                # 替换主图片URL
-                blob_pattern = %r{url="[^"]+/rails/active_storage/blobs/redirect/[^"]+/#{Regexp.escape(encoded_filename)}"}
-                content_html.gsub!(blob_pattern, %(url="#{new_url}"))
-                # 替换预览图URL
-                preview_pattern = %r{src="[^"]+/rails/active_storage/representations/redirect/[^"]+/[^"]+/#{Regexp.escape(encoded_filename)}"}
-                content_html.gsub!(preview_pattern, %(src="#{new_url}"))
-                # 替换sgid
-                sgid_pattern = /sgid="[^"]+"/
-                content_html.gsub!(sgid_pattern, %(sgid="#{new_sgid}"))
-                Rails.logger.debug "Content after replacement: #{content_html}"
-              end
-            end
-          end
-        end
-        # 更新文章内容
-        article.content = content_html
-        # article.tags = tags
-        article.save!
-      end
-    end
-  end
 
   class WordPressImport
+    WP_NAMESPACE = { "wp" => "http://wordpress.org/export/1.2/" }
     attr_reader :error_message
 
     def initialize(file)
@@ -180,9 +85,9 @@ module Tools
 
         title = item.at_xpath("title").text
         created_date = item.at_xpath("wp:post_date").text
-        slug = item.at_xpath("wp:post_name", "wp" => "http://wordpress.org/export/1.2/")&.text
+        slug = item.at_xpath("wp:post_name", WP_NAMESPACE)&.text
         content = item.at_xpath("content:encoded")&.text || ""
-        status = item.at_xpath("wp:status", "wp" => "http://wordpress.org/export/1.2/")&.text == "publish" ? :publish : :draft
+        status = item.at_xpath("wp:status", WP_NAMESPACE)&.text == "publish" ? :publish : :draft
 
         if slug.blank?
           wp_post_id = item.at_xpath("wp:post_id", WP_NAMESPACE)&.text
@@ -208,8 +113,52 @@ module Tools
           is_page: post_type == "page",
           status: status,
           created_at: created_date,
-          updated_at: item.at_xpath("wp:post_modified")&.text
+          updated_at: item.at_xpath("wp:post_modified")&.text,
+          scheduled_at: status == :schedule ? created_date : nil,
+          page_order: post_type == "page" ? 0 : nil  # 默认页面顺序为0
         )
+
+        Rails.logger.debug "WordPress Import - New article attributes: #{article.attributes.inspect}"
+
+        begin
+          # First save article without content to get id
+          article.save!
+          Rails.logger.debug "WordPress Import - Article saved: #{article.inspect}"
+
+          # Delete existing FTS record if exists
+          ActiveRecord::Base.connection.execute("DELETE FROM article_fts WHERE rowid = ?", article.id)
+          Rails.logger.debug "WordPress Import - Deleted existing FTS record"
+
+          # Process content to remove any problematic HTML
+          processed_content = ActionController::Base.helpers.strip_tags(content || "")
+          Rails.logger.debug "WordPress Import - Processed content length: #{processed_content.length}"
+
+          # Create ActionText content
+          action_text_content = ActionText::Content.new(content || "")
+          Rails.logger.debug "WordPress Import - Created ActionText content"
+
+          # Create FTS record manually
+          sql = ActiveRecord::Base.sanitize_sql_array(
+            [
+              "INSERT INTO article_fts (rowid, title, content) VALUES (?, ?, ?)",
+              article.id,
+              article.title || "",
+              processed_content
+            ]
+          )
+          ActiveRecord::Base.connection.execute(sql)
+          Rails.logger.debug "WordPress Import - Created FTS record"
+
+          # Then set content
+          article.content = action_text_content
+          article.save!
+          Rails.logger.debug "WordPress Import - Article content saved: #{article.content.inspect}"
+        rescue StandardError => e
+          Rails.logger.error "WordPress Import - Failed to save article: #{e.class} - #{e.message}"
+          Rails.logger.error "WordPress Import - Article validation errors: #{article.errors.full_messages}" if article.errors.any?
+          Rails.logger.error "WordPress Import - Article attributes: #{article.attributes.inspect}"
+          raise e
+        end
 
         # Process images in content
         doc = Nokogiri::HTML(content)
@@ -226,13 +175,17 @@ module Tools
 
             if File.exist?(file_path)
               File.open(file_path, "rb") do |io|
+                Rails.logger.debug "WordPress Import - Processing attachment: #{filename}"
                 blob = ActiveStorage::Blob.create_and_upload!(
                   io: io,
                   filename: filename,
                   content_type: Marcel::MimeType.for(io)
                 )
+                Rails.logger.debug "WordPress Import - Blob created: #{blob.inspect}"
 
-                article.content.embeds.attach(blob)
+                attach_result = article.content.embeds.attach(blob)
+                Rails.logger.debug "WordPress Import - Attachment result: #{attach_result.inspect}"
+                Rails.logger.debug "WordPress Import - Content after attachment: #{article.content.inspect}"
 
                 # Update image URL in content
                 new_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
@@ -247,8 +200,8 @@ module Tools
 
         # Save article with processed content
         article.content = doc.to_html
-        # article.tags = tags
         article.save!
+        Rails.logger.debug "WordPress Import - Final save complete: #{article.content.inspect}"
       end
     end
 

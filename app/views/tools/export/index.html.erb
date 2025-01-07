@@ -1,4 +1,5 @@
 <%= render 'admin/admin_bar' %>
 <h3>Export Data</h3>
+<p>This will export all data, including website settings and API keys, please do not make it public.</p>
 <%= button_to "Export as ZIP", tools_export_index_path, method: :post, data: { turbo: false } %>
 
