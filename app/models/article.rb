@@ -1,4 +1,5 @@
 class Article < ApplicationRecord
+  include DataChangeTracker
   has_rich_text :content
   enum :status, [ :draft, :publish, :schedule, :trash ]
 

@@ -24,6 +24,7 @@ class BackupJob < ApplicationJob
           level: :info,
           description: "Backup completed successfully: #{File.basename(backup_zip)}"
         )
+        settings.update(data_changed: false)
       end
     rescue Aws::S3::Errors::ServiceError => e
       ActivityLog.create!(

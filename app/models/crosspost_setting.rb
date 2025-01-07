@@ -1,4 +1,5 @@
 class CrosspostSetting < ApplicationRecord
+  include DataChangeTracker
   PLATFORMS = %w[mastodon twitter bluesky].freeze
 
   validates :platform, presence: true,

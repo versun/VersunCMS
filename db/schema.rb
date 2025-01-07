@@ -84,6 +84,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_06_114554) do
     t.string "s3_prefix", default: "backups"
     t.boolean "s3_enabled", default: false
     t.boolean "auto_backup", default: false
+    t.boolean "data_changed", default: false
     t.integer "backup_interval_hours", default: 24
     t.integer "backup_retention_days", default: 30
     t.datetime "last_backup_at"

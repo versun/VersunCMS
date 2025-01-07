@@ -1,4 +1,5 @@
 class BackupSetting < ApplicationRecord
+  include DataChangeTracker
   # S3 configuration validations
   validates :s3_bucket, presence: true, if: :s3_enabled
   validates :s3_region, presence: true, if: :s3_enabled

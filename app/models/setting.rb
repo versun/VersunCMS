@@ -1,4 +1,5 @@
 class Setting < ApplicationRecord
+  include DataChangeTracker
   has_rich_text :footer
   # after_initialize :set_default, if: :new_record?
   before_save :generate_social_links

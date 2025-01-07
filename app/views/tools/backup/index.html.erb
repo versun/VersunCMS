@@ -88,6 +88,12 @@
           <strong>Last backup:</strong> 
           <span class="text-muted"><%= @backup_setting.last_backup_at.strftime('%Y-%m-%d %H:%M:%S') %></span>
         </p>
+        <p class="mt-2 mb-0">
+          <strong>Data changed since last backup:</strong>
+          <span class="<%= @backup_setting.data_changed ? 'text-warning' : 'text-success' %>">
+            <%= @backup_setting.data_changed ? 'Yes' : 'No' %>
+          </span>
+        </p>
       <% end %>
     </div>
   </div>
