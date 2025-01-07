@@ -18,8 +18,9 @@ Rails.application.routes.draw do
     resources :backup, only: [ :index, :create ] do
       collection do
         post :perform_backup
-        get :backup_status
-        post :regenerate_ssh_key
+        get :last_backup_status
+        get :list_backups
+        post :restore
       end
     end
     resources :crosspost_settings, only: [ :index, :update ] do

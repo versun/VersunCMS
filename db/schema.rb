@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_11_20_125653) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_06_114554) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -49,6 +49,15 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125653) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "activity_logs", force: :cascade do |t|
+    t.string "action"
+    t.string "target"
+    t.text "description"
+    t.integer "level", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "articles", force: :cascade do |t|
     t.string "title"
     t.string "slug"
@@ -67,16 +76,17 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_20_125653) do
   end
 
   create_table "backup_settings", force: :cascade do |t|
-    t.string "repository_url", null: false
-    t.string "branch_name", default: "main", null: false
-    t.text "ssh_public_key"
-    t.text "ssh_private_key"
-    t.string "git_name"
-    t.string "git_email"
+    t.string "s3_bucket"
+    t.string "s3_region"
+    t.string "s3_access_key_id"
+    t.string "s3_secret_access_key"
+    t.string "s3_endpoint"
+    t.string "s3_prefix", default: "backups"
+    t.boolean "s3_enabled", default: false
     t.boolean "auto_backup", default: false
-    t.integer "backup_interval", default: 24
+    t.integer "backup_interval_hours", default: 24
+    t.integer "backup_retention_days", default: 30
     t.datetime "last_backup_at"
-    t.json "log"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

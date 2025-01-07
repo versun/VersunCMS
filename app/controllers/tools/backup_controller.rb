@@ -2,40 +2,28 @@ class Tools::BackupController < ApplicationController
   # before_action :authenticate_user!
 
   def index
-    @backup_setting = BackupSetting.first_or_initialize
-    @backup_logs = BackupLog.order(created_at: :desc).limit(10)
+    @backup_setting = BackupSetting.instance
+    load_activity_logs
   end
 
   def create
-    @backup_setting = BackupSetting.first_or_initialize
-
-    # Generate SSH key pair if not present
-    if @backup_setting.ssh_public_key.blank? || @backup_setting.ssh_private_key.blank?
-      key_pair = BackupSetting.generate_ssh_key_pair
-      params[:backup_setting][:ssh_public_key] = key_pair[:public_key]
-      params[:backup_setting][:ssh_private_key] = key_pair[:private_key]
-    end
+    @backup_setting = BackupSetting.instance
 
     if @backup_setting.update(backup_params)
       redirect_to tools_backup_index_path, notice: "Backup settings saved successfully."
     else
+      load_activity_logs
       render :index
     end
   end
 
   def update
-    @backup_setting = BackupSetting.first_or_initialize
-
-    # Generate SSH key pair if not present
-    if @backup_setting.ssh_public_key.blank? || @backup_setting.ssh_private_key.blank?
-      key_pair = BackupSetting.generate_ssh_key_pair
-      params[:backup_setting][:ssh_public_key] = key_pair[:public_key]
-      params[:backup_setting][:ssh_private_key] = key_pair[:private_key]
-    end
+    @backup_setting = BackupSetting.instance
 
     if @backup_setting.update(backup_params)
       redirect_to tools_backup_index_path, notice: "Backup settings saved successfully."
     else
+      load_activity_logs
       render :index
     end
   end
@@ -46,39 +34,43 @@ class Tools::BackupController < ApplicationController
   end
 
   def backup_status
-    render json: {
-      last_backup: BackupLog.last&.created_at,
-      status: BackupLog.last&.status,
-      message: BackupLog.last&.message
-    }
+    render json: BackupSetting.instance.last_backup_status
   end
 
-  def regenerate_ssh_key
-    @backup_setting = BackupSetting.first_or_initialize
-    key_pair = BackupSetting.generate_ssh_key_pair
+  def list_backups
+    @backups = BackupSetting.instance.list_backups
+    render json: @backups
+  end
 
-    if @backup_setting.update(
-      ssh_public_key: key_pair[:public_key],
-      ssh_private_key: key_pair[:private_key]
-    )
-      redirect_to tools_backup_index_path, notice: "SSH key pair regenerated successfully."
+  def restore
+    backup_key = params[:backup_key]
+    success = BackupSetting.instance.restore_backup(backup_key)
+
+    if success
+      redirect_to tools_backup_index_path, notice: "Database restored successfully from backup."
     else
-      redirect_to tools_backup_index_path, alert: "Failed to regenerate SSH key pair."
+      redirect_to tools_backup_index_path, alert: "Failed to restore database from backup."
     end
   end
 
   private
 
+  def load_activity_logs
+    @activity_logs = ActivityLog.where(action: "backup").order(created_at: :desc).limit(10)
+  end
+
   def backup_params
     params.require(:backup_setting).permit(
-      :repository_url,
-      :branch_name,
-      :git_name,
-      :git_email,
+      :s3_bucket,
+      :s3_region,
+      :s3_access_key_id,
+      :s3_secret_access_key,
+      :s3_endpoint,
+      :s3_prefix,
+      :s3_enabled,
       :auto_backup,
-      :backup_interval,
-      :ssh_public_key,
-      :ssh_private_key
+      :backup_interval_hours,
+      :backup_retention_days
     )
   end
 end
