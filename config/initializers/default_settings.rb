@@ -12,7 +12,7 @@ Rails.application.config.after_initialize do
       setting.description = "A blog about my life."
       setting.author = "Your Name"
       setting.time_zone = "UTC"
-      setting.footer = "Powered by <a href=\"https://github.com/versun/nanoblog\" target=\"_blank\" rel=\"noopener\">Nanoblog</a>"
+      setting.footer = "&copy; 2025 Your Name. All rights reserved."
 
       # 设置 URL
       if ENV["SITE_URL"].present?
