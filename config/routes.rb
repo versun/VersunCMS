@@ -11,7 +11,7 @@ Rails.application.routes.draw do
     resources :export, only: [ :index, :create ]
     resources :import, only: [ :index ] do
       collection do
-        post :from_zip
+        post :from_db
         post :from_wordpress
       end
     end
