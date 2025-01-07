@@ -5,6 +5,7 @@ gem "git"
 gem "ruby-vips"
 gem "mastodon-api", require: "mastodon"
 gem "x"
+gem "aws-sdk-s3"
 ##
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
