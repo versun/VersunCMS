@@ -1,5 +1,7 @@
-class SettingsService
-  class << self
+module CacheableSettings
+  extend ActiveSupport::Concern
+
+  class_methods do
     def time_zone
       Rails.cache.fetch("settings:time_zone", expires_in: 1.hour) do
         Setting.first&.time_zone || "UTC"

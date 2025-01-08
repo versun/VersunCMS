@@ -107,7 +107,7 @@ class BackupSetting < ApplicationRecord
         )
 
         # Refresh all settings cache after restore
-        SettingsService.refresh_all
+        Setting.refresh_all
 
         true
       else

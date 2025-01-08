@@ -126,6 +126,6 @@ class ArticlesController < ApplicationController
   end
 
   def set_time_zone
-    Time.zone = SettingsService.time_zone rescue "UTC"
+    Time.zone = Setting.time_zone rescue "UTC"
   end
 end
