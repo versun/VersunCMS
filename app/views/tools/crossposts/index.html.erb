@@ -3,7 +3,7 @@
 <fieldset>
   <legend><h4>Mastodon</h4></legend>
   <p class="text-muted">Get credentials: Open Mastodon -> Preferences -> Development -> New application | Scope: profile,write:statuses</p>
-  <%= form_with(model: @mastodon, url: tools_crosspost_setting_path(@mastodon.platform), method: :patch) do |f| %>
+  <%= form_with(model: @mastodon, url: tools_crosspost_path(@mastodon.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'mastodon' %>
     
     <div class="form-group">
@@ -41,7 +41,7 @@
 <fieldset>
   <legend><h4>X</h4></legend>
   <p class="text-muted">First, obtain X credentials from <a href="https://developer.x.com">https://developer.x.com</a>.</p>
-  <%= form_with(model: @twitter, url: tools_crosspost_setting_path(@twitter.platform), method: :patch) do |f| %>
+  <%= form_with(model: @twitter, url: tools_crosspost_path(@twitter.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'twitter' %>
     
     <div class="form-group">
@@ -79,7 +79,7 @@
 <fieldset>
   <legend><h4>Bluesky</h4></legend>
   <p class="text-muted">Get credentials: Log in to your Bluesky account and generate an App Password in settings.</p>
-  <%= form_with(model: @bluesky, url: tools_crosspost_setting_path(@bluesky.platform), method: :patch) do |f| %>
+  <%= form_with(model: @bluesky, url: tools_crosspost_path(@bluesky.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'bluesky' %>
 
     <div class="form-group">
@@ -123,8 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
       // Convert FormData to JSON object
       const jsonData = {};
       formData.forEach((value, key) => {
-        if (key.startsWith('crosspost_setting')) {
-          const cleanKey = key.replace('crosspost_setting[', '').replace(']', '');
+        if (key.startsWith('crosspost')) {
+          const cleanKey = key.replace('crosspost[', '').replace(']', '');
           jsonData[cleanKey] = value;
         }
       });
@@ -134,9 +134,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const originalText = button.innerHTML;
       button.innerHTML = 'Verifying...';
       
-      fetch(`/tools/crosspost_settings/${platform}/verify`, {
+      fetch(`/tools/crossposts/${platform}/verify`, {
         method: 'POST',
-        body: JSON.stringify({ crosspost_setting: jsonData }),
+        body: JSON.stringify({ crosspost: jsonData }),
         headers: {
           'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
           'Content-Type': 'application/json'

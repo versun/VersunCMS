@@ -1,7 +1,7 @@
 class MastodonService
   def initialize(article)
     @article = article
-    @settings = CrosspostSetting.mastodon
+    @settings = Crosspost.mastodon
   end
 
   def verify(settings)

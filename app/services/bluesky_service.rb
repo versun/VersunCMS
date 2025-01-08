@@ -4,7 +4,7 @@ class BlueskyService
 
   def initialize(article)
     @article = article
-    @settings = CrosspostSetting.bluesky
+    @settings = Crosspost.bluesky
     return unless @settings.present?
 
     @username = @settings.access_token

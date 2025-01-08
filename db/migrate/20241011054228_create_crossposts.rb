@@ -1,6 +1,6 @@
-class CreateCrosspostSettings < ActiveRecord::Migration[8.0]
+class CreateCrossposts < ActiveRecord::Migration[8.0]
   def change
-    create_table :crosspost_settings do |t|
+    create_table :crossposts do |t|
       t.string :platform, null: false  # mastodon or twitter
       t.string :server_url  # for mastodon
       t.string :access_token
@@ -13,6 +13,6 @@ class CreateCrosspostSettings < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :crosspost_settings, :platform, unique: true
+    add_index :crossposts, :platform, unique: true
   end
 end

@@ -1,4 +1,4 @@
-class CrosspostSetting < ApplicationRecord
+class Crosspost < ApplicationRecord
   include DataChangeTracker
   PLATFORMS = %w[mastodon twitter bluesky].freeze
 

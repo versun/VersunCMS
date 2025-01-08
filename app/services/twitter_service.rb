@@ -1,7 +1,7 @@
 class TwitterService
   def initialize(article)
     @article = article
-    @settings = CrosspostSetting.twitter
+    @settings = Crosspost.twitter
   end
 
   def verify(settings)

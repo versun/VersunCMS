@@ -92,7 +92,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_06_114554) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "crosspost_settings", force: :cascade do |t|
+  create_table "crossposts", force: :cascade do |t|
     t.string "platform", null: false
     t.string "server_url"
     t.string "access_token"
@@ -103,7 +103,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_06_114554) do
     t.text "settings"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["platform"], name: "index_crosspost_settings_on_platform", unique: true
+    t.index ["platform"], name: "index_crossposts_on_platform", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|

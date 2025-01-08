@@ -38,7 +38,7 @@
       
       <fieldset class="bordered-container bordered-fieldset">
         <legend>CrossPost</legend>
-        <% if CrosspostSetting.find_by(platform: 'mastodon')&.enabled? %>
+        <% if Crosspost.find_by(platform: 'mastodon')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_mastodon %>
             <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
@@ -47,7 +47,7 @@
             <% end %>
           </div>
         <% end %>
-        <% if CrosspostSetting.find_by(platform: 'twitter')&.enabled? %>
+        <% if Crosspost.find_by(platform: 'twitter')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_twitter %>
             <%= form.label :crosspost_twitter, "Post to X" %>
@@ -56,7 +56,7 @@
             <% end %>
           </div>
         <% end %>
-        <% if CrosspostSetting.find_by(platform: 'bluesky')&.enabled? %>
+        <% if Crosspost.find_by(platform: 'bluesky')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_bluesky %>
             <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
@@ -65,7 +65,7 @@
             <% end %>
           </div>
         <% end %>
-        <%= link_to "Go to Cross Post Settings", tools_crosspost_settings_path %>
+        <%= link_to "Go to Cross Post Settings", tools_crossposts_path %>
       </fieldset>
       
       <fieldset class="bordered-container bordered-fieldset">
