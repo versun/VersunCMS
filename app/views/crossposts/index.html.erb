@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const originalText = button.innerHTML;
       button.innerHTML = 'Verifying...';
       
-      fetch(`/tools/crossposts/${platform}/verify`, {
+      fetch(`/crossposts/${platform}/verify`, {
         method: 'POST',
         body: JSON.stringify({ crosspost: jsonData }),
         headers: {

@@ -32,13 +32,13 @@ class CrosspostsController < ApplicationController
 
       success = case crosspost[:platform]
       when "mastodon"
-        MastodonService.new(nil).verify(crosspost)
+        Integrations::MastodonService.new(nil).verify(crosspost)
       when "twitter"
-        TwitterService.new(nil).verify(crosspost)
+        Integrations::TwitterService.new(nil).verify(crosspost)
       when "bluesky"
         # Set default server_url if not provided
         crosspost[:server_url] = "https://bsky.social/xrpc" if crosspost[:server_url].blank?
-        BlueskyService.new(nil).verify(crosspost)
+        Integrations::BlueskyService.new(nil).verify(crosspost)
       else
         raise "Unknown platform: #{crosspost[:platform]}"
       end
