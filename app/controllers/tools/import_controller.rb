@@ -20,7 +20,7 @@ module Tools
         return
       end
 
-      @import = Tools::DBImport.new
+      @import = Tools::DbImport.new
       if @import.restore(params[:file].tempfile.path)
         redirect_to tools_import_index_path, notice: "Database restored successfully"
       else
@@ -35,7 +35,7 @@ module Tools
     end
 
     def from_wordpress
-      @import = Tools::WordPressImport.new(params[:file])
+      @import = Tools::WordpressImport.new(params[:file])
       if @import.process
         redirect_to tools_import_index_path, notice: "WordPress导入成功"
       else
