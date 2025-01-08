@@ -23,10 +23,11 @@ Rails.application.routes.draw do
         post :restore
       end
     end
-    resources :crossposts, only: [ :index, :update ] do
-      member do
-        post :verify
-      end
+  end
+
+  resources :crossposts, only: [ :index, :update ] do
+    member do
+      post :verify
     end
   end
 
