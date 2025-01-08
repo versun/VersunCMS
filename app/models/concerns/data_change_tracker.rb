@@ -8,10 +8,14 @@ module DataChangeTracker
   private
 
   def mark_data_changed
-    BackupSetting.instance.update_column(:data_changed, true)
+    ActiveRecord::Base.transaction do
+      BackupSetting.first_or_create.update_column(:data_changed, true)
+    end
   end
 
   def mark_data_not_changed
-    BackupSetting.instance.update_column(:data_changed, false)
+    ActiveRecord::Base.transaction do
+      BackupSetting.first_or_create.update_column(:data_changed, false)
+    end
   end
 end
