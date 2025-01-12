@@ -34,16 +34,16 @@ module Tools
       refresh_settings
     end
 
-    def from_wordpress
-      @import = Tools::WordpressImport.new(params[:file])
-      if @import.process
-        redirect_to tools_import_index_path, notice: "WordPress导入成功"
+    def from_rss
+      @import = RssImport.new(params[:file])
+      if @import.import_data
+        redirect_to tools_import_index_path, notice: "RSS Import successful"
       else
-        redirect_to tools_import_index_path, alert: "导入失败: #{@import.error_message}"
+        redirect_to tools_import_index_path, alert: "RSS Import failed: #{@import.error_message}"
       end
     rescue StandardError => e
-      Rails.logger.error "WordPress导入错误: #{e.message}"
-      redirect_to tools_import_index_path, alert: "导入过程中发生意外错误，请联系管理员"
+      Rails.logger.error "RSS Import error: #{e.message}"
+      redirect_to tools_import_index_path, alert: "An unexpected error occurred during RSS import"
     ensure
       refresh_pages
       refresh_settings

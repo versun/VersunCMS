@@ -12,7 +12,7 @@ Rails.application.routes.draw do
     resources :import, only: [ :index ] do
       collection do
         post :from_db
-        post :from_wordpress
+        post :from_rss
       end
     end
     resources :backup, only: [ :index, :create ] do

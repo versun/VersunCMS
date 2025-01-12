@@ -5,7 +5,7 @@
   <%= submit_tag "Import From DB", class: "admin-button" %>
 <% end %>
 <br>
-<%= form_tag from_wordpress_tools_import_index_path, multipart: true do %>
+<%= form_tag from_rss_tools_import_index_path, multipart: true do %>
   <%= file_field_tag :file, accept: 'application/xml',required: true%><br>
-  <%= submit_tag "Import From WordPress XML", class: "admin-button" %>
+  <%= submit_tag "Import From RSS XML", class: "admin-button" %>
 <% end %>
