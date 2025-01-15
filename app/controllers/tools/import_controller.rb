@@ -6,6 +6,8 @@ require "net/http"
 
 module Tools
   class ImportController < ApplicationController
+    include ActiveStorage::SetCurrent
+
     def index
     end
 
