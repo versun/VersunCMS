@@ -3,7 +3,7 @@ class Tools::BackupController < ApplicationController
 
   def index
     @backup_setting = BackupSetting.instance
-    load_activity_logs
+    @activity_logs = ActivityLog.track_activity("backup")
   end
 
   def create
@@ -12,7 +12,6 @@ class Tools::BackupController < ApplicationController
     if @backup_setting.update(backup_params)
       redirect_to tools_backup_index_path, notice: "Backup settings saved successfully."
     else
-      load_activity_logs
       render :index
     end
   end
@@ -23,7 +22,6 @@ class Tools::BackupController < ApplicationController
     if @backup_setting.update(backup_params)
       redirect_to tools_backup_index_path, notice: "Backup settings saved successfully."
     else
-      load_activity_logs
       render :index
     end
   end
@@ -54,10 +52,6 @@ class Tools::BackupController < ApplicationController
   end
 
   private
-
-  def load_activity_logs
-    @activity_logs = ActivityLog.where(action: "backup").order(created_at: :desc).limit(10)
-  end
 
   def backup_params
     params.require(:backup_setting).permit(
