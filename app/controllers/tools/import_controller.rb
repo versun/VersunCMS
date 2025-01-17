@@ -9,6 +9,7 @@ module Tools
     include ActiveStorage::SetCurrent
 
     def index
+      @activity_logs = ActivityLog.track_activity("import")
     end
 
     def from_db
@@ -37,18 +38,11 @@ module Tools
     end
 
     def from_rss
-      @import = RssImport.new(params[:file])
-      if @import.import_data
-        redirect_to tools_import_index_path, notice: "RSS Import successful"
-      else
-        redirect_to tools_import_index_path, alert: "RSS Import failed: #{@import.error_message}"
-      end
+      RssImportJob.perform_later(params[:url], params[:import_images])
+      redirect_to tools_import_index_path, notice: "RSS Import in progress, please check the logs for details"
     rescue StandardError => e
       Rails.logger.error "RSS Import error: #{e.message}"
       redirect_to tools_import_index_path, alert: "An unexpected error occurred during RSS import"
-    ensure
-      refresh_pages
-      refresh_settings
     end
   end
 end

@@ -6,6 +6,41 @@
 <% end %>
 <br>
 <%= form_tag from_rss_tools_import_index_path, multipart: true do %>
-  <%= file_field_tag :file, accept: 'application/xml',required: true%><br>
-  <%= submit_tag "Import From RSS XML", class: "admin-button" %>
+  <%= label_tag :url, "RSS URL:" %>
+  <%= text_field_tag :url, nil, required: true%><br>
+  <%= check_box_tag :import_images, '1' %>
+  <%= label_tag :import_images, "Import Images" %><br>
+  <%= submit_tag "Import From RSS", class: "admin-button" %>
 <% end %>
+<br>
+<h5 class="mb-0">Backup History</h5>
+<table class="table table-striped">
+  <thead>
+  <tr>
+    <th>Time</th>
+    <th>Level</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @activity_logs.each do |log| %>
+    <tr class="<%= case log.level&.to_sym
+                   when :error then 'table-danger'
+                   when :warn then 'table-warning'
+                   when :info then 'table-success'
+                   else ''
+                   end %>">
+      <td><%= log.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
+      <td><span class="badge <%= case log.level&.to_sym
+                                 when :error then 'bg-danger'
+                                 when :warn then 'bg-warning'
+                                 when :info then 'bg-success'
+                                 else 'bg-secondary'
+                                 end %>">
+            <%= log.level&.capitalize || 'Unknown' %>
+          </span></td>
+      <td><%= log.description %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
