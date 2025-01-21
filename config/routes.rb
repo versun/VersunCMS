@@ -6,7 +6,6 @@ Rails.application.routes.draw do
   resources :passwords
   resource :setting, only: [ :edit, :update ]
   # get "admin" => "sessions#new"
-
   namespace :tools do
     resources :export, only: [ :index, :create ]
     resources :import, only: [ :index ] do
@@ -36,6 +35,7 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "/rss" => redirect("/blog.rss")
   get "/feed" => redirect("/blog.rss")
+  get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
   get "/admin" => "admin#posts"
   get "/admin/posts" => "admin#posts"
