@@ -9,7 +9,7 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
 
   Article.published_pages.find_each do |post|
     xml.url do
-      xml.loc site_settings[:url] + "#{post.slug}"
+      xml.loc "#{site_settings[:url]}/#{post.slug}"
       xml.lastmod post.updated_at.strftime("%Y-%m-%d")
       xml.changefreq "weekly"
       xml.priority 0.8
@@ -18,7 +18,7 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
 
   Article.published_posts.find_each do |post|
     xml.url do
-      xml.loc site_settings[:url] + "/blog/#{post.slug}"
+      xml.loc "#{site_settings[:url]}/blog/#{post.slug}"
       xml.lastmod post.updated_at.strftime("%Y-%m-%d")
       xml.changefreq "weekly"
       xml.priority 0.8
