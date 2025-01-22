@@ -2,8 +2,8 @@
 # check=error=true
 
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t nanoblog .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name nanoblog nanoblog
+# docker build -t versuncms .
+# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name versuncms versuncms
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
