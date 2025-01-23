@@ -33,5 +33,5 @@ jobs:
       with:
         platforms: linux/arm64,linux/amd64
         push: true
-        tags: versun/versuncms:latest,versun/versuncms:${{ steps.latesttag.outputs.tag }}
+        tags: versunatdocker/versuncms:latest,versunatdocker/versuncms:${{ steps.latesttag.outputs.tag }}
 
