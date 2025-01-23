@@ -1,4 +1,4 @@
-name: latest:Docker Image CI
+name: Docker Publish to Docker Hub
 
 on:
   release:
