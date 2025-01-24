@@ -10,11 +10,22 @@ class ArticlesController < ApplicationController
         @page = params[:page].present? ? params[:page].to_i : 1
         @per_page = 10
 
+        # @articles = if params[:q].present?
+        #   Article.published_posts.full_text_search(
+        #     input: params[:q],
+        #     limit: @per_page
+        #   )
         @articles = if params[:q].present?
-          Article.published_posts.full_text_search(
-            input: params[:q],
-            limit: @per_page
-          )
+          PgSearch.multisearch(params[:q])
+            .includes(:searchable)
+            .limit(@per_page)
+            .map { |result|
+              if result.searchable.is_a?(ActionText::RichText)
+                result.searchable.record
+              else
+                result.searchable
+              end
+            }.uniq.select { |article| article.is_a?(Article) && article.published? }
         else
           Article.published_posts.order(created_at: :desc)
         end

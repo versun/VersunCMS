@@ -1,5 +1,6 @@
 class Article < ApplicationRecord
   include DataChangeTracker
+  include PgSearch::Model
   has_rich_text :content
   enum :status, [ :draft, :publish, :schedule, :trash ]
 
@@ -21,8 +22,7 @@ class Article < ApplicationRecord
   before_save :schedule_publication, if: :should_schedule?
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
 
-  include Article::FullTextSearch
-  after_save :find_or_create_article_fts
+  multisearchable against: [ :title ]
 
   def to_param
     slug

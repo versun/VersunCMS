@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_06_114554) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_24_053753) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -107,6 +107,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_06_114554) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["platform"], name: "index_crossposts_on_platform", unique: true
+  end
+
+  create_table "pg_search_documents", force: :cascade do |t|
+    t.text "content"
+    t.string "searchable_type"
+    t.bigint "searchable_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable"
   end
 
   create_table "sessions", force: :cascade do |t|
