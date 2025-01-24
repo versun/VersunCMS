@@ -16,7 +16,7 @@ class Article < ApplicationRecord
   scope :published_posts, -> { where(status: :publish, is_page: false) }
   scope :published_pages, -> { where(status: :publish, is_page: true) }
   scope :by_status, ->(status, is_page) { where(status: status, is_page: is_page) }
- # scope :paginate, ->(page, per_page) { offset((page - 1) * per_page).limit(per_page) }
+  # scope :paginate, ->(page, per_page) { offset((page - 1) * per_page).limit(per_page) }
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
 
   before_save :schedule_publication, if: :should_schedule?

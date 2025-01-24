@@ -19,7 +19,7 @@ class ArticlesController < ApplicationController
           PgSearch.multisearch(params[:q])
             .includes(:searchable)
             .limit(@per_page)
-            .map { |result| 
+            .map { |result|
               if result.searchable.is_a?(ActionText::RichText)
                 result.searchable.record
               else
@@ -31,7 +31,7 @@ class ArticlesController < ApplicationController
         end
 
         @total_count = @articles.count
-        @articles = @articles.paginate(page:@page, per_page:@per_page)
+        @articles = @articles.paginate(page: @page, per_page: @per_page)
       }
 
       format.rss {
