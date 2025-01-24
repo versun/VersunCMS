@@ -305,10 +305,6 @@ if Rails.env.development?
     end
   end
 
-  # 清空现有的文章和 FTS 表
-  Article.delete_all
-  ActiveRecord::Base.connection.execute("DELETE FROM article_fts")
-
   articles.each do |article_data|
     article = Article.new(
       title: article_data[:title],
@@ -319,17 +315,6 @@ if Rails.env.development?
     )
     article.content = article_data[:content]
 
-
-    # 直接插入 FTS 数据
-    sql = ActiveRecord::Base.sanitize_sql_array(
-      [
-        "INSERT INTO article_fts (rowid, title, content) VALUES (?, ?, ?)",
-        article.id,
-        article.title || "",
-        article.content.to_plain_text
-      ]
-    )
-    ActiveRecord::Base.connection.execute(sql)
     article.save!
   end
 
