@@ -108,7 +108,7 @@ module Integrations
       content_text = @article.description.present? ? @article.description : @article.content.body.to_plain_text
       max_content_length = 300 - post_url.length - 30
 
-      "#{@article.title}\n#{content_text[0...max_content_length]}\n...\n\nRead more: #{post_url}"
+      "#{@article.title}\n#{content_text[0...max_content_length]}...\n\nRead more: #{post_url}"
     end
 
     def build_post_url
