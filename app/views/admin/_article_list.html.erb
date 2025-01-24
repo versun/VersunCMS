@@ -14,12 +14,8 @@
       
         <%= link_to post.title, edit_article_path(post), class:"title" %>
     </div>
-  <% end %>             
-  
-  <%= render "components/pagination", 
-      page: @page, 
-      per_page: @per_page, 
-      total_count: @total_count,
-      url_params: { status: params[:status] } %>
+  <% end %>
+  <hr>
+  <%= will_paginate @posts %>
 </div>
 

@@ -10,9 +10,5 @@
     
   <% end %>
 </div>
-
-<%= render "components/pagination", 
-    page: @page, 
-    per_page: @per_page, 
-    total_count: @total_count
-    %>
+<hr>
+<%= will_paginate articles %>

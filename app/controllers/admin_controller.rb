@@ -23,8 +23,8 @@ class AdminController < ApplicationController
     @status = params[:status] || "all"
 
     filtered_posts = filter_by_status(scope, is_page)
-    @total_count = filtered_posts.count
-    filtered_posts.order(sort_by => :desc).paginate(@page, @per_page)
+    #@total_count = filtered_posts.count
+    filtered_posts.paginate(page:@page, per_page:@per_page).order(sort_by => :desc)
   end
 
   def filter_by_status(posts, is_page)
