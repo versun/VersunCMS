@@ -10,16 +10,7 @@ Rails.application.routes.draw do
     resources :export, only: [ :index, :create ]
     resources :import, only: [ :index ] do
       collection do
-        post :from_db
         post :from_rss
-      end
-    end
-    resources :backup, only: [ :index, :create ] do
-      collection do
-        post :perform_backup
-        get :last_backup_status
-        get :list_backups
-        post :restore
       end
     end
   end

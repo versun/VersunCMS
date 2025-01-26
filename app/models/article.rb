@@ -1,5 +1,4 @@
 class Article < ApplicationRecord
-  include DataChangeTracker
   include PgSearch::Model
   has_rich_text :content
   enum :status, [ :draft, :publish, :schedule, :trash ]
