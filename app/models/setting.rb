@@ -1,5 +1,4 @@
 class Setting < ApplicationRecord
-  include DataChangeTracker
   include CacheableSettings
   has_rich_text :footer
   # after_initialize :set_default, if: :new_record?
