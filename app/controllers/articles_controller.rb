@@ -1,3 +1,4 @@
+require 'will_paginate/array'
 class ArticlesController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ] # %i 是一种字面量符号数组的简写方式，表示[:index]
   before_action :set_article, only: %i[ show edit update destroy ]
@@ -10,28 +11,19 @@ class ArticlesController < ApplicationController
         @page = params[:page].present? ? params[:page].to_i : 1
         @per_page = 10
 
-        # @articles = if params[:q].present?
-        #   Article.published_posts.full_text_search(
-        #     input: params[:q],
-        #     limit: @per_page
-        #   )
         @articles = if params[:q].present?
-          PgSearch.multisearch(params[:q])
-            .includes(:searchable)
-            .limit(@per_page)
-            .map { |result|
-              if result.searchable.is_a?(ActionText::RichText)
-                result.searchable.record
-              else
-                result.searchable
-              end
-            }.uniq.select { |article| article.is_a?(Article) && article.published? }
-        else
-          Article.published_posts.order(created_at: :desc)
-        end
+                      Article.search_content(params[:q])
+                             .published_posts
+                             .includes(:rich_text_content)
+                             .order(created_at: :desc)
+                             .paginate(page: @page, per_page: @per_page)
+                    else
+                      Article.published_posts
+                             .order(created_at: :desc)
+                             .paginate(page: @page, per_page: @per_page)
+                    end
 
         @total_count = @articles.count
-        @articles = @articles.paginate(page: @page, per_page: @per_page)
       }
 
       format.rss {

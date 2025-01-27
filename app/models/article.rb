@@ -1,5 +1,6 @@
 class Article < ApplicationRecord
   include PgSearch::Model
+  multisearchable against: [:title, :content]
   has_rich_text :content
   enum :status, [ :draft, :publish, :schedule, :trash ]
 
@@ -21,7 +22,21 @@ class Article < ApplicationRecord
   before_save :schedule_publication, if: :should_schedule?
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
 
-  multisearchable against: [ :title ]
+  # 配置单表搜索作用域
+  pg_search_scope :search_content,
+                  against: :title,
+                  associated_against: {
+                    rich_text_content: :body
+                  },
+                  using: {
+                    tsearch: {
+                      prefix: true,
+                      dictionary: "english"
+                    },
+                    trigram: {
+                      threshold: 0.3
+                    }
+                  }
 
   def to_param
     slug
