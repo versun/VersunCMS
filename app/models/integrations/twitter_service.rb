@@ -64,7 +64,7 @@ module Integrations
 
     def build_tweet
       post_url = build_post_url
-      content_text = @article.description || @article.content.body.to_plain_text
+      content_text = @article.description.presence || @article.content.body.to_plain_text
       max_content_length = 140 - post_url.length - 30 - @article.title.length
 
 

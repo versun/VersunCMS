@@ -47,7 +47,7 @@ module Integrations
 
     def build_status
       post_url = build_post_url
-      content_text = @article.description || @article.content.body.to_plain_text
+      content_text = @article.description.presence || @article.content.body.to_plain_text
       max_content_length = 500 - post_url.length - 30 - @article.title.length
 
       "#{@article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
