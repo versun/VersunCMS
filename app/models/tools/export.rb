@@ -11,7 +11,6 @@ module Tools
     end
 
     def generate
-        
     end
   end
 end
