@@ -109,8 +109,9 @@
   <% end %>
 </fieldset>
 
+<% content_for :javascript do %>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('turbo:load', function() {
   const verifyButtons = document.querySelectorAll('.verify-btn');
   
   verifyButtons.forEach(button => {
@@ -169,3 +170,4 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+<% end %>
