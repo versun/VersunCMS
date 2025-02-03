@@ -1,3 +1,7 @@
+# 2025-02-03
+storage service添加了从环境变量中获取服务配置，默认时local。
+s3服务目前只有amazon官方和wasabi的s3可以开箱即用，其它比如CF的R2和backblaze的b2都需要特殊配置CORS等，比较麻烦
+
 # 2025-01-27
 storage还是改回local模式了，S3兼容性各家都不一样，还是算了，以后再说吧。
 之前local不行是因为docker映射的文件夹权限问题，所以就先放在docker内，之后在做备份时再统一备份出来
