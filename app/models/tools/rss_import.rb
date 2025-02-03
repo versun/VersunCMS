@@ -27,15 +27,17 @@ module Tools
 
         encoded_link = item.url
         decoded_link = CGI.unescape(encoded_link)
+        title = item.title || item.published
         slug = decoded_link.split("/").last
         content = ActionText::Content.new(item.content)
         # get all images in the content and download them and then add them to the article content
         doc = Nokogiri::HTML(content.to_s)
 
+
          # doc, content.attachables = import_images(doc) if @import_images
          if @import_images
             begin
-              doc, attachables = import_images(doc)
+              doc, attachables = import_images(doc, title)
               content.attachables.concat(attachables)
             rescue StandardError => e
               raise "Image import failed: #{e.message}"
@@ -44,7 +46,7 @@ module Tools
 
         content = doc.to_html
         Article.create(status: :publish,
-                      title: item.title || item.published,
+                      title: title,
                       content: content,
                       created_at: item.published,
                       slug: slug,
@@ -69,7 +71,7 @@ module Tools
       false
     end
 
-    def import_images(doc)
+    def import_images(doc, title)
       attachables = []
       doc.css("img").each do |img|
         src = img["src"]
@@ -79,7 +81,7 @@ module Tools
           URI.open(src) do |io|
             blob = ActiveStorage::Blob.create_and_upload!(
               io: io,
-              filename: src.split("/").last,
+              filename: "#{title.parameterize}-#{SecureRandom.hex(4)}.#{io.content_type.split("/").last}",
               content_type: io.content_type
             )
             attachables << blob
