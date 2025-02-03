@@ -27,7 +27,7 @@ module Tools
 
         encoded_link = item.url
         decoded_link = CGI.unescape(encoded_link)
-        title = item.title || item.published
+        title = (item.title || item.published).to_s
         slug = decoded_link.split("/").last
         content = ActionText::Content.new(item.content)
         # get all images in the content and download them and then add them to the article content
