@@ -5,9 +5,11 @@
 #   gem "sqlite3"
 #
 default: &default
-  adapter: postgresql #sqlite3
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
+
+postgresql: &postgresql
+  adapter: postgresql
   username: <%= ENV.fetch("PGUSER") { "postgres" } %>
   password: <%= ENV.fetch("PGPASSWORD") { "postgres" } %>
   host: <%= ENV.fetch("PGHOST") { "localhost" } %>
@@ -16,9 +18,11 @@ default: &default
 development:
   primary:
     <<: *default
+    <<: *postgresql
     database: versuncms_development
   queue:
     <<: *default
+    <<: *postgresql
     database: versuncms_development_queue
     migrations_paths: db/queue_migrate
 
@@ -26,8 +30,19 @@ development:
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
-  <<: *default
-  database: versuncms_test
+  primary:
+    adapter: sqlite3
+    <<: *default
+    pool: 5
+    timeout: 5000
+    database: db/test.sqlite3
+  queue:
+    adapter: sqlite3
+    <<: *default
+    pool: 5
+    timeout: 5000
+    database: db/test_queue.sqlite3
+    migrations_paths: db/queue_migrate
 
 
 # Store production database in the storage directory, which by default
@@ -35,16 +50,20 @@ test:
 production:
   primary:
     <<: *default
+    <<: *postgresql
     database: versuncms_production
   cache:
     <<: *default
+    <<: *postgresql
     database: versuncms_production_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
+    <<: *postgresql
     database: versuncms_production_queue
     migrations_paths: db/queue_migrate
   cable:
     <<: *default
+    <<: *postgresql
     database: versuncms_production_cable
     migrations_paths: db/cable_migrate
