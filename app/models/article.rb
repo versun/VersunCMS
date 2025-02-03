@@ -1,6 +1,6 @@
 class Article < ApplicationRecord
   include PgSearch::Model
-  multisearchable against: [:title, :content]
+  multisearchable against: [ :title, :content ]
   has_rich_text :content
   enum :status, [ :draft, :publish, :schedule, :trash ]
 

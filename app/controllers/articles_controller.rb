@@ -1,4 +1,4 @@
-require 'will_paginate/array'
+require "will_paginate/array"
 class ArticlesController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ] # %i 是一种字面量符号数组的简写方式，表示[:index]
   before_action :set_article, only: %i[ show edit update destroy ]
@@ -17,11 +17,11 @@ class ArticlesController < ApplicationController
                              .includes(:rich_text_content)
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
-                    else
+        else
                       Article.published_posts
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
-                    end
+        end
 
         @total_count = @articles.count
       }
