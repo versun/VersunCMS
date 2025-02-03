@@ -18,7 +18,9 @@ module Integrations
     end
 
     def verify(settings)
-      return false if settings[:access_token].blank? || settings[:access_token_secret].blank?
+      if settings[:access_token].blank? || settings[:access_token_secret].blank?
+        return { success: false, error: "Access token and access token secret are required" }
+      end
 
       # Temporarily store the current credentials
       original_username = @username
@@ -37,12 +39,9 @@ module Integrations
 
         # Attempt to generate new tokens with the provided credentials
         verify_tokens
-        true
+        { success: true }
       rescue => e
-        Rails.logger.error "Bluesky verification failed: #{e.class.name}"
-        Rails.logger.error "Error message: #{e.message}"
-        Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
-        false
+        { success: false, error: "Bluesky verification failed: #{e.message}" }
       ensure
         # Restore the original credentials
         @username = original_username

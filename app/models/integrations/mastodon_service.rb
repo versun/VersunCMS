@@ -6,18 +6,23 @@ module Integrations
     end
 
     def verify(settings)
-      return false if settings[:server_url].blank? || settings[:access_token].blank?
+      if settings[:access_token].blank?
+        return { success: false, error: "Access token are required" }
+      end
 
-      client = Mastodon::REST::Client.new(
-        base_url: settings[:server_url],
-        bearer_token: settings[:access_token]
-      )
-      client.verify_credentials
-      true
-    rescue => e
-      Rails.logger.error "Mastodon verification failed: #{e.message}"
-      false
+      begin
+        base_url =  "https://mastodon.social" if settings[:server_url].blank?
+        client = Mastodon::REST::Client.new(
+          base_url: base_url,
+          bearer_token: settings[:access_token]
+        )
+        client.verify_credentials
+        { success: true }
+      rescue => e
+        { success: false, error: "Mastodon verification failed: #{e.message}" }
+      end
     end
+
 
     def post(article)
       return unless @settings&.enabled?

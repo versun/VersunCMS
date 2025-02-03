@@ -30,7 +30,7 @@ class CrosspostsController < ApplicationController
         raise "Platform mismatch: #{crosspost[:platform]} != #{params[:id]}"
       end
 
-      success = case crosspost[:platform]
+      results = case crosspost[:platform]
       when "mastodon"
         Integrations::MastodonService.new(nil).verify(crosspost)
       when "twitter"
@@ -43,10 +43,10 @@ class CrosspostsController < ApplicationController
         raise "Unknown platform: #{crosspost[:platform]}"
       end
 
-      if success
-        render json: { status: "success", message: "#{crosspost[:platform].capitalize} credentials verified successfully!" }
+      if results[:success]
+        render json: { status: "success", message: "Verified Successfully!" }
       else
-        render json: { status: "error", message: "Failed to verify #{crosspost[:platform].capitalize} credentials." }
+        render json: { status: "error", message: results[:error] }
       end
     rescue => e
       Rails.logger.error "Verification error for #{params[:id]}: #{e.message}"

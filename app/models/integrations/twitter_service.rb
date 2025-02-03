@@ -6,29 +6,30 @@ module Integrations
     end
 
     def verify(settings)
-      return false if settings[:client_id].blank? || settings[:client_secret].blank? || settings[:access_token].blank?
-
+      if settings[:client_id].blank? || settings[:client_secret].blank? || settings[:access_token].blank?
+        return { success: false, error: "Client ID, client secret, and access token are required" }
+      end
       require "x"
 
-      client = X::Client.new(
-        api_key: settings[:client_id],
-        api_key_secret: settings[:client_secret],
-        access_token: settings[:access_token],
-        access_token_secret: settings[:access_token_secret]
-      )
+      begin
+          client = X::Client.new(
+            api_key: settings[:client_id],
+            api_key_secret: settings[:client_secret],
+            access_token: settings[:access_token],
+            access_token_secret: settings[:access_token_secret]
+          )
 
-      # Try to post a test tweet to verify credentials
-      test_response = client.get("users/me")
-      if test_response && test_response["data"] && test_response["data"]["id"]
-        Rails.logger.info "Twitter credentials verified successfully! #{test_response}"
-        true
-      else
-        Rails.logger.error "Twitter verification failed: #{test_response}"
+          # Try to post a test tweet to verify credentials
+          test_response = client.get("users/me")
+          if test_response && test_response["data"] && test_response["data"]["id"]
+            { success: true }
+          else
+            { success: false, error: "Twitter verification failed: #{test_response}" }
+          end
+
+      rescue => e
+        { success: false, error: "Twitter verification failed: #{e.message}" }
       end
-
-    rescue => e
-      Rails.logger.error "Twitter verification failed: #{e.message}"
-      false
     end
 
     def post(article)
