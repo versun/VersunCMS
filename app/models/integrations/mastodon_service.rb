@@ -44,8 +44,9 @@ module Integrations
     private
 
     def create_client
+      base_url =  "https://mastodon.social" if settings[:server_url].blank?
       Mastodon::REST::Client.new(
-        base_url: @settings.server_url,
+        base_url: base_url,
         bearer_token: @settings.access_token
       )
     end
