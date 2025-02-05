@@ -19,11 +19,11 @@ development:
   primary:
     <<: *default
     <<: *postgresql
-    database: versuncms_development
+    database: <%= ENV.fetch("DEV_DATABASE") { "versuncms_development" } %>
   queue:
     <<: *default
     <<: *postgresql
-    database: versuncms_development_queue
+    database: <%= ENV.fetch("DEV_QUEUE_DATABASE") { "versuncms_development_queue" } %>
     migrations_paths: db/queue_migrate
 
 # Warning: The database defined as "test" will be erased and
@@ -51,19 +51,19 @@ production:
   primary:
     <<: *default
     <<: *postgresql
-    database: versuncms_production
+    database: <%= ENV.fetch("DATABASE") { "versuncms_production" } %>
   cache:
     <<: *default
     <<: *postgresql
-    database: versuncms_production_cache
+    database: <%= ENV.fetch("CACHE_DATABASE") { "versuncms_production_cache" } %>
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
     <<: *postgresql
-    database: versuncms_production_queue
+    database: <%= ENV.fetch("QUEUE_DATABASE") { "versuncms_production_queue" } %>
     migrations_paths: db/queue_migrate
   cable:
     <<: *default
     <<: *postgresql
-    database: versuncms_production_cable
+    database: <%= ENV.fetch("CABLE_DATABASE") { "versuncms_production_cable" } %>
     migrations_paths: db/cable_migrate
