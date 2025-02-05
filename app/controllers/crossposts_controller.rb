@@ -32,6 +32,7 @@ class CrosspostsController < ApplicationController
 
       results = case crosspost[:platform]
       when "mastodon"
+        crosspost[:server_url] = "https://mastodon.social" if crosspost[:server_url].blank?
         Integrations::MastodonService.new(nil).verify(crosspost)
       when "twitter"
         Integrations::TwitterService.new(nil).verify(crosspost)
