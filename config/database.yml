@@ -55,15 +55,16 @@ production:
   cache:
     <<: *default
     <<: *postgresql
-    database: <%= ENV.fetch("CACHE_DATABASE") { "versuncms_production_cache" } %>
+    database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cache" %>
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
     <<: *postgresql
-    database: <%= ENV.fetch("QUEUE_DATABASE") { "versuncms_production_queue" } %>
+    database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_queue" %>
     migrations_paths: db/queue_migrate
   cable:
     <<: *default
     <<: *postgresql
-    database: <%= ENV.fetch("CABLE_DATABASE") { "versuncms_production_cable" } %>
+    database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cable" %>
     migrations_paths: db/cable_migrate
+
