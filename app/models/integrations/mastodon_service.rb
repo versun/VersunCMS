@@ -1,3 +1,6 @@
+require "net/http"
+require "uri"
+
 module Integrations
   class MastodonService
     def initialize(article)
@@ -11,30 +14,50 @@ module Integrations
       end
 
       begin
-        base_url =  "https://mastodon.social" if settings[:server_url].blank?
-        client = Mastodon::REST::Client.new(
-          base_url: base_url,
-          bearer_token: settings[:access_token]
-        )
-        client.verify_credentials
-        { success: true }
+        uri = URI.join(settings[:server_url], "/api/v1/accounts/verify_credentials")
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = uri.scheme == "https"
+
+        request = Net::HTTP::Get.new(uri)
+        request["Authorization"] = "Bearer #{settings[:access_token]}"
+
+        response = http.request(request)
+
+        response.is_a?(Net::HTTPSuccess) ?
+          { success: true } :
+          { success: false, error: "Verification failed: #{response.code} #{response.message}" }
       rescue => e
-        { success: false, error: "Mastodon verification failed: #{e.message}" }
+        { success: false, error: "Mastodon verification failed: #{e}" }
       end
     end
 
 
     def post(article)
       return unless @settings&.enabled?
-
-      require "mastodon"
-      client = create_client
-      status = build_status
+      status_text = build_status
+      uri = URI.join(@settings[:server_url], "/api/v1/statuses")
 
       begin
-        response = client.create_status(status)
-        Rails.logger.info "Successfully posted article #{@article.id} to Mastodon"
-        response.url
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = uri.scheme == "https"
+
+        request = Net::HTTP::Post.new(uri)
+        request.set_form_data(
+          status: status_text,
+          visibility: "public"
+        )
+        request["Authorization"] = "Bearer #{@settings.access_token}"
+
+        response = http.request(request)
+
+        if response.is_a?(Net::HTTPSuccess)
+          json_response = JSON.parse(response.body)
+          Rails.logger.info "Successfully posted article #{@article.id} to Mastodon"
+          json_response["url"]
+        else
+          Rails.logger.error "Failed to post article #{@article.id} to Mastodon: #{response.code} #{response.message}"
+          nil
+        end
       rescue => e
         Rails.logger.error "Failed to post article #{@article.id} to Mastodon: #{e.message}"
         nil
@@ -43,13 +66,12 @@ module Integrations
 
     private
 
-    def create_client
-      base_url =  "https://mastodon.social" if settings[:server_url].blank?
-      Mastodon::REST::Client.new(
-        base_url: base_url,
-        bearer_token: @settings.access_token
-      )
-    end
+    # def create_client
+    #   Mastodon::REST::Client.new(
+    #     base_url: @settings[:server_url],
+    #     bearer_token: @settings.access_token
+    #   )
+    # end
 
     def build_status
       post_url = build_post_url
