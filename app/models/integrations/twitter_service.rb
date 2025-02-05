@@ -1,3 +1,4 @@
+require "x"
 module Integrations
   class TwitterService
     def initialize(article)
@@ -9,7 +10,6 @@ module Integrations
       if settings[:client_id].blank? || settings[:client_secret].blank? || settings[:access_token].blank?
         return { success: false, error: "Client ID, client secret, and access token are required" }
       end
-      require "x"
 
       begin
           client = X::Client.new(
@@ -35,7 +35,6 @@ module Integrations
     def post(article)
       return unless @settings&.enabled?
 
-      require "x"
       client = create_client
       tweet = build_tweet
 
