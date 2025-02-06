@@ -40,21 +40,6 @@ class Setting < ApplicationRecord
     }
   }.freeze
 
-  STATIC_FILES = {
-    "robots.txt" => {
-      placeholder: "User-agent: *\nDisallow: /admin"
-    },
-    "humans.txt" => {
-      placeholder: "/* TEAM */\nAuthor: Your Name\nSite: your-site.com\nLocation: Your City, Country"
-    },
-    "security.txt" => {
-      placeholder: "Contact: mailto:security@your-site.com\nExpires: 2025-12-31T23:59:59.000Z\nPreferred-Languages: en, zh"
-    },
-    "ads.txt" => {
-      placeholder: "google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0"
-    }
-  }.freeze
-
   private
 
   def generate_social_links

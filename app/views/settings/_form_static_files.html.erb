@@ -1,14 +1,23 @@
-<b>Static Files</b>
+<p><b>Static Files</b></p>
 <div id="static-files">
-  <% Setting::STATIC_FILES.each do |file, config| %>
-    <div class="static-file-item">
-        <label><%= file.to_s %>:</label>
-         <%= form.fields_for :static_files do |static_files| %>
-          <%= static_files.text_area file.to_s,
-              name: "setting[static_files][#{file}]",
-              value: @setting.static_files&.dig(file.to_s),
-              placeholder: config[:placeholder] %>
-         <% end %>
-    </div>
+  <%= form_with url: upload_setting_path, multipart: true do |form|%>
+    <%= form.label :file, "Upload File" %>
+    <%= form.file_field :file %>
+    <%= form.submit "Upload" %>
   <% end %>
+
+  <table>
+
+    <% @files.each do |file| %>
+      <tr>
+        <td>
+          <%= button_to '删除', setting_path(filename: file),
+                        method: :delete,
+                        form: { data: { turbo_confirm: '确认删除该文件？' } },
+                        class: 'btn-danger' %>
+        </td>
+        <td><%= link_to file, "/#{file}" %></td>
+      </tr>
+    <% end %>
+  </table>
 </div>

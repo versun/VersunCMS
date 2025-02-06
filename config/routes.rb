@@ -4,7 +4,14 @@ Rails.application.routes.draw do
   resources :users
   resource :session
   resources :passwords
-  resource :setting, only: [ :edit, :update ]
+  # resources :settings
+
+  resource :setting, only: [ :edit, :update, :destroy ] do
+    collection do
+      post :upload
+      delete :destroy
+    end
+  end
   # get "admin" => "sessions#new"
   namespace :tools do
     resources :export, only: [ :index, :create ]
@@ -41,12 +48,9 @@ Rails.application.routes.draw do
   post "/blog" => "articles#create", as: :create_article
   patch "/blog/:slug" => "articles#update", as: :update_article
   delete "/blog/:slug" => "articles#destroy", as: :destroy_article
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Static files routes
-  get "/:file_name", to: "settings#static_file",
-    constraints: { file_name: /robots\.txt|humans\.txt|security\.txt/ }
 end

@@ -1,6 +1,8 @@
 class SettingsController < ApplicationController
+
   def edit
     @setting = Setting.first_or_create
+    @files = Dir.glob(Rails.public_path.join("*")).map { |f| File.basename(f) }
   end
 
   def update
@@ -13,15 +15,24 @@ class SettingsController < ApplicationController
     end
   end
 
-  def static_file
-    @setting = Setting.first
-    file_name = params[:file_name]
-
-    if Setting::STATIC_FILES.key?(file_name)
-      content = @setting.static_files&.dig(file_name) || Setting::STATIC_FILES[file_name][:placeholder]
-      render plain: content, content_type: "text/plain"
+  def upload
+    if params[:file]
+      FileUtils.mkdir_p(Rails.public_path)
+      File.binwrite(Rails.public_path.join(params[:file].original_filename), params[:file].read)
+      redirect_to edit_setting_path, notice: "File uploaded successfully"
     else
-      head :not_found
+      redirect_to edit_setting_path, alert: "No file selected"
+    end
+  end
+
+  def destroy
+    file_path = Rails.public_path.join(params[:filename].to_s)
+
+    if File.exist?(file_path)
+      File.delete(file_path)
+      redirect_to edit_setting_path, notice: "File deleted successfully, please refresh the app to apply changes"
+    else
+      redirect_to edit_setting_path, alert: "File not found"
     end
   end
 
@@ -37,6 +48,7 @@ class SettingsController < ApplicationController
       :custom_css,
       :time_zone,
       :head_code,
+      :file,
       social_links: {},
       static_files: {}
     )
