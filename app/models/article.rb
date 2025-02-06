@@ -6,7 +6,8 @@ class Article < ApplicationRecord
 
   # serialize :crosspost_urls, Hash, default: {}
 
-  before_validation :generate_slug, if: :slug_empty?
+  before_validation :generate_title
+  before_validation :generate_slug
   validates :slug, presence: true, uniqueness: true
   validates :scheduled_at, presence: true, if: :schedule?
   validates :page_order, presence: true, if: :is_page?
@@ -48,12 +49,11 @@ class Article < ApplicationRecord
 
   private
 
-  def generate_slug
-    self.slug = title.parameterize
+  def generate_title
+    self.title = DateTime.current.strftime("%Y-%m-%d %H:%M") if title.blank?
   end
-
-  def slug_empty?
-    slug.blank?
+  def generate_slug
+    self.slug = title.parameterize if slug.blank?
   end
 
   def should_publish?
