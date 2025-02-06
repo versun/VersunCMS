@@ -35,7 +35,7 @@ class ArticlesController < ApplicationController
 
   # GET /1 or /1.json
   def show
-    if @article.nil? || (@article.status != "publish" && !authenticated?)
+    if @article.nil? || (!%w[publish shared].include?(@article.status) && !authenticated?)
       render file: Rails.public_path.join("404.html"), status: :not_found, layout: false
       nil
     end
