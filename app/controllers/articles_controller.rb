@@ -35,8 +35,8 @@ class ArticlesController < ApplicationController
 
   # GET /1 or /1.json
   def show
-    unless @article
-      redirect_to root_path, notice: "Article Not found."
+    if @article.nil? || (@article.status != "publish" && !authenticated?)
+      render file: Rails.public_path.join('404.html'), status: :not_found, layout: false
       nil
     end
   end
