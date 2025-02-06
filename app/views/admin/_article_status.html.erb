@@ -7,8 +7,11 @@
             class: "status-tab #{@status == 'publish' ? 'active' : ''}" %> - 
     <%= link_to "Scheduled (#{@scope.schedule.count})", 
             url_for(controller: controller_name, action: action_name, status: 'schedule'),
-            class: "status-tab #{@status == 'schedule' ? 'active' : ''}" %> - 
-    <%= link_to "Draft (#{@scope.draft.count})", 
+            class: "status-tab #{@status == 'schedule' ? 'active' : ''}" %> -
+    <%= link_to "Shared (#{@scope.shared.count})",
+                url_for(controller: controller_name, action: action_name, status: 'shared'),
+                class: "status-tab #{@status == 'shared' ? 'active' : ''}" %> -
+    <%= link_to "Draft (#{@scope.draft.count})",
             url_for(controller: controller_name, action: action_name, status: 'draft'),
             class: "status-tab #{@status == 'draft' ? 'active' : ''}" %> - 
     <%= link_to "Trash (#{@scope.trash.count})", 

@@ -29,7 +29,7 @@ class AdminController < ApplicationController
 
   def filter_by_status(posts, is_page)
     case @status
-    when "publish", "schedule", "draft", "trash" then posts.by_status(@status.to_sym, is_page)
+    when "publish", "schedule", "shared", "draft", "trash" then posts.by_status(@status.to_sym, is_page)
     else posts
     end
   end
