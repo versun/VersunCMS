@@ -6,6 +6,11 @@ class ApplicationController < ActionController::Base
 
   helper_method :site_settings, :navbar_items
 
+  def redirect_mastodon
+    mastodon_url = Setting.site_info[:social_links]["mastodon"]["url"]
+    redirect_to mastodon_url,allow_other_host: true, status: 302
+  end
+
   private
 
   def site_settings
