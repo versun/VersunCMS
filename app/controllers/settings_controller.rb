@@ -1,5 +1,4 @@
 class SettingsController < ApplicationController
-
   def edit
     @setting = Setting.first_or_create
     @files = Dir.glob(Rails.public_path.join("*")).map { |f| File.basename(f) }
