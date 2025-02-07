@@ -1,3 +1,7 @@
+# 2025-02-07
+在setting页面添加了一个tool code，类似head code，可以直接添加html代码，比如newsletter的表格代码，暂时解决newsletter的问题
+使用环境变量ARTICLE_ROUTE_PREFIX来设置文章路径的前缀，可以将文章路径设置为“/blog”或者“/posts”等
+
 # 2025-02-06
 总算将我的博客迁移到这个cms了，目前用的还不错。
 - 文章添加了shared状态，可以不显示在主页上，页不出现在sitemap里，只能通过url访问
