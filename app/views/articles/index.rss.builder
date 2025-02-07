@@ -13,8 +13,8 @@ xml.rss version: "2.0",
         xml.description article.description
         xml.tag!("content:encoded") { xml.cdata! article.content.to_s }
         xml.pubDate article.created_at.rfc822
-        xml.link "#{site_settings[:url]}/#{Rails.application.config.article_route_prefix}/#{article.slug}"
-        xml.guid "#{site_settings[:url]}/#{Rails.application.config.article_route_prefix}/#{article.slug}"
+        xml.link [site_settings[:url], Rails.application.config.article_route_prefix, article.slug].reject(&:blank?).join('/')
+        xml.guid "#{article.slug}"
         xml.author site_settings[:author]
       end
     end
