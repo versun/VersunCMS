@@ -5,15 +5,17 @@
     <td><%= site_settings[:footer] %></td>
     <td align="right" width="50%">
       <div class="social-links">
-        <a href="/rss" target="_blank" class="social-icon" rel="rss">rss |
-        </a>
-          
+        <a href="/rss" target="_blank" class="social-icon" rel="rss">
+          <%= image_tag "rss.svg", size: "20", alt: "RSS", class: "social-icon" %></a>
         <% if site_settings[:social_links].present? %>
           <% site_settings[:social_links].each do |platform, data| %>
             <% if data['url'].present? %>
               <a rel="me" href="<%= data['url'] %>" target="_blank" class="social">
-                <%= platform.to_s.downcase %> |
-              </a>
+                <%= image_tag data['icon_path'],
+                              size: "20",
+                              alt: platform.to_s.titleize,
+                              class: "social-icon",
+                              title: platform.to_s.titleize %></a>
             <% end %>
           <% end %>
         <% end %>

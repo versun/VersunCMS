@@ -9,34 +9,34 @@ class Setting < ApplicationRecord
 
   SOCIAL_PLATFORMS = {
     github: {
-      icon_path: "fontawesome/github.svg"
+      icon_path: "github.svg"
     },
     twitter: {
-      icon_path: "fontawesome/x-twitter.svg"
+      icon_path: "x-twitter.svg"
     },
     mastodon: {
-      icon_path: "fontawesome/mastodon.svg"
+      icon_path: "mastodon.svg"
     },
     bluesky: {
-      icon_path: "fontawesome/bluesky.svg"
+      icon_path: "bluesky.svg"
     },
     linkedin: {
-      icon_path: "fontawesome/linkedin.svg"
+      icon_path: "linkedin.svg"
     },
     instagram: {
-      icon_path: "fontawesome/instagram.svg"
+      icon_path: "instagram.svg"
     },
     youtube: {
-      icon_path: "fontawesome/youtube.svg"
+      icon_path: "youtube.svg"
     },
     facebook: {
-      icon_path: "fontawesome/facebook.svg"
+      icon_path: "facebook.svg"
     },
     medium: {
-      icon_path: "fontawesome/medium.svg"
+      icon_path: "medium.svg"
     },
     stackoverflow: {
-      icon_path: "fontawesome/stack-overflow.svg"
+      icon_path: "stack-overflow.svg"
     }
   }.freeze
 
