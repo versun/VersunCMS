@@ -41,13 +41,15 @@ Rails.application.routes.draw do
   get "/admin/pages" => "admin#pages"
   get "admin/pages/new", to: "articles#new"
 
-  get "/blog" => "articles#index", as: :articles
-  # get "/blog/new" => "articles#new", as: :new_article
-  get "/blog/:slug" => "articles#show", as: :article
-  get "/blog/:slug/edit" => "articles#edit", as: :edit_article
-  post "/blog" => "articles#create", as: :create_article
-  patch "/blog/:slug" => "articles#update", as: :update_article
-  delete "/blog/:slug" => "articles#destroy", as: :destroy_article
+  scope path: Rails.application.config.article_route_prefix do
+    get "/" => "articles#index", as: :articles
+    # get "/blog/new" => "articles#new", as: :new_article
+    get "/:slug" => "articles#show", as: :article
+    get "/:slug/edit" => "articles#edit", as: :edit_article
+    post "/" => "articles#create", as: :create_article
+    patch "/:slug" => "articles#update", as: :update_article
+    delete "/:slug" => "articles#destroy", as: :destroy_article
+  end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
