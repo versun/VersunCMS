@@ -21,7 +21,8 @@ module CacheableSettings
           head_code: setting&.head_code,
           footer: setting&.footer,
           custom_css: setting&.custom_css,
-          social_links: setting&.social_links
+          social_links: setting&.social_links,
+          tool_code: setting&.tool_code
         }
       end
     end

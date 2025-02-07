@@ -48,6 +48,7 @@ class SettingsController < ApplicationController
       :time_zone,
       :head_code,
       :file,
+      :tool_code,
       social_links: {},
       static_files: {}
     )
