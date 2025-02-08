@@ -1,3 +1,6 @@
+# 2025-02-08
+还是打算使用s3做为active storage服务，放在本地非常危险，早上差点就误删除文件夹了。。。还好有备份，恢复了
+
 # 2025-02-07
 在setting页面添加了一个tool code，类似head code，可以直接添加html代码，比如newsletter的表格代码，暂时解决newsletter的问题
 使用环境变量ARTICLE_ROUTE_PREFIX来设置文章路径的前缀，可以将文章路径设置为“/blog”或者“/posts”等
