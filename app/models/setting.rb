@@ -40,7 +40,7 @@ class Setting < ApplicationRecord
     },
     status_page: {
       icon_path: "status.svg"
-    },
+    }
   }.freeze
 
   private
