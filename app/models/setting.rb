@@ -37,7 +37,10 @@ class Setting < ApplicationRecord
     },
     stackoverflow: {
       icon_path: "stack-overflow.svg"
-    }
+    },
+    status_page: {
+      icon_path: "status.svg"
+    },
   }.freeze
 
   private
