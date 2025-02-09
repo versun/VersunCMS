@@ -29,7 +29,12 @@ s3:
 #   storage_access_key: <%= Rails.application.credentials.dig(:azure_storage, :storage_access_key) %>
 #   container: your_container_name-<%= Rails.env %>
 
-# mirror:
-#   service: Mirror
-#   primary: local
-#   mirrors: [ amazon, google, microsoft ]
+local_mirror_to_s3:
+  service: Mirror
+  primary: local
+  mirrors: [ s3 ]
+
+s3_mirror_to_local:
+  service: Mirror
+  primary: s3
+  mirrors: [ local ]
