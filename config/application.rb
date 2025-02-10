@@ -16,6 +16,9 @@ module VersunCms
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    def self.git_version
+      @git_version ||= `git rev-parse HEAD`.strip[0..7]
+    end
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
