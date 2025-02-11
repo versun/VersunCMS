@@ -16,7 +16,7 @@ WORKDIR /rails
 
 # Install base packages
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 libpq-dev git&& \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 libpq-dev && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment
@@ -41,6 +41,8 @@ RUN bundle install && \
 
 # Copy application code
 COPY . .
+
+RUN git rev-parse HEAD > REVISION.txt
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/

@@ -17,7 +17,13 @@ module VersunCms
     config.autoload_lib(ignore: %w[assets tasks])
 
     def self.git_version
-      @git_version ||= `git rev-parse HEAD`.strip[0..7]
+      @git_version ||= begin
+        if File.exist?('REVISION')
+          File.read('REVISION').strip[0..7]
+        else
+          'NA'
+        end
+      end
     end
     # Configuration for the application, engines, and railties goes here.
     #
