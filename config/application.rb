@@ -18,10 +18,10 @@ module VersunCms
 
     def self.git_version
       @git_version ||= begin
-        if File.exist?('REVISION')
-          File.read('REVISION').strip[0..7]
+        if File.exist?("REVISION")
+          File.read("REVISION").strip[0..7]
         else
-          'NA'
+          "NA"
         end
       end
     end
