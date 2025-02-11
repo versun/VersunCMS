@@ -63,13 +63,28 @@ module Integrations
     end
 
     def build_tweet
-      post_url = build_post_url
+      post_url = "\nRead more:#{build_post_url}"
+      max_length = 140 - post_url.length # 预留URL和"Read more:"的空间
+
+      title = @article.title
       content_text = @article.description.presence || @article.content.body.to_plain_text
-      max_content_length = 140 - post_url.length - 30 - @article.title.length
 
+      if title.length >= max_length - 3 # 减3是为了预留"..."的空间
+        # 标题过长时，只显示标题（截断）和URL
+        "#{title[0...(max_length - 3)]}...#{post_url}"
+      else
+        # 标题未超长时，计算剩余空间给正文内容
+        remaining_length = max_length - title.length - 1 # 减1是为了标题后的换行符
+        content_part = if remaining_length > 4 # 确保至少有空间放"..."
+          "\n#{content_text[0...(remaining_length - 3)]}..."
+        else
+          ""
+        end
 
-      "#{@article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
+        "#{title}#{content_part}#{post_url}"
+      end
     end
+
 
     def build_post_url
       Rails.application.routes.url_helpers.article_url(
