@@ -64,7 +64,7 @@ module Integrations
 
     def build_tweet
       post_url = "\nRead more:#{build_post_url}"
-      max_length = 140 - post_url.length # 预留URL和"Read more:"的空间
+      max_length = 280 - 34 # URL固定23个字符+11个"\nRead more:"字符
 
       title = @article.title
       content_text = @article.description.presence || @article.content.body.to_plain_text
