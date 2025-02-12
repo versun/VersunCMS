@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_07_062320) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_12_053135) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -73,7 +73,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_07_062320) do
     t.boolean "crosspost_mastodon", default: false, null: false
     t.boolean "crosspost_twitter", default: false, null: false
     t.boolean "crosspost_bluesky", default: false, null: false
-    t.json "crosspost_urls", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_articles_on_slug", unique: true
@@ -126,6 +125,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_07_062320) do
     t.text "tool_code"
   end
 
+  create_table "social_media_posts", force: :cascade do |t|
+    t.string "platform", null: false
+    t.string "url", null: false
+    t.bigint "article_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["article_id", "platform"], name: "index_social_media_posts_on_article_id_and_platform", unique: true
+    t.index ["article_id"], name: "index_social_media_posts_on_article_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "user_name", null: false
     t.string "password_digest", null: false
@@ -137,4 +146,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_07_062320) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "social_media_posts", "articles"
 end

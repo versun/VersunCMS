@@ -6,16 +6,16 @@
   </div>
 </article>
 
-<% if @article.crosspost_urls.present? %>
-<br>
-<b>Discussion on </b>
-    <% if @article.crosspost_urls['mastodon'].present? %>
-      <%= link_to ' Mastodon', @article.crosspost_urls['mastodon'], target: '_blank' %>
-    <% end %>
-    <% if @article.crosspost_urls['twitter'].present? %>
-      <%= link_to ' X', @article.crosspost_urls['twitter'], target: '_blank' %>
-    <% end %>
-    <% if @article.crosspost_urls['bluesky'].present? %>
-      <%= link_to ' Bluesky', @article.crosspost_urls['bluesky'], target: '_blank' %>
-    <% end %>
+<% if @article.social_media_posts.present? %>
+  <br>
+  <b>Discussion on </b>
+  <% if mastodon_url = @article.social_media_posts.find_by(platform: 'mastodon')&.url %>
+    <%= link_to "Mastodon", mastodon_url, target: "_blank" %>,
+  <% end %>
+  <% if twitter_url = @article.social_media_posts.find_by(platform: 'twitter')&.url %>
+    <%= link_to "X", twitter_url, target: "_blank" %>,
+  <% end %>
+  <% if bluesky_url = @article.social_media_posts.find_by(platform: 'bluesky')&.url %>
+    <%= link_to "Bluesky", bluesky_url, target: "_blank" %>.
+  <% end %>
 <% end %>

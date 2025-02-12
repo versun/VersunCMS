@@ -38,33 +38,46 @@
       
       <fieldset class="bordered-container bordered-fieldset">
         <legend>CrossPost</legend>
+        
         <% if Crosspost.find_by(platform: 'mastodon')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_mastodon %>
             <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
-            <% if article.crosspost_urls&.dig('mastodon').present? %>
-              (<%= link_to article.crosspost_urls['mastodon'], article.crosspost_urls['mastodon'], target: "_blank" %>)
-            <% end %>
+              <%= form.fields_for :social_media_posts, article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
+                <% if post_form.object.platform == 'mastodon' %>
+                  <%= post_form.text_field :url, placeholder: "Post URL" %>
+                  <%= post_form.hidden_field :platform, value: "mastodon" %>
+                <% end %>
+              <% end %>
           </div>
         <% end %>
+        
         <% if Crosspost.find_by(platform: 'twitter')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_twitter %>
-            <%= form.label :crosspost_twitter, "Post to X" %>
-            <% if article.crosspost_urls&.dig('twitter').present? %>
-              (<%= link_to article.crosspost_urls['twitter'], article.crosspost_urls['twitter'], target: "_blank" %>)
-            <% end %>
+            <%= form.label :crosspost_twitter, "Post to Twitter" %>
+              <%= form.fields_for :social_media_posts, article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
+                <% if post_form.object.platform == 'twitter' %>
+                  <%= post_form.text_field :url, placeholder: "Post URL" %>
+                  <%= post_form.hidden_field :platform, value: "twitter" %>
+                <% end %>
+              <% end %>
           </div>
         <% end %>
+        
         <% if Crosspost.find_by(platform: 'bluesky')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_bluesky %>
             <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
-            <% if article.crosspost_urls&.dig('bluesky').present? %>
-              (<%= link_to article.crosspost_urls['bluesky'], article.crosspost_urls['bluesky'], target: "_blank" %>)
+              <%= form.fields_for :social_media_posts, article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
+              <% if post_form.object.platform == 'bluesky' %>
+                <%= post_form.text_field :url, placeholder: "Post URL" %>
+                <%= post_form.hidden_field :platform, value: "bluesky" %>
+              <% end %>
             <% end %>
           </div>
         <% end %>
+        
         <%= link_to "Go to Cross Post Settings", crossposts_path %>
       </fieldset>
       

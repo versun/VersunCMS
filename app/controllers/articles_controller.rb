@@ -124,7 +124,7 @@ class ArticlesController < ApplicationController
       :crosspost_mastodon,
       :crosspost_twitter,
       :crosspost_bluesky,
-      :crosspost_urls
+      social_media_posts_attributes: [:id, :_destroy, :platform, :url]
     )
   end
 

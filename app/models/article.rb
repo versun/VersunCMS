@@ -2,9 +2,10 @@ class Article < ApplicationRecord
   include PgSearch::Model
   multisearchable against: [ :title, :content ]
   has_rich_text :content
+  has_many :social_media_posts, dependent: :destroy
+  accepts_nested_attributes_for :social_media_posts, allow_destroy: true
+  
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]
-
-  # serialize :crosspost_urls, Hash, default: {}
 
   before_validation :generate_title
   before_validation :generate_slug
@@ -21,6 +22,7 @@ class Article < ApplicationRecord
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
 
   before_save :schedule_publication, if: :should_schedule?
+  before_save :cleanup_empty_social_media_posts
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
 
   # 配置单表搜索作用域
@@ -82,8 +84,14 @@ class Article < ApplicationRecord
   def handle_crosspost
     if should_crosspost?
       CrosspostArticleJob.perform_later(id)
-    else
-      update_column(:crosspost_urls, {})
+    # else
+    #   update_column(:crosspost_urls, {})
+    end
+  end
+
+  def cleanup_empty_social_media_posts
+    social_media_posts.each do |post|
+      post.mark_for_destruction if post.url.blank?
     end
   end
 end
