@@ -5,7 +5,7 @@
     <% if navbar_items.present? %>
       <% navbar_items.each do |item| %>
         <span class="navbar-item">
-          <%= link_to item.title, article_path(item) %>
+          <%= link_to item.title, page_path(item) %>
         </span> | 
       <% end %>     
     <% end %>

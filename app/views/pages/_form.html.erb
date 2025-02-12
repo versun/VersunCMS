@@ -1,0 +1,47 @@
+<%= form_with(model: page) do |form| %>
+  <% if page.errors.any? %>
+    <div style="color: red">
+      <h3><%= pluralize(page.errors.count, "error") %> prohibited this page from being saved:</h3>
+
+      <ul>
+        <% page.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div>
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Base</legend>
+        <%= form.label :title, "title:" %>
+        <%= form.text_field :title %><br/>
+        <%= form.label :slug, "slug:"%>
+        <%= form.text_field :slug %><br/>
+
+        <%= form.label :page_order, "page order:" %>
+        <%= form.number_field :page_order %>
+        
+      </fieldset>
+      
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Content</legend>
+        <%= form.rich_text_area :content, required: true %>
+      </fieldset>
+      
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Actions</legend>
+          <div>
+            <%= form.select :status, Page.statuses.keys, { prompt: 'choose a status' }, { id: 'status_select', required: true } %>
+          </div>
+
+          <div>
+          <%= form.submit "save" %>
+          <% if page.persisted? %>
+            <%= link_to "delete", page_path(page.slug), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
+          <% end %>
+        </div>
+      </fieldset>
+
+  </div>
+
+<% end %>

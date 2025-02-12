@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_12_053135) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_12_131322) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -92,6 +92,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_12_053135) do
     t.index ["platform"], name: "index_crossposts_on_platform", unique: true
   end
 
+  create_table "pages", force: :cascade do |t|
+    t.string "title"
+    t.string "slug"
+    t.integer "status", null: false
+    t.integer "page_order", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_pages_on_slug", unique: true
+  end
+
   create_table "pg_search_documents", force: :cascade do |t|
     t.text "content"
     t.string "searchable_type"
@@ -122,6 +132,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_12_053135) do
     t.json "static_files", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "newsletter_form_url"
     t.text "tool_code"
   end
 

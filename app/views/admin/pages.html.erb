@@ -1,10 +1,10 @@
 <!-- % content_for :title, "Admin" % --->
 
 <%= render 'admin_bar' %>
-<%= render 'article_status', scope: @posts %>
-<%= link_to "New", admin_pages_new_path(is_page: true) %>
+<%= render 'post_status', scope: @posts %>
+<%= link_to "New", admin_pages_new_path %>
 <% if @posts %>
-<%= render 'article_list', articles: @posts %>
+<%= render 'page_list', page: @posts %>
 <% else %>
 <p>No Pages Found</p>
 <% end %>
