@@ -4,8 +4,6 @@ Rails.application.routes.draw do
   resources :users
   resource :session
   resources :passwords
-  resources :pages, param: :slug, path: ""
-  # resources :settings
 
   resource :setting, only: [ :edit, :update, :destroy ] do
     collection do
@@ -44,6 +42,7 @@ Rails.application.routes.draw do
   get "/admin/pages" => "admin#pages"
   get "/admin/pages/new", to: "pages#new"
 
+  resources :pages, param: :slug, path: ""
   scope path: Rails.application.config.article_route_prefix do
     get "/" => "articles#index", as: :articles
     get "/:slug" => "articles#show", as: :article
