@@ -1,3 +1,6 @@
+# 2025-02-12
+将crosspost_url抛离article模型，单独做为一个模型social_media_post，方便更改post的url，也可以手动更新社交平台的url，这样不用勾选Post to X也能添加Discussion链接
+
 # 2025-02-08
 还是打算使用s3做为active storage服务，放在本地非常危险，早上差点就误删除文件夹了。。。还好有备份，恢复了
 
