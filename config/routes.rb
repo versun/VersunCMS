@@ -12,7 +12,7 @@ Rails.application.routes.draw do
       delete :destroy
     end
   end
-  # get "admin" => "sessions#new"
+
   namespace :tools do
     resources :export, only: [ :index, :create ]
     resources :import, only: [ :index ] do
@@ -39,13 +39,12 @@ Rails.application.routes.draw do
 
   get "/admin" => "admin#posts"
   get "/admin/posts" => "admin#posts"
-  get "admin/posts/new", to: "articles#new"
+  get "/admin/posts/new", to: "articles#new"
   get "/admin/pages" => "admin#pages"
-  get "admin/pages/new", to: "articles#new"
+  get "/admin/pages/new", to: "articles#new"
 
   scope path: Rails.application.config.article_route_prefix do
     get "/" => "articles#index", as: :articles
-    # get "/blog/new" => "articles#new", as: :new_article
     get "/:slug" => "articles#show", as: :article
     get "/:slug/edit" => "articles#edit", as: :edit_article
     post "/" => "articles#create", as: :create_article

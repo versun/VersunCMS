@@ -16,6 +16,8 @@ module VersunCms
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Set the article route prefix, default: example.com/article_slug
+    config.article_route_prefix = ENV.fetch("ARTICLE_ROUTE_PREFIX", "")
     def self.git_version
       @git_version ||= begin
         if File.exist?("REVISION")
