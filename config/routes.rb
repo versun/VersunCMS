@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   resources :users
   resource :session
   resources :passwords
-  resources :pages, param: :slug
+  resources :pages, param: :slug, path: ""
   # resources :settings
 
   resource :setting, only: [ :edit, :update, :destroy ] do
