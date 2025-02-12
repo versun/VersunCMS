@@ -4,7 +4,7 @@ class Article < ApplicationRecord
   has_rich_text :content
   has_many :social_media_posts, dependent: :destroy
   accepts_nested_attributes_for :social_media_posts, allow_destroy: true
-  
+
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]
 
   before_validation :generate_title
@@ -84,8 +84,8 @@ class Article < ApplicationRecord
   def handle_crosspost
     if should_crosspost?
       CrosspostArticleJob.perform_later(id)
-    # else
-    #   update_column(:crosspost_urls, {})
+      # else
+      #   update_column(:crosspost_urls, {})
     end
   end
 

@@ -7,6 +7,6 @@ class CreateSocialMediaPosts < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    add_index :social_media_posts, [:article_id, :platform], unique: true
+    add_index :social_media_posts, [ :article_id, :platform ], unique: true
   end
 end
