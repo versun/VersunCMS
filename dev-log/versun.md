@@ -1,3 +1,6 @@
+# 2025-02-13
+将is_page从article中删除，并独立为page模型，这样可以更好的区分文章和页面，也方便管理
+
 # 2025-02-12
 将crosspost_url抛离article模型，单独做为一个模型social_media_post，方便更改post的url，也可以手动更新社交平台的url，这样不用勾选Post to X也能添加Discussion链接
 
