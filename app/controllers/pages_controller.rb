@@ -58,10 +58,10 @@ class PagesController < ApplicationController
     notice_message = if @page.status != "trash"
                        @page.update(status: "trash")
                        "Page was successfully moved to trash."
-                     else
+    else
                        @page.destroy!
                        "Page was successfully destroyed."
-                     end
+    end
 
     respond_to do |format|
       format.html { redirect_to admin_pages_path, status: :see_other, notice: notice_message }
