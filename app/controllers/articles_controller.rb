@@ -13,12 +13,12 @@ class ArticlesController < ApplicationController
 
         @articles = if params[:q].present?
                       Article.search_content(params[:q])
-                             .published_posts
+                             .published
                              .includes(:rich_text_content)
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
         else
-                      Article.published_posts
+                      Article.published
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
         end
@@ -27,7 +27,7 @@ class ArticlesController < ApplicationController
       }
 
       format.rss {
-        @articles = Article.published_posts.order(created_at: :desc)
+        @articles = Article.published.order(created_at: :desc)
         render layout: false
       }
     end
@@ -44,12 +44,6 @@ class ArticlesController < ApplicationController
   # GET /articles/new
   def new
     @article = Article.new
-
-    @article.is_page = params[:is_page] == "true"
-    if @article.is_page
-      max_order = Article.where(is_page: true).maximum(:page_order) || 0
-      @article.page_order = max_order + 1
-    end
   end
 
   # GET /1/edit
@@ -59,12 +53,9 @@ class ArticlesController < ApplicationController
   # POST / or /articles.json
   def create
     @article = Article.new(article_params)
-    path_after_create = @article.is_page ? admin_pages_path : admin_posts_path
-
     respond_to do |format|
       if @article.save
-        refresh_pages if @article.is_page
-        format.html { redirect_to path_after_create, notice: "Created successfully." }
+        format.html { redirect_to admin_posts_path, notice: "Created successfully." }
         format.json { render :show, status: :created, location: @article }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -75,12 +66,9 @@ class ArticlesController < ApplicationController
 
   # PATCH/PUT /1 or /1.json
   def update
-    path_after_create = @article.is_page ? admin_pages_path : admin_posts_path
-
     respond_to do |format|
       if @article.update(article_params)
-        refresh_pages if @article.is_page
-        format.html { redirect_to path_after_create, notice: "Updated successfully." }
+        format.html { redirect_to admin_posts_path, notice: "Updated successfully." }
         format.json { render :show, status: :ok, location: @article }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -118,8 +106,6 @@ class ArticlesController < ApplicationController
       :status,
       :slug,
       :description,
-      :is_page,
-      :page_order,
       :scheduled_at,
       :crosspost_mastodon,
       :crosspost_twitter,

@@ -16,14 +16,7 @@
         <%= form.label :title, "title:" %>
         <%= form.text_field :title %><br/>
         <%= form.label :slug, "slug:"%>
-        <%= form.text_field :slug %><br/>
-        
-        <%= form.hidden_field :is_page %>
-        <% if article.is_page? %>
-            <%= form.label :page_order, "page order:" %>
-            <%= form.number_field :page_order %>
-        <% end %>
-        
+        <%= form.text_field :slug %>
       </fieldset>
       
       <fieldset class="bordered-container bordered-fieldset">

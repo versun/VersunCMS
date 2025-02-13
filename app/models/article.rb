@@ -11,13 +11,9 @@ class Article < ApplicationRecord
   before_validation :generate_slug
   validates :slug, presence: true, uniqueness: true
   validates :scheduled_at, presence: true, if: :schedule?
-  validates :page_order, presence: true, if: :is_page?
 
-  scope :all_posts, -> { where(is_page: false) }
-  scope :all_pages, -> { where(is_page: true) }
-  scope :published_posts, -> { where(status: :publish, is_page: false) }
-  scope :published_pages, -> { where(status: :publish, is_page: true) }
-  scope :by_status, ->(status, is_page) { where(status: status, is_page: is_page) }
+  scope :published, -> { where(status: :publish) }
+  scope :by_status, ->(status) { where(status: status) }
   # scope :paginate, ->(page, per_page) { offset((page - 1) * per_page).limit(per_page) }
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
 
@@ -84,8 +80,6 @@ class Article < ApplicationRecord
   def handle_crosspost
     if should_crosspost?
       CrosspostArticleJob.perform_later(id)
-      # else
-      #   update_column(:crosspost_urls, {})
     end
   end
 

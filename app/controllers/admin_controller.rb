@@ -1,14 +1,12 @@
 class AdminController < ApplicationController
   def posts
-    @is_page = false
-    @scope = Article.all_posts
+    @scope = Article.all
     @posts = fetch_articles(@scope)
     @path = admin_posts_path
     # render 'admin/article_list'
   end
 
   def pages
-    @is_page = true
     @scope = Page.all
     @posts = fetch_articles(@scope, sort_by: :page_order)
     @path = admin_pages_path

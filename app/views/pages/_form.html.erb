@@ -14,12 +14,12 @@
       <fieldset class="bordered-container bordered-fieldset">
         <legend>Base</legend>
         <%= form.label :title, "title:" %>
-        <%= form.text_field :title %><br/>
+        <%= form.text_field :title, required: true  %><br/>
         <%= form.label :slug, "slug:"%>
-        <%= form.text_field :slug %><br/>
+        <%= form.text_field :slug, required: true %><br/>
 
         <%= form.label :page_order, "page order:" %>
-        <%= form.number_field :page_order %>
+        <%= form.number_field :page_order, required: true  %>
         
       </fieldset>
       

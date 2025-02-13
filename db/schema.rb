@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_12_225825) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_13_102206) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -67,8 +67,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_12_225825) do
     t.string "slug"
     t.string "description"
     t.integer "status", null: false
-    t.boolean "is_page", default: false, null: false
-    t.integer "page_order", default: 0, null: false
     t.datetime "scheduled_at"
     t.boolean "crosspost_mastodon", default: false, null: false
     t.boolean "crosspost_twitter", default: false, null: false

@@ -7,7 +7,7 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
     xml.priority 1.0 # 优先级
   end
 
-  Article.published_pages.find_each do |post|
+  Page.published.find_each do |post|
     xml.url do
       xml.loc "#{site_settings[:url]}/#{post.slug}"
       xml.lastmod post.updated_at.strftime("%Y-%m-%d")
@@ -16,9 +16,9 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
     end
   end
 
-  Article.published_posts.find_each do |post|
+  Article.published.find_each do |post|
     xml.url do
-      xml.loc "#{site_settings[:url]}/blog/#{post.slug}"
+      xml.loc [ site_settings[:url], Rails.application.config.article_route_prefix, post.slug ].reject(&:blank?).join("/")
       xml.lastmod post.updated_at.strftime("%Y-%m-%d")
       xml.changefreq "weekly"
       xml.priority 0.8
