@@ -132,7 +132,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_12_225825) do
     t.json "static_files", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "newsletter_form_url"
     t.text "tool_code"
   end
 
