@@ -9,7 +9,7 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
 
   Page.published.find_each do |post|
     xml.url do
-      xml.loc "#{site_settings[:url]}/#{post.slug}"
+      xml.loc "#{site_settings[:url]}/pages/#{post.slug}"
       xml.lastmod post.updated_at.strftime("%Y-%m-%d")
       xml.changefreq "weekly"
       xml.priority 0.8
