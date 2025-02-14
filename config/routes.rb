@@ -11,7 +11,7 @@ Rails.application.routes.draw do
       delete :destroy
     end
   end
-  
+
   namespace :tools do
     resources :export, only: [ :index, :create ]
     resources :import, only: [ :index ] do
