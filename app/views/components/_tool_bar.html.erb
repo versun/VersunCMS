@@ -1,13 +1,1 @@
-<table width="100%">
-  <tr>
-    <td>
-      <%= raw site_settings[:tool_code] %>
-    </td>
-    <td align="right" width="50%">
-      <%= form_tag root_path, method: :get, class: 'search-form' do %>
-        <%= search_field_tag :q, params[:q], placeholder: 'Search...' %>
-        <%= submit_tag 'Search' %>
-      <% end %>
-    </td>
-  </tr>
-</table>
+<%= raw site_settings[:tool_code] %>

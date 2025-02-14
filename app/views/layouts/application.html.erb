@@ -33,12 +33,35 @@
 
   <body>
     <header>
-      <%= render 'components/nav_bar', navbar_items: navbar_items, site_settings: site_settings %>
+      <table width="100%">
+        <tr>
+          <td>
+            <h1><%= link_to site_settings[:title], root_path %></h1>
+          </td>
+          <td align="right" width="50%">
+              <p class="description"><%= site_settings[:description] %></p>
+          </td>
+        </tr>
+      </table>
+                  
+      <table width="100%">
+        <tr>
+          <td>
+            <%= render 'components/nav_bar', navbar_items: navbar_items, site_settings: site_settings %>
+          </td>
+          <td align="right" width="30%">
+            <%= form_tag root_path, method: :get, class: 'search-form' do %>
+              <%= search_field_tag :q, params[:q], placeholder: 'Search...' %>
+              <%= submit_tag 'Search' %>
+            <% end %>
+          </td>
+        </tr>
+      </table>
     </header>
 
     <hr>
 
-    <%= render "components/tool_bar" %>
+    <%= raw site_settings[:tool_code] %>
     
     <main> 
       <%= yield %>
