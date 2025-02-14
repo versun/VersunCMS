@@ -11,7 +11,7 @@ Rails.application.routes.draw do
       delete :destroy
     end
   end
-
+  
   namespace :tools do
     resources :export, only: [ :index, :create ]
     resources :import, only: [ :index ] do
@@ -51,7 +51,7 @@ Rails.application.routes.draw do
     delete "/:slug" => "articles#destroy", as: :destroy_article
   end
 
-  resources :pages, param: :slug, path: ""
+  resources :pages, param: :slug
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
