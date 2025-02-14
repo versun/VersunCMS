@@ -33,7 +33,10 @@
           <div>
             <%= form.select :status, Page.statuses.keys, { prompt: 'choose a status' }, { id: 'status_select', required: true } %>
           </div>
-
+          <div class="scheduled-at" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
+            <%= form.datetime_field :scheduled_at %>
+            Current Date Time: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %>
+          </div>
           <div>
           <%= form.submit "save" %>
           <% if page.persisted? %>
@@ -44,4 +47,29 @@
 
   </div>
 
+<% end %>
+
+<%= javascript_tag do %>
+  function initializeScheduledAt() {
+    const statusSelect = document.getElementById('status_select');
+    const scheduledAtContainer = document.getElementById('scheduled_at');
+
+    // 初始检查状态
+    if (statusSelect.value === 'schedule') {
+      scheduledAtContainer.style.display = 'block';
+    }
+
+    // 添加change事件监听
+    statusSelect.addEventListener('change', function() {
+      if (this.value === 'schedule') {
+        scheduledAtContainer.style.display = 'block';
+      } else {
+        scheduledAtContainer.style.display = 'none';
+      }
+    });
+  }
+
+  // 同时支持传统加载和Turbo Drive加载
+  document.addEventListener("DOMContentLoaded", initializeScheduledAt);
+  document.addEventListener("turbo:load", initializeScheduledAt);
 <% end %>
