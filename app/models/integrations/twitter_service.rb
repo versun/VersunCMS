@@ -1,26 +1,22 @@
 require "x"
 module Integrations
   class TwitterService
-    def initialize(article)
-      @article = article
-      @settings = Crosspost.twitter
+    def initialize()
+      @api_key = ENV.fetch("TWITTER_API_KEY")
+      @api_key_secret = ENV.fetch("TWITTER_API_KEY_SECRET")
+      @access_token = ENV.fetch("TWITTER_ACCESS_TOKEN")
+      @access_token_secret = ENV.fetch("TWITTER_ACCESS_TOKEN_SECRET")
+      @client = create_client
     end
 
-    def verify(settings)
-      if settings[:client_id].blank? || settings[:client_secret].blank? || settings[:access_token].blank?
+    def verify()
+      if @api_key.blank? || @api_key_secret.blank? || @access_token.blank?
         return { success: false, error: "Client ID, client secret, and access token are required" }
       end
 
       begin
-          client = X::Client.new(
-            api_key: settings[:client_id],
-            api_key_secret: settings[:client_secret],
-            access_token: settings[:access_token],
-            access_token_secret: settings[:access_token_secret]
-          )
-
           # Try to post a test tweet to verify credentials
-          test_response = client.get("users/me")
+          test_response = @client.get("users/me")
           if test_response && test_response["data"] && test_response["data"]["id"]
             { success: true }
           else
@@ -33,20 +29,17 @@ module Integrations
     end
 
     def post(article)
-      return unless @settings&.enabled?
-
-      client = create_client
-      tweet = build_tweet
+      tweet = build_tweet(article)
 
       begin
-        user = client.get("users/me")
+        user = @client.get("users/me")
         username = user["data"]["username"] if user && user["data"]
-        response = client.post("tweets", { text: tweet }.to_json)
+        response = @client.post("tweets", { text: tweet }.to_json)
 
         id = response["data"]["id"] if response && response["data"] && response["data"]["id"]
         "https://x.com/#{username}/status/#{id}" if username && id
       rescue => e
-        Rails.logger.error "Failed to post article #{@article.id} to X: #{e.message}"
+        Rails.logger.error "Failed to post article #{article.id} to X: #{e.message}"
         nil
       end
     end
@@ -55,19 +48,19 @@ module Integrations
 
     def create_client
       X::Client.new(
-        api_key: @settings.client_id,
-        api_key_secret: @settings.client_secret,
-        access_token: @settings.access_token,
-        access_token_secret: @settings.access_token_secret
+        api_key: @api_key,
+        api_key_secret: @api_key_secret,
+        access_token: @access_token,
+        access_token_secret: @access_token_secret
       )
     end
 
-    def build_tweet
-      post_url = "\nRead more:#{build_post_url}"
+    def build_tweet(article)
+      post_url = "\nRead more:#{build_post_url(article.slug)}"
       max_length = 280 - 34 # URL固定23个字符+11个"\nRead more:"字符
 
-      title = @article.title
-      content_text = @article.description.presence || @article.content.body.to_plain_text
+      title = article.title
+      content_text = article.description.presence || article.content.body.to_plain_text
 
       if title.length >= max_length - 3 # 减3是为了预留"..."的空间
         # 标题过长时，只显示标题（截断）和URL
@@ -86,9 +79,9 @@ module Integrations
     end
 
 
-    def build_post_url
+    def build_post_url(article_slug)
       Rails.application.routes.url_helpers.article_url(
-        @article.slug,
+        article_slug,
         host: Setting.first.url.sub(%r{https?://}, "")
       )
     end

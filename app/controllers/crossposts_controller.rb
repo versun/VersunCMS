@@ -3,46 +3,41 @@ class CrosspostsController < ApplicationController
     @mastodon = Crosspost.mastodon
     @twitter = Crosspost.twitter
     @bluesky = Crosspost.bluesky
+    @listmonk = Crosspost.listmonk
   end
 
   def update
-    @settings = Crosspost.find_or_create_by(platform: params[:id])
-    Rails.logger.info "Updating Crosspost: #{params[:id]}"
-    # Rails.logger.info "Params: #{params.inspect}"
+    platforms = %w[mastodon twitter bluesky]
 
-    if @settings.update(crosspost_params)
-      Rails.logger.info "Successfully updated Crosspost"
-      redirect_to crossposts_path, notice: "CrossPost settings updated successfully."
-    else
-      Rails.logger.error "Failed to update Crosspost: #{@settings.errors.full_messages}"
-      redirect_to crossposts_path, alert: @settings.errors.full_messages.join(", ")
+    platforms.each do |platform|
+      settings = Crosspost.find_or_create_by(platform: platform)
+      platform_params = params[:crosspost][platform]
+
+      if platform_params.present?
+        if settings.update(platform_params.permit(:enabled, :platform))
+          Rails.logger.info "Successfully updated Crosspost: #{platform}"
+        else
+          Rails.logger.error "Failed to update Crosspost: #{platform} - #{settings.errors.full_messages}"
+          flash[:alert] = settings.errors.full_messages.join(", ")
+        end
+      end
     end
+
+    redirect_to crossposts_path, notice: "CrossPost 设置已成功更新。"
   end
 
+
   def verify
-    Rails.logger.info "Verifying #{params[:id]} platform"
-    Rails.logger.info "Params: #{params.inspect}"
-
     begin
-      crosspost = params[:crosspost]
+      platform = params[:id]
+      #platform_params = params.require(:crosspost).require(platform).permit(:enabled)
 
-      unless crosspost[:platform] == params[:id]
-        raise "Platform mismatch: #{crosspost[:platform]} != #{params[:id]}"
-      end
-
-      results = case crosspost[:platform]
-      when "mastodon"
-        crosspost[:server_url] = "https://mastodon.social" if crosspost[:server_url].blank?
-        Integrations::MastodonService.new(nil).verify(crosspost)
-      when "twitter"
-        Integrations::TwitterService.new(nil).verify(crosspost)
-      when "bluesky"
-        # Set default server_url if not provided
-        crosspost[:server_url] = "https://bsky.social/xrpc" if crosspost[:server_url].blank?
-        Integrations::BlueskyService.new(nil).verify(crosspost)
-      else
-        raise "Unknown platform: #{crosspost[:platform]}"
-      end
+      results = case platform
+                when "mastodon" then Integrations::MastodonService.new.verify
+                when "twitter" then Integrations::TwitterService.new.verify
+                when "bluesky" then Integrations::BlueskyService.new.verify
+                else raise "Unknown: #{platform}"
+                end
 
       if results[:success]
         render json: { status: "success", message: "Verified Successfully!" }
@@ -50,7 +45,7 @@ class CrosspostsController < ApplicationController
         render json: { status: "error", message: results[:error] }
       end
     rescue => e
-      Rails.logger.error "Verification error for #{params[:id]}: #{e.message}"
+      Rails.logger.error "Verification error for #{platform}: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
       render json: { status: "error", message: "Error: #{e.message}" }, status: :unprocessable_entity
     end
@@ -58,10 +53,9 @@ class CrosspostsController < ApplicationController
 
   private
 
-  def crosspost_params
-    params.require(:crosspost).permit(
-      :platform, :server_url, :access_token, :access_token_secret,
-      :client_id, :client_secret, :enabled
-    )
-  end
+  # def crosspost_params
+  #   params.require(:crosspost).permit(
+  #     :platform, :enabled
+  #   )
+  # end
 end

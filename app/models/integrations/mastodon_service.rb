@@ -3,23 +3,25 @@ require "uri"
 
 module Integrations
   class MastodonService
-    def initialize(article)
-      @article = article
-      @settings = Crosspost.mastodon
+    def initialize()
+      @server_url = ENV.fetch("MASTODON_URL", "https://mastodon.social")
+      @client_key = ENV.fetch("MASTODON_CLIENT_KEY")
+      @client_secret = ENV.fetch("MASTODON_CLIENT_SECRET")
+      @access_token = ENV.fetch("MASTODON_ACCESS_TOKEN")
     end
 
-    def verify(settings)
-      if settings[:access_token].blank?
+    def verify()
+      if @access_token.blank?
         return { success: false, error: "Access token are required" }
       end
 
       begin
-        uri = URI.join(settings[:server_url], "/api/v1/accounts/verify_credentials")
+        uri = URI.join(@server_url, "/api/v1/accounts/verify_credentials")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
 
         request = Net::HTTP::Get.new(uri)
-        request["Authorization"] = "Bearer #{settings[:access_token]}"
+        request["Authorization"] = "Bearer #{@access_token}"
 
         response = http.request(request)
 
@@ -33,9 +35,8 @@ module Integrations
 
 
     def post(article)
-      return unless @settings&.enabled?
-      status_text = build_status
-      uri = URI.join(@settings[:server_url], "/api/v1/statuses")
+      status_text = build_status(article)
+      uri = URI.join(@server_url, "/api/v1/statuses")
 
       begin
         http = Net::HTTP.new(uri.host, uri.port)
@@ -46,20 +47,20 @@ module Integrations
           status: status_text,
           visibility: "public"
         )
-        request["Authorization"] = "Bearer #{@settings.access_token}"
+        request["Authorization"] = "Bearer #{@access_token}"
 
         response = http.request(request)
 
         if response.is_a?(Net::HTTPSuccess)
           json_response = JSON.parse(response.body)
-          Rails.logger.info "Successfully posted article #{@article.id} to Mastodon"
+          Rails.logger.info "Successfully posted article #{article.id} to Mastodon"
           json_response["url"]
         else
-          Rails.logger.error "Failed to post article #{@article.id} to Mastodon: #{response.code} #{response.message}"
+          Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{response.code} #{response.message}"
           nil
         end
       rescue => e
-        Rails.logger.error "Failed to post article #{@article.id} to Mastodon: #{e.message}"
+        Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{e.message}"
         nil
       end
     end
@@ -73,17 +74,17 @@ module Integrations
     #   )
     # end
 
-    def build_status
-      post_url = build_post_url
-      content_text = @article.description.presence || @article.content.body.to_plain_text
-      max_content_length = 500 - post_url.length - 30 - @article.title.length
+    def build_status(article)
+      post_url = build_post_url(article.slug)
+      content_text = article.description.presence || article.content.body.to_plain_text
+      max_content_length = 500 - post_url.length - 30 - article.title.length
 
-      "#{@article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
+      "#{article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
     end
 
-    def build_post_url
+    def build_post_url(article_slug)
       Rails.application.routes.url_helpers.article_url(
-        @article.slug,
+        article_slug,
         host: Setting.first.url.sub(%r{https?://}, "")
       )
     end

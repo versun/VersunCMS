@@ -3,35 +3,22 @@ module Integrations
   class BlueskyService
     TOKEN_CACHE_KEY = :bluesky_token_data
 
-    def initialize(article)
-      @article = article
-      @settings = Crosspost.bluesky
-      return unless @settings.present?
-
-      @username = @settings.access_token
-      @password = @settings.access_token_secret
-      @server_url = "https://bsky.social/xrpc" if @settings.server_url.blank?
+    def initialize()
+      @username = ENV.fetch("BLUESKY_USERNAME")
+      @password = ENV.fetch("BLUESKY_APP_PASSWORD")
+      @server_url = ENV.fetch("BLUESKY_URL", "https://bsky.social/xrpc")
 
       if (token_data = Rails.cache.read(TOKEN_CACHE_KEY))
         process_tokens(token_data)
       end
     end
 
-    def verify(settings)
-      if settings[:access_token].blank? || settings[:access_token_secret].blank?
+    def verify()
+      if @password.blank? || @username.blank?
         return { success: false, error: "Access token and access token secret are required" }
       end
 
-      # Temporarily store the current credentials
-      original_username = @username
-      original_password = @password
-      original_server_url = @server_url
-
       begin
-        @username = settings[:access_token]
-        @password = settings[:access_token_secret]
-        @server_url = settings[:server_url]
-
         # Clear any existing token data
         @token = nil
         @token_expires_at = nil
@@ -42,25 +29,18 @@ module Integrations
         { success: true }
       rescue => e
         { success: false, error: "Bluesky verification failed: #{e.message}" }
-      ensure
-        # Restore the original credentials
-        @username = original_username
-        @password = original_password
-        @server_url = original_server_url
       end
     end
 
     def post(article)
-      return unless @settings&.enabled?
-
-      content = build_content
+      content = build_content(article)
 
       begin
         response = skeet(content)
-        Rails.logger.info "Successfully posted article #{@article.title} to Bluesky"
+        Rails.logger.info "Successfully posted article #{article.title} to Bluesky"
         response
       rescue => e
-        Rails.logger.error "Failed to post article #{@article.title} to Bluesky: #{e.message}"
+        Rails.logger.error "Failed to post article #{article.title} to Bluesky: #{e.message}"
         nil
       end
     end
@@ -85,7 +65,7 @@ module Integrations
       # This is the full atproto URI
       # Ex: "at://did:plc:axbcdefg12345/app.bsky.feed.post/abcdefg12345"
       if response_body["uri"].present?
-        "https://bsky.app/profile/#{@settings.access_token}/post/#{response_body["uri"].split('/').last}"
+        "https://bsky.app/profile/#{@token}/post/#{response_body["uri"].split('/').last}"
       end
     end
 
@@ -102,17 +82,17 @@ module Integrations
 
     private
 
-    def build_content
-      post_url = build_post_url
-      content_text = @article.description.presence || @article.content.body.to_plain_text
-      max_content_length = 300 - post_url.length - 30 - @article.title.length
+    def build_content(article)
+      post_url = build_post_url(article.slug)
+      content_text = article.description.presence || article.content.body.to_plain_text
+      max_content_length = 300 - post_url.length - 30 - article.title.length
 
-      "#{@article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
+      "#{article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
     end
 
-    def build_post_url
+    def build_post_url(article_slug)
       Rails.application.routes.url_helpers.article_url(
-        @article.slug,
+        article_slug,
         host: Setting.first.url.sub(%r{https?://}, "")
       )
     end

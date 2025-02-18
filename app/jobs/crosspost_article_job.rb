@@ -8,19 +8,19 @@ class CrosspostArticleJob < ApplicationJob
     social_media_posts = {}
 
     if article.crosspost_mastodon?
-      if mastodon_url = Integrations::MastodonService.new(article).post(article)
+      if (mastodon_url = Integrations::MastodonService.new.post(article))
         social_media_posts["mastodon"] = mastodon_url
       end
     end
 
     if article.crosspost_twitter?
-      if twitter_url = Integrations::TwitterService.new(article).post(article)
+      if (twitter_url = Integrations::TwitterService.new.post(article))
         social_media_posts["twitter"] = twitter_url
       end
     end
 
     if article.crosspost_bluesky?
-      if bluesky_url = Integrations::BlueskyService.new(article).post(article)
+      if (bluesky_url = Integrations::BlueskyService.new.post(article))
         social_media_posts["bluesky"] = bluesky_url
       end
     end
