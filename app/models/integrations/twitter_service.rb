@@ -69,14 +69,14 @@ module Integrations
       title = @article.title
       content_text = @article.description.presence || @article.content.body.to_plain_text
 
-      if title.length >= max_length - 3 # 减3是为了预留"..."的空间
+      if count_chars(title) >= max_length - 3 # 减3是为了预留"..."的空间
         # 标题过长时，只显示标题（截断）和URL
         "#{title[0...(max_length - 3)]}...#{post_url}"
       else
         # 标题未超长时，计算剩余空间给正文内容
-        remaining_length = max_length - title.length - 1 # 减1是为了标题后的换行符
+        remaining_length = max_length - count_chars(title) - 1 # 减1是为了标题后的换行符
         content_part = if remaining_length > 4 # 确保至少有空间放"..."
-          "\n#{content_text[0...(remaining_length - 3)]}..."
+          "\n#{truncate_twitter_text(content_text, remaining_length - 3)}..."
         else
           ""
         end
@@ -85,6 +85,23 @@ module Integrations
       end
     end
 
+    def count_chars(str)
+      str.each_char.map { |c| c.ascii_only? ? 1 : 2 }.sum
+    end
+
+    def truncate_twitter_text(str, max_length)
+      current_length = 0
+      chars = []
+
+      str.each_char do |c|
+        char_length = c.ascii_only? ? 1 : 2
+        break if current_length + char_length > max_length
+        current_length += char_length
+        chars << c
+      end
+
+      chars.join("")
+    end
 
     def build_post_url
       Rails.application.routes.url_helpers.article_url(
