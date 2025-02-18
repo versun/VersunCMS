@@ -7,23 +7,17 @@ class CrosspostsController < ApplicationController
   end
 
   def update
-    platforms = %w[mastodon twitter bluesky]
+    @settings = Crosspost.find_or_create_by(platform: params[:id])
+    Rails.logger.info "Updating Crosspost: #{params[:id]}"
+    # Rails.logger.info "Params: #{params.inspect}"
 
-    platforms.each do |platform|
-      settings = Crosspost.find_or_create_by(platform: platform)
-      platform_params = params[:crosspost][platform]
-
-      if platform_params.present?
-        if settings.update(platform_params.permit(:enabled, :platform))
-          Rails.logger.info "Successfully updated Crosspost: #{platform}"
-        else
-          Rails.logger.error "Failed to update Crosspost: #{platform} - #{settings.errors.full_messages}"
-          flash[:alert] = settings.errors.full_messages.join(", ")
-        end
-      end
+    if @settings.update(crosspost_params)
+      Rails.logger.info "Successfully updated Crosspost"
+      redirect_to crossposts_path, notice: "CrossPost settings updated successfully."
+    else
+      Rails.logger.error "Failed to update Crosspost: #{@settings.errors.full_messages}"
+      redirect_to crossposts_path, alert: @settings.errors.full_messages.join(", ")
     end
-
-    redirect_to crossposts_path, notice: "CrossPost 设置已成功更新。"
   end
 
 
@@ -53,9 +47,9 @@ class CrosspostsController < ApplicationController
 
   private
 
-  # def crosspost_params
-  #   params.require(:crosspost).permit(
-  #     :platform, :enabled
-  #   )
-  # end
+  def crosspost_params
+    params.require(:crosspost).permit(
+      :platform, :enabled
+    )
+  end
 end

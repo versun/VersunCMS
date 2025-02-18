@@ -21,12 +21,9 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :crossposts, only: [:index] do
-    collection do
-      patch :update  # 处理所有平台的统一更新
-    end
+  resources :crossposts, only: [ :index, :update ] do
     member do
-      post :verify   # 保持单独的验证端点
+      post :verify
     end
   end
 

@@ -4,7 +4,6 @@ class Crosspost < ApplicationRecord
   validates :platform, presence: true,
                       uniqueness: true,
                       inclusion: { in: PLATFORMS }
-  validates :access_token, presence: true, if: :enabled?
 
   scope :mastodon, -> { find_or_create_by(platform: "mastodon") }
   scope :twitter, -> { find_or_create_by(platform: "twitter") }

@@ -1,45 +1,30 @@
 <%= render 'admin/admin_bar' %>
 <h3>CrossPost Settings</h3>
-<%= form_with(url: crossposts_path, method: :patch, id: 'crosspost-form') do |f| %>
-  <div class="mastodon-section">
-    <%= fields_for :crosspost, @mastodon do |mf| %>
-      <%= mf.hidden_field :platform, value: 'mastodon' %>
-      <div class="form-group">
-        <%= mf.check_box :enabled %>
-        <%= mf.label :enabled, "Enable Mastodon CrossPost" %>
-        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'mastodon' } %>
-        <span>(Get credentials: Open Mastodon -> Preferences -> Development -> New application | Scope: profile,write:statuses)</span>
-      </div>
-    <% end %>
-  </div>
+<%= form_with(model: @mastodon, url: crosspost_path(@mastodon.platform), method: :patch) do |f| %>
+  <%= f.hidden_field :platform, value: 'mastodon' %>
+  <%= f.check_box :enabled, id: 'mastodon_enabled' %>
+  <%= f.label :enabled, "Enable Mastodon CrossPost", for: 'mastodon_enabled' %>
+  <span class="text-muted">(Get credentials: Open Mastodon -> Preferences -> Development -> New application | Scope: profile,write:statuses)</span>
+  <%= f.submit "Save", class: 'btn btn-primary' %>
+  <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'mastodon' } %>
+<% end %>
 
-  <div class="twitter-section">
-    <%= fields_for :crosspost, @twitter do |tf| %>
-      <%= tf.hidden_field :platform, value: 'twitter' %>
-      <div class="form-group">
-        <%= tf.check_box :enabled %>
-        <%= tf.label :enabled, "Enable X CrossPost" %>
-        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'twitter' } %>
-        <span>(Get credentials: <a href="https://developer.x.com">https://developer.x.com</a>.)</span>
-      </div>
-    <% end %>
-  </div>
+<%= form_with(model: @twitter, url: crosspost_path(@twitter.platform), method: :patch) do |f| %>
+  <%= f.hidden_field :platform, value: 'twitter' %>
+  <%= f.check_box :enabled, id: 'twitter_enabled' %>
+  <%= f.label :enabled, "Enable X CrossPost", for: 'twitter_enabled' %>
+  <span class="text-muted">(First, obtain X credentials from <a href="https://developer.x.com">https://developer.x.com</a>.)</span>
+  <%= f.submit "Save", class: 'btn btn-primary' %>
+  <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'twitter' } %>
+<% end %>
 
-  <div class="bluesky-section">
-    <%= fields_for :crosspost, @bluesky do |bf| %>
-      <%= bf.hidden_field :platform, value: 'bluesky' %>
-      <div class="form-group">
-        <%= bf.check_box :enabled %>
-        <%= bf.label :enabled, "Enable Bluesky CrossPost" %>
-        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'bluesky' } %>
-        <span>(Get credentials: Log in to your Bluesky account and generate an App Password in settings.)</span>
-      </div>
-    <% end %>
-  </div>
-
-  <div class="form-actions">
-    <%= f.submit "Save", class: 'btn btn-primary' %>
-  </div>
+<%= form_with(model: @bluesky, url: crosspost_path(@bluesky.platform), method: :patch) do |f| %>
+  <%= f.hidden_field :platform, value: 'bluesky' %>
+  <%= f.check_box :enabled, id: 'bluesky_enabled' %>
+  <%= f.label :enabled, "Enable Bluesky CrossPost", for: 'bluesky_enabled' %>
+  <span class="text-muted">(Get credentials: Log in to your Bluesky account and generate an App Password in settings.)</span>
+  <%= f.submit "Save", class: 'btn btn-primary' %>
+  <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'bluesky' } %>
 <% end %>
 
 <% content_for :javascript do %>
@@ -50,54 +35,56 @@
           verifyButtons.forEach(button => {
               button.addEventListener('click', function() {
                   const platform = this.dataset.platform;
-                  const section = this.closest(`div.${platform}-section`);
-                  const formData = new FormData();
+                  const form = this.closest('form');
+                  const formData = new FormData(form);
+                  const button = this;
 
-                  // 获取当前平台部分的所有表单数据
-                  section.querySelectorAll('input').forEach(input => {
-                      formData.append(`crosspost[${input.name.split('[').pop().replace(']', '')}]`, input.value);
+                  // Convert FormData to JSON object
+                  const jsonData = {};
+                  formData.forEach((value, key) => {
+                      if (key.startsWith('crosspost')) {
+                          const cleanKey = key.replace('crosspost[', '').replace(']', '');
+                          jsonData[cleanKey] = value;
+                      }
                   });
 
-                  // 禁用按钮并显示加载状态
-                  const button = this;
+                  // Disable button and show loading state
                   button.disabled = true;
                   const originalText = button.innerHTML;
                   button.innerHTML = 'Verifying...';
 
                   fetch(`/crossposts/${platform}/verify`, {
                       method: 'POST',
-                      body: JSON.stringify({
-                          crosspost: Object.fromEntries(formData)
-                      }),
+                      body: JSON.stringify({ crosspost: jsonData }),
                       headers: {
                           'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
                           'Content-Type': 'application/json'
                       },
-                      credentials: 'same-origin'
-                  })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'success') {
-                            alert(data.message);
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => {
-                        alert('An error occurred during verification.');
-                        console.error('Error:', error);
-                    })
-                    .finally(() => {
-                        button.disabled = false;
-                        button.innerHTML = originalText;
-                    });
+                      credentials
+                      .then(response => {
+                          if (!response.ok) {
+                              throw new Error(`HTTP error! status: ${response.status}`);
+                          }
+                          return response.json();
+                      })
+                        .then(data => {
+                            if (data.status === 'success') {
+                                alert(data.message);
+                            } else {
+                                alert(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            alert('An error occurred during verification.');
+                            console.error('Error:', error);
+                        })
+                        .finally(() => {
+                            // Re-enable button and restore original text
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+                        });
+                  });
               });
           });
-      });
   </script>
 <% end %>
