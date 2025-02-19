@@ -10,6 +10,13 @@ trix-editor {
   min-height: 5em;
   outline: none; }
 
+trix-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: white;
+}
+
 trix-toolbar * {
   box-sizing: border-box; }
 
