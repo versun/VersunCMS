@@ -47,6 +47,7 @@ class SettingsController < ApplicationController
       :custom_css,
       :time_zone,
       :head_code,
+      :giscus,
       :file,
       :tool_code,
       social_links: {},
