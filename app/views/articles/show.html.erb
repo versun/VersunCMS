@@ -1,9 +1,10 @@
-<hr>
+<% content_for :title do %>
+  <%= @article.title %> | <%= site_settings[:title] %>
+<% end %>
 <article>
-  <%= render "article_meta", article:@article%>
-  <div class="article-content">
-    <%= @article.content %>
-  </div>
+  <small><%= @article.created_at.to_date %></small>
+  <h2><%= @article.title %></h2>
+  <%= @article.content %>
 </article>
 
 <% if @article.social_media_posts.present? %>
@@ -19,3 +20,5 @@
     <%= link_to "Bluesky", bluesky_url, target: "_blank" %>.
   <% end %>
 <% end %>
+<hr>
+<div class="giscus"></div>

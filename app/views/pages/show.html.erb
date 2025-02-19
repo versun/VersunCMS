@@ -1,4 +1,6 @@
-<hr>
+<% content_for :title do %>
+  <%= @page.title %> | <%= site_settings[:title] %>
+<% end %>
 <article>
   <div class="article-content">
     <%= @page.content %>
