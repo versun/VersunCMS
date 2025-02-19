@@ -40,6 +40,9 @@ class Setting < ApplicationRecord
     },
     status_page: {
       icon_path: "status.svg"
+    },
+    web_analytics: {
+      icon_path: "chart.svg"
     }
   }.freeze
 
