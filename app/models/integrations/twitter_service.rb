@@ -7,14 +7,14 @@ module Integrations
     end
 
     def verify(settings)
-      if settings[:client_id].blank? || settings[:client_secret].blank? || settings[:access_token].blank?
+      if settings[:access_token_secret].blank? || settings[:access_token].blank? || settings[:api_key].blank? || settings[:api_key_secret].blank?
         return { success: false, error: "Client ID, client secret, and access token are required" }
       end
 
       begin
           client = X::Client.new(
-            api_key: settings[:client_id],
-            api_key_secret: settings[:client_secret],
+            api_key: settings[:api_key],
+            api_key_secret: settings[:api_key_secret],
             access_token: settings[:access_token],
             access_token_secret: settings[:access_token_secret]
           )
@@ -55,8 +55,8 @@ module Integrations
 
     def create_client
       X::Client.new(
-        api_key: @settings.client_id,
-        api_key_secret: @settings.client_secret,
+        api_key: @settings.api_key,
+        api_key_secret: @settings.api_key_secret,
         access_token: @settings.access_token,
         access_token_secret: @settings.access_token_secret
       )

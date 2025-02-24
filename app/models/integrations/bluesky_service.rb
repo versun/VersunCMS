@@ -8,8 +8,8 @@ module Integrations
       @settings = Crosspost.bluesky
       return unless @settings.present?
 
-      @username = @settings.access_token
-      @password = @settings.access_token_secret
+      @username = @settings.username
+      @password = @settings.app_password
       @server_url = "https://bsky.social/xrpc" if @settings.server_url.blank?
 
       if (token_data = Rails.cache.read(TOKEN_CACHE_KEY))
@@ -18,7 +18,7 @@ module Integrations
     end
 
     def verify(settings)
-      if settings[:access_token].blank? || settings[:access_token_secret].blank?
+      if settings[:username].blank? || settings[:app_password].blank?
         return { success: false, error: "Access token and access token secret are required" }
       end
 
@@ -28,8 +28,8 @@ module Integrations
       original_server_url = @server_url
 
       begin
-        @username = settings[:access_token]
-        @password = settings[:access_token_secret]
+        @username = settings[:username]
+        @password = settings[:app_password]
         @server_url = settings[:server_url]
 
         # Clear any existing token data
@@ -85,7 +85,7 @@ module Integrations
       # This is the full atproto URI
       # Ex: "at://did:plc:axbcdefg12345/app.bsky.feed.post/abcdefg12345"
       if response_body["uri"].present?
-        "https://bsky.app/profile/#{@settings.access_token}/post/#{response_body["uri"].split('/').last}"
+        "https://bsky.app/profile/#{@settings.username}/post/#{response_body["uri"].split('/').last}"
       end
     end
 
