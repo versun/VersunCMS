@@ -59,9 +59,8 @@ class CrosspostsController < ApplicationController
   private
 
   def crosspost_params
-    params.require(:crosspost).permit(
-      :platform, :server_url, :access_token, :access_token_secret,
-      :client_id, :client_secret, :enabled
+    params.expect(crosspost: [
+      :platform, :server_url, :enabled, :access_token, :access_token_secret, :client_id, :client_secret, :client_key, :api_key, :api_key_secret, :app_password, :username]
     )
   end
 end
