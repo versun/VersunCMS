@@ -50,8 +50,14 @@ class Article < ApplicationRecord
   def generate_title
     self.title = DateTime.current.strftime("%Y-%m-%d %H:%M") if title.blank?
   end
+
   def generate_slug
-    self.slug = title.parameterize if slug.blank?
+    if slug.blank?
+      self.slug = title.parameterize
+    end
+
+    # Remove dots from slug if present
+    self.slug = slug.gsub(".", "") if slug.include?(".")
   end
 
   def should_publish?
