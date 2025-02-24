@@ -8,7 +8,7 @@ module Integrations
 
     def verify(settings)
       if settings[:access_token_secret].blank? || settings[:access_token].blank? || settings[:api_key].blank? || settings[:api_key_secret].blank?
-        return { success: false, error: "Client ID, client secret, and access token are required" }
+        return { success: false, error: "Please fill in all information" }
       end
 
       begin

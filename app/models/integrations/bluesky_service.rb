@@ -19,7 +19,7 @@ module Integrations
 
     def verify(settings)
       if settings[:username].blank? || settings[:app_password].blank?
-        return { success: false, error: "Access token and access token secret are required" }
+        return { success: false, error: "App Password and username are required" }
       end
 
       # Temporarily store the current credentials
