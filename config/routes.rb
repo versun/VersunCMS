@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  get "newsletters/index"
+  get "newsletters/edit"
+  get "newsletters/update"
   # Defines the root path route ("/")
   root "articles#index"
   resources :users
@@ -41,6 +44,11 @@ Rails.application.routes.draw do
   get "/admin/posts/new", to: "articles#new"
   get "/admin/pages" => "admin#pages"
   get "/admin/pages/new", to: "pages#new"
+
+
+  get "/admin/newsletters", to: "newsletters#edit", as: "edit_newsletter"
+  # get '/admin/newsletters/edit', to: 'newsletters#edit', as: 'edit_newsletter'
+  patch "/admin/newsletters", to: "newsletters#update", as: "newsletter"
 
   scope path: Rails.application.config.article_route_prefix do
     get "/" => "articles#index", as: :articles
