@@ -7,7 +7,7 @@ class NewslettersController < ApplicationController
 
   def update
     if @listmonk.update(listmonk_params)
-      redirect_to edit_newsletter, notice: 'Listmonk配置已更新'
+      redirect_to edit_newsletter_path, notice: 'Listmonk配置已更新'
     else
       @lists = @listmonk.fetch_lists if @listmonk.api_key.present? && @listmonk.url.present?
       render :edit
