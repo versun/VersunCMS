@@ -39,3 +39,7 @@
 
 # JB
 /.idea
+
+# Replit
+.replit
+replit.nix
