@@ -1,20 +1,21 @@
-<h1>Newsletter设置</h1>
+<%= render 'admin/admin_bar' %>
+
+<h3>Newsletter设置</h3>
 
 <%= form_with(model: @listmonk, url: edit_newsletter_path, method: :patch) do |form| %>
-  <% if @listmonk.errors.any? %>
-    <div>
-      <h2><%= pluralize(@listmonk.errors.count, "error") %> 阻止保存:</h2>
-      <ul>
-        <% @listmonk.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
+  <div class="form-group">
+    <%= form.label :enabled, "Enable Newsletter" %>
+    <%= form.check_box :enabled %>
+  </div>
 
   <div>
     <%= form.label :url, "Listmonk URL" %>
-    <%= form.text_field :url %>
+    <%= form.text_field :url, placeholder: "https://example.com"%>
+  </div>
+
+  <div>
+    <%= form.label :username, "Username" %>
+    <%= form.text_field :username %>
   </div>
 
   <div>
@@ -24,25 +25,14 @@
 
   <% if @lists.present? %>
     <div>
-      <%= form.label :selected_list_id, "选择列表" %>
-      <%= form.select :selected_list_id, @lists.map { |l| [l["name"], l["id"]] }, include_blank: "请选择列表" %>
+      <%= form.label :list_id, "List" %>
+      <%= form.select :list_id, @lists.map { |l| [l["name"], l["id"]] }, include_blank: "Select a List" %>
+      <%= form.label :template_id, "Template" %>
+      <%= form.select :template_id, @templates.map { |l| [l["name"], l["id"]] }, include_blank: "Select a Template" %>
     </div>
-
-    <h2>可用列表</h2>
-    <ul>
-      <% @lists.each do |list| %>
-        <li>
-          <%= list["name"] %>
-          (<%= list["id"] %>)
-          <% if @listmonk.selected_list_id == list["id"] %>
-            [当前选择]
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
   <% end %>
 
   <div>
-    <%= form.submit "保存" %>
+    <%= form.submit "Save" %>
   </div>
 <% end %>

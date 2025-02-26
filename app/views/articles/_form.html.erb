@@ -75,7 +75,17 @@
         
         <%= link_to "Go to Cross Post Settings", crossposts_path %>
       </fieldset>
-      
+
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Newsletter</legend>
+        <% if Listmonk.first&.enabled? %>
+          <div>
+            <%= form.check_box :send_newsletter %>
+            <%= form.label :send_newsletter, "Send Newsletter" %>
+          </div>
+        <% end %>
+      </fieldset>
+
       <fieldset class="bordered-container bordered-fieldset">
         <legend>Actions</legend>
           <div>

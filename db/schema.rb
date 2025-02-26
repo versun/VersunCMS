@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_25_124551) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_26_213628) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -73,6 +73,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_124551) do
     t.boolean "crosspost_bluesky", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "send_newsletter", default: false, null: false
     t.index ["slug"], name: "index_articles_on_slug", unique: true
   end
 
@@ -96,9 +97,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_25_124551) do
   end
 
   create_table "listmonks", force: :cascade do |t|
+    t.boolean "enabled", default: false, null: false
+    t.string "username"
     t.string "api_key"
     t.string "url"
     t.integer "list_id"
+    t.integer "template_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

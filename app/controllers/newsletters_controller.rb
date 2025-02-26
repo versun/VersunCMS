@@ -2,12 +2,16 @@ class NewslettersController < ApplicationController
   before_action :set_listmonk, only: [ :edit, :update]
 
   def edit
-    @lists = @listmonk.fetch_lists if @listmonk.persisted? && @listmonk.api_key.present? && @listmonk.url.present?
+    if @listmonk.persisted? && @listmonk.api_key.present? && @listmonk.url.present?
+      @lists = @listmonk.fetch_lists
+      @templates  = @listmonk.fetch_templates
+    end
+
   end
 
   def update
     if @listmonk.update(listmonk_params)
-      redirect_to edit_newsletter_path, notice: 'Listmonk配置已更新'
+      redirect_to edit_newsletter_path, notice: 'Listmonk updated.'
     else
       @lists = @listmonk.fetch_lists if @listmonk.api_key.present? && @listmonk.url.present?
       render :edit
@@ -21,7 +25,6 @@ class NewslettersController < ApplicationController
   end
 
   def listmonk_params
-    params.expect( listmonk: [ :api_key, :url, :selected_list_id ])
-    # params.require(:listmonk).permit(:api_key, :url, :selected_list_id)
+    params.expect( listmonk: [ :enabled, :username, :api_key, :url, :list_id, :template_id ])
   end
 end
