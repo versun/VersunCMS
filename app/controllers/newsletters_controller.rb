@@ -16,7 +16,7 @@ class NewslettersController < ApplicationController
     @activity_logs = ActivityLog.track_activity("newsletter")
 
     if @listmonk.update(listmonk_params)
-      redirect_to newsletter_path, notice: 'Listmonk settings updated.'
+      redirect_to newsletter_path, notice: "Listmonk settings updated."
     else
       render :edit
     end
