@@ -1,3 +1,6 @@
+# 2025-02-28
+添加了newsletter功能，后端搭配listmonk
+
 # 2025-02-14
 page的路径不能设置为“”，即直接从 / 开始，这样在编辑page时，会首先匹配article的路由，导致page的数据发送到了article control，所以还是默认的从/page路由吧
 

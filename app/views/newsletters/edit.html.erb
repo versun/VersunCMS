@@ -2,7 +2,7 @@
 
 <h3>Newsletter设置</h3>
 
-<%= form_with(model: @listmonk, url: edit_newsletter_path, method: :patch) do |form| %>
+<%= form_with(model: @listmonk, url: update_newsletter_path, method: :patch) do |form| %>
   <div class="form-group">
     <%= form.label :enabled, "Enable Newsletter" %>
     <%= form.check_box :enabled %>
@@ -26,9 +26,9 @@
   <% if @lists.present? %>
     <div>
       <%= form.label :list_id, "List" %>
-      <%= form.select :list_id, @lists.map { |l| [l["name"], l["id"]] }, include_blank: "Select a List" %>
+      <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @selected_list), include_blank: "Select a List" %>
       <%= form.label :template_id, "Template" %>
-      <%= form.select :template_id, @templates.map { |l| [l["name"], l["id"]] }, include_blank: "Select a Template" %>
+      <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @selected_template), include_blank: "Select a Template" %>
     </div>
   <% end %>
 
@@ -36,3 +36,34 @@
     <%= form.submit "Save" %>
   </div>
 <% end %>
+<h5 class="mb-0">Logs</h5>
+<table class="table table-striped">
+  <thead>
+  <tr>
+    <th>Time</th>
+    <th>Level</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @activity_logs.each do |log| %>
+    <tr class="<%= case log.level&.to_sym
+                   when :error then 'table-danger'
+                   when :warn then 'table-warning'
+                   when :info then 'table-success'
+                   else ''
+                   end %>">
+      <td><%= log.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
+      <td><span class="badge <%= case log.level&.to_sym
+                                 when :error then 'bg-danger'
+                                 when :warn then 'bg-warning'
+                                 when :info then 'bg-success'
+                                 else 'bg-secondary'
+                                 end %>">
+        <%= log.level&.capitalize || 'Unknown' %>
+      </span></td>
+      <td><%= log.description %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
