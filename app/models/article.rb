@@ -79,7 +79,7 @@ class Article < ApplicationRecord
     return false unless publish? && has_crosspost_enabled
 
     crossposts_changed = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter? || saved_change_to_crosspost_bluesky?
-    became_published = saved_change_to_status? && status_previously_was != "publish" #应该只在内容首次发布或从非发布状态变为发布状态时触发，而不是每次内容更新都触发
+    became_published = saved_change_to_status? && status_previously_was != "publish" # 应该只在内容首次发布或从非发布状态变为发布状态时触发，而不是每次内容更新都触发
 
     new_record? || crossposts_changed || became_published
   end
@@ -92,7 +92,7 @@ class Article < ApplicationRecord
 
   def handle_newsletter
     return false unless publish? && saved_change_to_send_newsletter?
-    became_published = saved_change_to_status? && status_previously_was != "publish" #应该只在内容首次发布或从非发布状态变为发布状态时触发，而不是每次内容更新都触发
+    became_published = saved_change_to_status? && status_previously_was != "publish" # 应该只在内容首次发布或从非发布状态变为发布状态时触发，而不是每次内容更新都触发
 
     if send_newsletter? && became_published
       ListmonkSenderJob.perform_later(id)
