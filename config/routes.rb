@@ -44,11 +44,8 @@ Rails.application.routes.draw do
   get "/admin/posts/new", to: "articles#new"
   get "/admin/pages" => "admin#pages"
   get "/admin/pages/new", to: "pages#new"
-
-
-  get "/admin/newsletters", to: "newsletters#edit", as: "edit_newsletter"
-  # get '/admin/newsletters/edit', to: 'newsletters#edit', as: 'edit_newsletter'
-  patch "/admin/newsletters", to: "newsletters#update", as: "newsletter"
+  get "/admin/newsletters", to: "newsletters#edit", as: "newsletter"
+  patch "/admin/newsletters", to: "newsletters#update", as: "update_newsletter"
 
   scope path: Rails.application.config.article_route_prefix do
     get "/" => "articles#index", as: :articles
