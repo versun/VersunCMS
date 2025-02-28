@@ -1,7 +1,7 @@
 require "x"
 module Integrations
   class TwitterService
-    def initialize()
+    def initialize
       @settings = Crosspost.twitter
     end
 
@@ -73,7 +73,7 @@ module Integrations
       )
     end
 
-    def build_content(slug, title, content_text, description_text=nil)
+    def build_content(slug, title, content_text, description_text = nil)
       post_url = "\nRead more:#{build_post_url(slug)}"
       max_length = 280 - 34 # URL固定23个字符+11个"\nRead more:"字符
 

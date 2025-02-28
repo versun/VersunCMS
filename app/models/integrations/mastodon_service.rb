@@ -3,7 +3,7 @@ require "uri"
 
 module Integrations
   class MastodonService
-    def initialize()
+    def initialize
       @settings = Crosspost.mastodon
     end
 
@@ -88,7 +88,7 @@ module Integrations
     #   )
     # end
 
-    def build_content(slug, title, content_text, description_text=nil)
+    def build_content(slug, title, content_text, description_text = nil)
       post_url = build_post_url(slug)
       content_text = description_text || content_text
       max_content_length = 500 - post_url.length - 30 - title.length

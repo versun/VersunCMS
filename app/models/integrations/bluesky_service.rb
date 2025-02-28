@@ -3,7 +3,7 @@ module Integrations
   class BlueskyService
     TOKEN_CACHE_KEY = :bluesky_token_data
 
-    def initialize()
+    def initialize
       @settings = Crosspost.bluesky
       return unless @settings.present?
 
@@ -112,7 +112,7 @@ module Integrations
 
     private
 
-    def build_content(slug, title, content_text, description_text=nil)
+    def build_content(slug, title, content_text, description_text = nil)
       post_url = build_post_url(slug)
       content_text = description_text || content_text
       max_content_length = 300 - post_url.length - 30 - title.length
