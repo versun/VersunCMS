@@ -75,28 +75,58 @@ class Article < ApplicationRecord
   end
 
   def should_crosspost?
+    # 以下情况下应该发送post
+    # 1. 文章状态从非发布状态变为发布状态，且 has_crosspost_enabled 为 true
+    # 2. 文章状态为发布状态，且 has_crosspost_enabled 从 false 变为 true
+    # 以下情况下不应该发送post
+    # 1. 文章状态为非发布状态
+    # 2. 文章状态为发布状态，且 has_crosspost_enabled 为 false
+    # 3. 文章状态为发布状态，但 has_crosspost_enabled 没有变化，依旧是 true，因为这种情况下不是首次发布，只是内容更新
     has_crosspost_enabled = crosspost_mastodon? || crosspost_twitter? || crosspost_bluesky?
     return false unless publish? && has_crosspost_enabled
 
-    crossposts_changed = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter? || saved_change_to_crosspost_bluesky?
-    became_published = saved_change_to_status? && status_previously_was != "publish" # 应该只在内容首次发布或从非发布状态变为发布状态时触发，而不是每次内容更新都触发
+    any_crosspost_enabled_changed_to_true = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter? || saved_change_to_crosspost_bluesky?
+    became_published = saved_change_to_status? && status_previously_was != "publish" # 防止每次内容更新都触发
 
-    new_record? || crossposts_changed || became_published
+    any_crosspost_enabled_changed_to_true || became_published
   end
 
   def handle_crosspost
-    if should_crosspost?
-      CrosspostArticleJob.perform_later(id)
-    end
+    CrosspostArticleJob.perform_later(id) if should_crosspost?
+  end
+
+  def should_send_newsletter?
+    # 以下情况下应该发送邮件
+    # 1. 文章状态从非发布状态变为发布状态，且 send_newsletter 为 true
+    # 2. 文章状态为发布状态，且 send_newsletter 从 false 变为 true
+    # 以下情况下不应该发送邮件
+    # 1. 文章状态为非发布状态
+    # 2. 文章状态为发布状态，但 send_newsletter 为 false
+    # 3. 文章状态为发布状态，但 send_newsletter 没有变化，依旧是 true，因为这种情况下不是首次发布，只是内容更新
+    # 例子：
+    # 1. 新建文章，状态为草稿，send_newsletter 为 false，不发送邮件
+    # 2. 新建文章，状态为草稿，send_newsletter 为 true，不发送邮件
+    # 3. 新建文章，状态为发布，send_newsletter 为 false，不发送邮件
+    # 4. 新建文章，状态为发布，send_newsletter 为 true，发送邮件
+    # 5. 更新文章，状态从草稿变为发布，send_newsletter 为 false，不发送邮件
+    # 6. 更新文章，状态从草稿变为发布，send_newsletter 为 true，发送邮件
+    # 7. 更新文章，状态从发布变为发布，send_newsletter 变为 true，发送邮件
+    # 8. 更新文章，状态从发布变为发布，send_newsletter 没有变化，不发送邮件
+    # 9. 更新文章，状态从发布变为草稿，send_newsletter 为 false，不发送邮件
+    # 10. 更新文章，状态从发布变为草稿，send_newsletter 为 true，不发送邮件
+    # 11. 更新文章，状态从草稿变为草稿，send_newsletter 为 false，不发送邮件
+    # 12. 更新文章，状态从草稿变为草稿，send_newsletter 为 true，不发送邮件
+
+    return false unless publish? && send_newsletter?
+
+    # 检查文章是否从非发布状态变为发布状态
+    became_published = saved_change_to_status? && status_previously_was != "publish"
+
+    became_published || saved_change_to_send_newsletter?
   end
 
   def handle_newsletter
-    return false unless publish? && saved_change_to_send_newsletter?
-    became_published = saved_change_to_status? && status_previously_was != "publish" # 应该只在内容首次发布或从非发布状态变为发布状态时触发，而不是每次内容更新都触发
-
-    if send_newsletter? && became_published
-      ListmonkSenderJob.perform_later(id)
-    end
+    ListmonkSenderJob.perform_later(id) if should_send_newsletter?
   end
 
   def cleanup_empty_social_media_posts
