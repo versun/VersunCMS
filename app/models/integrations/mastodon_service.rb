@@ -3,8 +3,7 @@ require "uri"
 
 module Integrations
   class MastodonService
-    def initialize(article)
-      @article = article
+    def initialize()
       @settings = Crosspost.mastodon
     end
 
@@ -34,7 +33,7 @@ module Integrations
 
     def post(article)
       return unless @settings&.enabled?
-      status_text = build_status
+      status_text = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
       uri = URI.join(@settings[:server_url], "/api/v1/statuses")
 
       begin
@@ -52,14 +51,14 @@ module Integrations
 
         if response.is_a?(Net::HTTPSuccess)
           json_response = JSON.parse(response.body)
-          Rails.logger.info "Successfully posted article #{@article.id} to Mastodon"
+          Rails.logger.info "Successfully posted article #{article.id} to Mastodon"
           json_response["url"]
         else
-          Rails.logger.error "Failed to post article #{@article.id} to Mastodon: #{response.code} #{response.message}"
+          Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{response.code} #{response.message}"
           nil
         end
       rescue => e
-        Rails.logger.error "Failed to post article #{@article.id} to Mastodon: #{e.message}"
+        Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{e.message}"
         nil
       end
     end
@@ -73,17 +72,17 @@ module Integrations
     #   )
     # end
 
-    def build_status
-      post_url = build_post_url
-      content_text = @article.description.presence || @article.content.body.to_plain_text
-      max_content_length = 500 - post_url.length - 30 - @article.title.length
+    def build_content(slug, title, content_text, description_text=nil)
+      post_url = build_post_url(slug)
+      content_text = description_text || content_text
+      max_content_length = 500 - post_url.length - 30 - title.length
 
-      "#{@article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
+      "#{title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
     end
 
-    def build_post_url
+    def build_post_url(slug)
       Rails.application.routes.url_helpers.article_url(
-        @article.slug,
+        slug,
         host: Setting.first.url.sub(%r{https?://}, "")
       )
     end

@@ -3,8 +3,7 @@ module Integrations
   class BlueskyService
     TOKEN_CACHE_KEY = :bluesky_token_data
 
-    def initialize(article)
-      @article = article
+    def initialize()
       @settings = Crosspost.bluesky
       return unless @settings.present?
 
@@ -53,14 +52,14 @@ module Integrations
     def post(article)
       return unless @settings&.enabled?
 
-      content = build_content
+      content = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
 
       begin
         response = skeet(content)
-        Rails.logger.info "Successfully posted article #{@article.title} to Bluesky"
+        Rails.logger.info "Successfully posted article #{article.title} to Bluesky"
         response
       rescue => e
-        Rails.logger.error "Failed to post article #{@article.title} to Bluesky: #{e.message}"
+        Rails.logger.error "Failed to post article #{article.title} to Bluesky: #{e.message}"
         nil
       end
     end
@@ -102,17 +101,17 @@ module Integrations
 
     private
 
-    def build_content
-      post_url = build_post_url
-      content_text = @article.description.presence || @article.content.body.to_plain_text
-      max_content_length = 300 - post_url.length - 30 - @article.title.length
+    def build_content(slug, title, content_text, description_text=nil)
+      post_url = build_post_url(slug)
+      content_text = description_text || content_text
+      max_content_length = 300 - post_url.length - 30 - title.length
 
-      "#{@article.title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
+      "#{title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
     end
 
-    def build_post_url
+    def build_post_url(slug)
       Rails.application.routes.url_helpers.article_url(
-        @article.slug,
+        slug,
         host: Setting.first.url.sub(%r{https?://}, "")
       )
     end

@@ -1,8 +1,7 @@
 require "x"
 module Integrations
   class TwitterService
-    def initialize(article)
-      @article = article
+    def initialize()
       @settings = Crosspost.twitter
     end
 
@@ -36,7 +35,7 @@ module Integrations
       return unless @settings&.enabled?
 
       client = create_client
-      tweet = build_tweet
+      tweet = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
 
       begin
         user = client.get("users/me")
@@ -46,7 +45,7 @@ module Integrations
         id = response["data"]["id"] if response && response["data"] && response["data"]["id"]
         "https://x.com/#{username}/status/#{id}" if username && id
       rescue => e
-        Rails.logger.error "Failed to post article #{@article.id} to X: #{e.message}"
+        Rails.logger.error "Failed to post article #{article.id} to X: #{e.message}"
         nil
       end
     end
@@ -62,12 +61,11 @@ module Integrations
       )
     end
 
-    def build_tweet
-      post_url = "\nRead more:#{build_post_url}"
+    def build_content(slug, title, content_text, description_text=nil)
+      post_url = "\nRead more:#{build_post_url(slug)}"
       max_length = 280 - 34 # URL固定23个字符+11个"\nRead more:"字符
 
-      title = @article.title
-      content_text = @article.description.presence || @article.content.body.to_plain_text
+      content_text = description_text || content_text
 
       if count_chars(title) >= max_length - 3 # 减3是为了预留"..."的空间
         # 标题过长时，只显示标题（截断）和URL
@@ -103,9 +101,9 @@ module Integrations
       chars.join("")
     end
 
-    def build_post_url
+    def build_post_url(slug)
       Rails.application.routes.url_helpers.article_url(
-        @article.slug,
+        slug,
         host: Setting.first.url.sub(%r{https?://}, "")
       )
     end
