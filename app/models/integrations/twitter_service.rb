@@ -43,9 +43,21 @@ module Integrations
         response = client.post("tweets", { text: tweet }.to_json)
 
         id = response["data"]["id"] if response && response["data"] && response["data"]["id"]
+        ActivityLog.create!(
+          action: "crosspost",
+          target: "crosspost",
+          level: :info,
+          description: "Successfully posted article #{article.title} to Twitter"
+        )
+
         "https://x.com/#{username}/status/#{id}" if username && id
       rescue => e
-        Rails.logger.error "Failed to post article #{article.id} to X: #{e.message}"
+        ActivityLog.create!(
+          action: "crosspost",
+          target: "crosspost",
+          level: :error,
+          description: "Failed to post article #{article.title} to X: #{e.message}"
+        )
         nil
       end
     end

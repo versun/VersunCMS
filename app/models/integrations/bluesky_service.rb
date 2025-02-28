@@ -55,11 +55,22 @@ module Integrations
       content = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
 
       begin
-        response = skeet(content)
-        Rails.logger.info "Successfully posted article #{article.title} to Bluesky"
-        response
+        posted_url = skeet(content)
+        ActivityLog.create!(
+          action: "crosspost",
+          target: "crosspost",
+          level: :info,
+          description: "Successfully posted article #{article.title} to Bluesky"
+        )
+
+        posted_url
       rescue => e
-        Rails.logger.error "Failed to post article #{article.title} to Bluesky: #{e.message}"
+        ActivityLog.create!(
+          action: "crosspost",
+          target: "crosspost",
+          level: :error,
+          description: "Failed to post article #{article.title} to Bluesky: #{e.message}"
+        )
         nil
       end
     end

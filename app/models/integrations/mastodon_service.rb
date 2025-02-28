@@ -51,14 +51,30 @@ module Integrations
 
         if response.is_a?(Net::HTTPSuccess)
           json_response = JSON.parse(response.body)
-          Rails.logger.info "Successfully posted article #{article.id} to Mastodon"
+          ActivityLog.create!(
+            action: "crosspost",
+            target: "crosspost",
+            level: :info,
+            description: "Successfully posted article #{article.title} to Mastodon"
+          )
+
           json_response["url"]
         else
-          Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{response.code} #{response.message}"
+          ActivityLog.create!(
+            action: "crosspost",
+            target: "crosspost",
+            level: :error,
+            description: "Failed to post article #{article.title} to Mastodon: #{e.message}"
+          )
           nil
         end
       rescue => e
-        Rails.logger.error "Failed to post article #{article.id} to Mastodon: #{e.message}"
+        ActivityLog.create!(
+          action: "crosspost",
+          target: "crosspost",
+          level: :error,
+          description: "Failed to post article #{article.title} to Mastodon: #{e.message}"
+        )
         nil
       end
     end

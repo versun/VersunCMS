@@ -109,6 +109,38 @@
   <% end %>
 </fieldset>
 
+<h5 class="mb-0">Logs</h5>
+<table class="table table-striped">
+  <thead>
+  <tr>
+    <th>Time</th>
+    <th>Level</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @activity_logs.each do |log| %>
+    <tr class="<%= case log.level&.to_sym
+                   when :error then 'table-danger'
+                   when :warn then 'table-warning'
+                   when :info then 'table-success'
+                   else ''
+                   end %>">
+      <td><%= log.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
+      <td><span class="badge <%= case log.level&.to_sym
+                                 when :error then 'bg-danger'
+                                 when :warn then 'bg-warning'
+                                 when :info then 'bg-success'
+                                 else 'bg-secondary'
+                                 end %>">
+        <%= log.level&.capitalize || 'Unknown' %>
+      </span></td>
+      <td><%= log.description %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+
 <% content_for :javascript do %>
 <script>
 document.addEventListener('turbo:load', function() {

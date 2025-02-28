@@ -3,25 +3,27 @@ class CrosspostsController < ApplicationController
     @mastodon = Crosspost.mastodon
     @twitter = Crosspost.twitter
     @bluesky = Crosspost.bluesky
+    @activity_logs = ActivityLog.track_activity("crosspost")
   end
 
   def update
+    @activity_logs = ActivityLog.track_activity("crosspost")
     @settings = Crosspost.find_or_create_by(platform: params[:id])
-    Rails.logger.info "Updating Crosspost: #{params[:id]}"
+    # Rails.logger.info "Updating Crosspost: #{params[:id]}"
     # Rails.logger.info "Params: #{params.inspect}"
 
     if @settings.update(crosspost_params)
-      Rails.logger.info "Successfully updated Crosspost"
+      # Rails.logger.info "Successfully updated Crosspost"
       redirect_to crossposts_path, notice: "CrossPost settings updated successfully."
     else
-      Rails.logger.error "Failed to update Crosspost: #{@settings.errors.full_messages}"
+      # Rails.logger.error "Failed to update Crosspost: #{@settings.errors.full_messages}"
       redirect_to crossposts_path, alert: @settings.errors.full_messages.join(", ")
     end
   end
 
   def verify
-    Rails.logger.info "Verifying #{params[:id]} platform"
-    Rails.logger.info "Params: #{params.inspect}"
+    # Rails.logger.info "Verifying #{params[:id]} platform"
+    # Rails.logger.info "Params: #{params.inspect}"
 
     begin
       crosspost = params[:crosspost]
@@ -50,8 +52,8 @@ class CrosspostsController < ApplicationController
         render json: { status: "error", message: results[:error] }
       end
     rescue => e
-      Rails.logger.error "Verification error for #{params[:id]}: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
+      # Rails.logger.error "Verification error for #{params[:id]}: #{e.message}"
+      # Rails.logger.error e.backtrace.join("\n")
       render json: { status: "error", message: "Error: #{e.message}" }, status: :unprocessable_entity
     end
   end
