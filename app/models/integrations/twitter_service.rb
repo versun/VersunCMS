@@ -77,7 +77,7 @@ module Integrations
       post_url = "\nRead more:#{build_post_url(slug)}"
       max_length = 280 - 34 # URL固定23个字符+11个"\nRead more:"字符
 
-      content_text = description_text || content_text
+      content_text = description_text.presence || content_text
 
       if count_chars(title) >= max_length - 3 # 减3是为了预留"..."的空间
         # 标题过长时，只显示标题（截断）和URL
