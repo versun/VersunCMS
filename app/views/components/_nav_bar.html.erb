@@ -1,9 +1,9 @@
 <nav> 
   <div class="navbar-items">
     <% if navbar_items.present? %>
-      <% navbar_items.each do |item| %>
-        <span class="navbar-item">
-          <%= link_to item.title, page_path(item) %>
+      <% navbar_items.each do |page| %>
+        <span class="navbar-page">
+          <%= link_to page.title, page_link_path(page), page_link_attributes(page) %>
         </span> | 
       <% end %>     
     <% end %>

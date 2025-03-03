@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_26_213628) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_03_121724) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -114,6 +114,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_26_213628) do
     t.integer "page_order", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "redirect_url"
     t.index ["slug"], name: "index_pages_on_slug", unique: true
   end
 

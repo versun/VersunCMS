@@ -30,7 +30,7 @@ module CacheableSettings
 
     def navbar_items
       Rails.cache.fetch("settings:navbar_items", expires_in: 1.hour) do
-        Page.published.order(page_order: :desc).select(:id, :title, :slug)
+        Page.published.order(page_order: :desc).select(:id, :title, :slug, :redirect_url)
       end
     end
 
