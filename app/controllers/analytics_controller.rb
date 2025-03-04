@@ -11,15 +11,25 @@ class AnalyticsController < ApplicationController
     end
     @visits_by_path = visits_count.sort_by { |_, count| -count }.first(10).to_h
 
-    # 按引荐来源数量从大到小排序
     @referrers = Ahoy::Visit.group(:referrer)
                             .count
                             .reject { |k, _| k.nil? }
                             .sort_by { |_, count| -count }
                             .to_h
 
-    @browsers = Ahoy::Visit.group(:browser).count
-    @operating_systems = Ahoy::Visit.group(:os).count
-    @devices = Ahoy::Visit.group(:device_type).count
+    @browsers = Ahoy::Visit.group(:browser)
+                           .count
+                           .sort_by { |_, count| -count }
+                           .to_h
+
+    @operating_systems = Ahoy::Visit.group(:os)
+                                    .count
+                                    .sort_by { |_, count| -count }
+                                    .to_h
+
+    @devices = Ahoy::Visit.group(:device_type)
+                          .count
+                          .sort_by { |_, count| -count }
+                          .to_h
   end
 end
