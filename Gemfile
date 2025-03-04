@@ -9,6 +9,8 @@ gem "aws-sdk-s3"
 gem "open-uri"
 gem "feedjira"
 gem "will_paginate"
+gem "ahoy_matey"
+#gem "groupdate"
 ##
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"

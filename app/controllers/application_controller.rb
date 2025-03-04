@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  after_action :track_action
+  
   include Authentication
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
@@ -6,6 +8,12 @@ class ApplicationController < ActionController::Base
 
   helper_method :site_settings, :navbar_items
 
+  protected
+
+  def track_action
+    ahoy.track "Viewed", request.path_parameters
+  end
+  
   private
 
   def site_settings

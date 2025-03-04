@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get "analytics/index"
   get "newsletters/index"
   get "newsletters/edit"
   get "newsletters/update"
@@ -40,13 +41,14 @@ Rails.application.routes.draw do
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
   get "/admin" => "admin#posts"
+  get "/admin/analytics" => "analytics#index", as: "analytics"
   get "/admin/posts" => "admin#posts"
   get "/admin/posts/new", to: "articles#new"
   get "/admin/pages" => "admin#pages"
   get "/admin/pages/new", to: "pages#new"
   get "/admin/newsletters", to: "newsletters#edit", as: "newsletter"
   patch "/admin/newsletters", to: "newsletters#update", as: "update_newsletter"
-
+  
   scope path: Rails.application.config.article_route_prefix do
     get "/" => "articles#index", as: :articles
     get "/:slug" => "articles#show", as: :article
