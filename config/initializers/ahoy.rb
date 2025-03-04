@@ -13,4 +13,4 @@ Ahoy.visit_duration = 30.minutes
 Ahoy.visitor_duration = 30.days
 
 Ahoy.track_bots = true
-Ahoy.server_side_visits = false # 禁用服务器端访问记录
+#Ahoy.server_side_visits = false # 禁用服务器端访问记录
