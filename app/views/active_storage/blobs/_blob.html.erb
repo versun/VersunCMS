@@ -1,5 +1,5 @@
 <figure class="attachment attachment--file attachment--<%= blob.filename.extension %>">
-  <%= image_tag url_for(blob) %>
+  <%= image_tag "#{site_settings[:url]}#{url_for(blob)}" %>
 
   <figcaption class="attachment__caption">
     <% if caption = blob.try(:caption) %>
