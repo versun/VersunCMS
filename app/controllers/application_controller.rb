@@ -6,7 +6,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   protect_from_forgery with: :exception
 
-  helper_method :site_settings, :navbar_items
+  helper_method :navbar_items
 
   protected
 
@@ -16,9 +16,9 @@ class ApplicationController < ActionController::Base
 
   private
 
-  def site_settings
-    @site_settings ||= Setting.site_info
-  end
+  # def site_settings
+  #   @site_settings ||= Setting.site_info
+  # end
 
   def navbar_items
     @navbar_items ||= Setting.navbar_items
