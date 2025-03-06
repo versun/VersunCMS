@@ -1,3 +1,10 @@
+# 2025-03-06
+将analytics页面公开
+
+# 2025-03-05
+给active_storage的blob view的image的url添加了host信息，以便img的src为全路径，否则邮件的图片无法显示
+将application controller的site_settings移到applicationHelper下，确保全局可用
+
 # 2025-03-04
 使用ahoy_matey包添加了网站分析功能，因为很多浏览器的防广告插件会禁止大部分的第三方的跟踪js脚本，所以统计不完全
 所以使用ahoy_matey直接从controller端进行统计，更准确
