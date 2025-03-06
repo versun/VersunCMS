@@ -41,7 +41,7 @@ Rails.application.routes.draw do
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
   get "/admin" => "admin#posts"
-  #get "/admin/analytics" => "analytics#index", as: "analytics"
+  # get "/admin/analytics" => "analytics#index", as: "analytics"
   get "/admin/posts" => "admin#posts"
   get "/admin/posts/new", to: "articles#new"
   get "/admin/pages" => "admin#pages"
