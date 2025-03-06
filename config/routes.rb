@@ -1,10 +1,7 @@
 Rails.application.routes.draw do
-  get "analytics/index"
-  get "newsletters/index"
-  get "newsletters/edit"
-  get "newsletters/update"
   # Defines the root path route ("/")
   root "articles#index"
+  get "/analytics" => "analytics#index"
   resources :users
   resource :session
   resources :passwords
@@ -33,6 +30,9 @@ Rails.application.routes.draw do
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
+  # get "newsletters/index"
+  # get "newsletters/edit"
+  # get "newsletters/update"
   get "up" => "rails/health#show", as: :rails_health_check
   get "/rss" => redirect("/feed")
   get "/rss.xml" => redirect("/feed")
@@ -41,7 +41,7 @@ Rails.application.routes.draw do
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
   get "/admin" => "admin#posts"
-  get "/admin/analytics" => "analytics#index", as: "analytics"
+  #get "/admin/analytics" => "analytics#index", as: "analytics"
   get "/admin/posts" => "admin#posts"
   get "/admin/posts/new", to: "articles#new"
   get "/admin/pages" => "admin#pages"

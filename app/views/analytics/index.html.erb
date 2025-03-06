@@ -1,35 +1,46 @@
-<%= render 'admin/admin_bar' %>
 <h3>Website Analytics</h3>
 
 <div class="total-visits">
   <h4>Total Views: <%= @total_visits %></h4>
 </div>
-<p>Pages</p>
-<% @visits_by_path.each do |path_data, count| %>
-    <%= count %> <>
-    <%= path_data['slug'] %><br>
-<% end %>
+    
+<div style="display: flex; justify-content: space-between;">
+  <div>
+    <p>Pages</p>
+    <% @visits_by_path.each do |path_data, count| %>
+        <%= count %> <>
+        <%= path_data['slug'] %><br>
+    <% end %>
+  </div>
+  <div>
+    <p>Referrers</p>
+    <% @referrers.each do |referrer, count| %>
+        <%= count %> <>
+        <%= referrer %><br>
+    <% end %>
+  </div>
+</div>
 <hr>
-<p>Referrers</p>
-<% @referrers.each do |referrer, count| %>
-    <%= count %> <>
-    <%= referrer %><br>
-<% end %>
-<hr>
-<p>Browsers</p>
-<% @browsers.each do |browser, count| %>
-    <%= count %> <>
-    <%= browser %><br>
-<% end %>
-<hr>
-<p>OS</p>
-<% @operating_systems.each do |os, count| %>
-  <%= count %> <>
-  <%= os %><br>
-<% end %>
-<hr>
-<p>Devices</p>
-<% @devices.each do |device, count| %>
-  <%= count %> <>
-  <%= device %><br>
-<% end %>
+<div style="display: flex; justify-content: space-between;">
+  <div>
+    <p>Browsers</p>
+    <% @browsers.each do |browser, count| %>
+        <%= count %> <>
+        <%= browser %><br>
+    <% end %>
+  </div>
+  <div>
+    <p>OS</p>
+    <% @operating_systems.each do |os, count| %>
+      <%= count %> <>
+      <%= os %><br>
+    <% end %>
+  </div>
+  <div>
+    <p>Devices</p>
+    <% @devices.each do |device, count| %>
+      <%= count %> <>
+      <%= device %><br>
+    <% end %>
+  </div>
+</div>
