@@ -91,7 +91,7 @@
       <fieldset class="bordered-container bordered-fieldset">
         <legend>Actions</legend>
           <div>
-            <%= form.select :status, Article.statuses.keys, { prompt: 'choose a status' }, { id: 'status_select', required: true } %>
+            <%= form.select :status, Article.statuses.keys, { prompt: 'choose a status', selected: 'draft' }, { id: 'status_select', required: true } %>
           </div>
 
           <div class="scheduled-at" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
