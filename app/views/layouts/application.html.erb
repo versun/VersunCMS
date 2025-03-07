@@ -27,6 +27,16 @@
     <%= raw site_settings[:head_code] %>
 
     <style>
+        body {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 10px;
+            background: #f8f4ee;
+        }
+        a:hover {
+            text-decoration: underline wavy;
+            background-color: #f0f0f0;
+        }
       <%= site_settings[:custom_css] %>
     </style>
   </head>
