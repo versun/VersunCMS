@@ -3,3 +3,7 @@ body {
   margin: 0 auto;
   padding: 10px;
 }
+a:hover {
+  text-decoration: underline wavy;
+  background-color: #f0f0f0;
+}
