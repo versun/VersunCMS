@@ -1,6 +1,17 @@
-<%# content_for :head do %>
-  <%#= stylesheet_link_tag 'admin', media: 'all' %>
-<%# end %>
+<% content_for :head do %>
+  <style>
+      trix-toolbar {
+          position: sticky;
+          top: 0;
+          z-index: 1;
+          background-color: white;
+      }
+      .status-tab.active {
+          background-color: cornflowerblue;
+          color: white;
+      }
+  </style>
+<% end %>
 
 <p style="color: green"><%= notice %></p>
 <p style="color: red"><%= alert %></p>
