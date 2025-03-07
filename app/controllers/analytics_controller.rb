@@ -1,4 +1,6 @@
 class AnalyticsController < ApplicationController
+  allow_unauthenticated_access only: %i[ index ]
+
   def index
     @total_visits = Ahoy::Visit.count
     events = Ahoy::Event.where(name: "Viewed").where("properties->>'slug' IS NOT NULL")
