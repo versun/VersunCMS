@@ -18,7 +18,7 @@ class AdminController < ApplicationController
   def fetch_articles(scope, sort_by: :created_at)
     @page = params[:page].present? ? params[:page].to_i : 1
     @per_page = 20
-    @status = params[:status] || "all"
+    @status = params[:status] || "publish"
 
     filtered_posts = filter_by_status(scope)
     # @total_count = filtered_posts.count
