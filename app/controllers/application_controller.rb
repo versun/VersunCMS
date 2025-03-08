@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  include CacheableSettings
+  before_action :set_time_zone
   after_action :track_action
 
   include Authentication
@@ -16,19 +18,19 @@ class ApplicationController < ActionController::Base
 
   private
 
-  # def site_settings
-  #   @site_settings ||= Setting.site_info
-  # end
+  def set_time_zone
+    Time.zone = CacheableSettings.site_info[:time_zone] || "UTC"
+  end
 
   def navbar_items
-    @navbar_items ||= Setting.navbar_items
+    @navbar_items ||= CacheableSettings.navbar_items
   end
 
   def refresh_settings
-    Setting.refresh_all
+    CacheableSettings.refresh_site_info
   end
 
   def refresh_pages
-    Setting.refresh_navbar_items
+    CacheableSettings.refresh_navbar_items
   end
 end

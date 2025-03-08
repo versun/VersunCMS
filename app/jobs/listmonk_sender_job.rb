@@ -16,6 +16,6 @@ class ListmonkSenderJob < ApplicationJob
     )
     return unless listmonk.present? && listmonk.list_id.present? && listmonk.template_id.present?
 
-    listmonk.send_newsletter(article, ListmonkSenderJob.site_info[:title])
+    listmonk.send_newsletter(article, CacheableSettings.site_info[:title])
   end
 end

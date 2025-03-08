@@ -1,11 +1,6 @@
 class Setting < ApplicationRecord
-  include CacheableSettings
   has_rich_text :footer
-  # after_initialize :set_default, if: :new_record?
   before_save :generate_social_links
-
-  # Handle static_files as JSON
-  # attribute :static_files, :json, default: {}
 
   SOCIAL_PLATFORMS = {
     github: {
