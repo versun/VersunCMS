@@ -1,31 +1,28 @@
 class CrosspostArticleJob < ApplicationJob
   queue_as :default
 
-  def perform(article_id)
+  def perform(article_id, platform)
     article = Article.find_by(id: article_id)
     return unless article
 
     social_media_posts = {}
 
-    if article.crosspost_mastodon?
-      mastodon_url = Integrations::MastodonService.new.post(article)
-      if mastodon_url
-        social_media_posts["mastodon"] = mastodon_url
-      end
-    end
-
-    if article.crosspost_twitter?
-      twitter_url = Integrations::TwitterService.new.post(article)
-      if twitter_url
-        social_media_posts["twitter"] = twitter_url
-      end
-    end
-
-    if article.crosspost_bluesky?
-      bluesky_url = Integrations::BlueskyService.new.post(article)
-      if bluesky_url
-        social_media_posts["bluesky"] = bluesky_url
-      end
+    case platform
+    when "mastodon"
+        mastodon_url = Integrations::MastodonService.new.post(article)
+        if mastodon_url
+          social_media_posts["mastodon"] = mastodon_url
+        end
+    when "twitter"
+        twitter_url = Integrations::TwitterService.new.post(article)
+        if twitter_url
+          social_media_posts["twitter"] = twitter_url
+        end
+    when "bluesky"
+        bluesky_url = Integrations::BlueskyService.new.post(article)
+        if bluesky_url
+          social_media_posts["bluesky"] = bluesky_url
+        end
     end
 
     # Update article with all crosspost URLs at once

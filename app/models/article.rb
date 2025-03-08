@@ -75,25 +75,32 @@ class Article < ApplicationRecord
     PublishScheduledArticlesJob.schedule_at(self)
   end
 
-  def should_crosspost?
-    # 以下情况下应该发送post
-    # 1. 文章状态从非发布状态变为发布状态，且 has_crosspost_enabled 为 true
-    # 2. 文章状态为发布状态，且 has_crosspost_enabled 从 false 变为 true
-    # 以下情况下不应该发送post
-    # 1. 文章状态为非发布状态
-    # 2. 文章状态为发布状态，且 has_crosspost_enabled 为 false
-    # 3. 文章状态为发布状态，但 has_crosspost_enabled 没有变化，依旧是 true，因为这种情况下不是首次发布，只是内容更新
-    has_crosspost_enabled = crosspost_mastodon? || crosspost_twitter? || crosspost_bluesky?
-    return false unless publish? && has_crosspost_enabled
-
-    any_crosspost_enabled_changed_to_true = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter? || saved_change_to_crosspost_bluesky?
-    became_published = saved_change_to_status? && status_previously_was != "publish" # 防止每次内容更新都触发
-
-    any_crosspost_enabled_changed_to_true || became_published
-  end
+  # def should_crosspost?
+  #
+  #   has_crosspost_enabled = crosspost_mastodon? || crosspost_twitter? || crosspost_bluesky?
+  #   return false unless publish? && has_crosspost_enabled
+  #
+  #   any_crosspost_enabled_changed_to_true = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter? || saved_change_to_crosspost_bluesky?
+  #   became_published = saved_change_to_status? && status_previously_was != "publish" # 防止每次内容更新都触发
+  #
+  #   any_crosspost_enabled_changed_to_true || became_published
+  # end
 
   def handle_crosspost
-    CrosspostArticleJob.perform_later(id) if should_crosspost?
+    return false unless publish?
+    return false unless crosspost_mastodon? || crosspost_twitter? || crosspost_bluesky?
+
+    became_published = saved_change_to_status? && status_previously_was != "publish" # 防止每次内容更新都触发
+    first_post_to_mastodon = crosspost_mastodon? && became_published
+    first_post_to_twitter = crosspost_twitter? && became_published
+    first_post_to_bluesky = crosspost_bluesky? && became_published
+    re_post_to_mastodon = crosspost_mastodon? && saved_change_to_crosspost_mastodon? # 已经确定是publish状态，所以不需要再次检查
+    re_post_to_twitter = crosspost_twitter? && saved_change_to_crosspost_twitter? # 已经确定是publish状态，所以不需要再次检查
+    re_post_to_bluesky = crosspost_bluesky? && saved_change_to_crosspost_bluesky? # 已经确定是publish状态，所以不需要再次检查
+
+    CrosspostArticleJob.perform_later(id, "mastodon") if first_post_to_mastodon || re_post_to_mastodon
+    CrosspostArticleJob.perform_later(id, "twitter") if first_post_to_twitter || re_post_to_twitter
+    CrosspostArticleJob.perform_later(id, "bluesky") if first_post_to_bluesky || re_post_to_bluesky
   end
 
   def should_send_newsletter?
@@ -126,14 +133,14 @@ class Article < ApplicationRecord
     became_published || saved_change_to_send_newsletter?
   end
 
+  def handle_newsletter
+    ListmonkSenderJob.perform_later(id) if should_send_newsletter?
+  end
+
   def handle_time_zone
     # Make sure scheduled_at is interpreted correctly
     # This ensures Rails knows this time is already in the application time zone
     self.scheduled_at = scheduled_at.in_time_zone(CacheableSettings.site_info[:time_zone]).utc if scheduled_at.present?
-  end
-
-  def handle_newsletter
-    ListmonkSenderJob.perform_later(id) if should_send_newsletter?
   end
 
   def cleanup_empty_social_media_posts
