@@ -13,8 +13,9 @@ class PublishScheduledArticlesJob < ApplicationJob
   def self.schedule_at(article)
     return unless article.schedule? && article.scheduled_at.present?
 
-    # Use setting's time zone
-    scheduled_time = article.scheduled_at.in_time_zone(Setting.first.time_zone)
+    # The scheduled_at value is already in UTC in the database
+    # We only need to convert it to the application time zone for display/job scheduling
+    scheduled_time = article.scheduled_at # UTC
 
     set(wait_until: scheduled_time).perform_later(article.id)
 

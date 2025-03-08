@@ -17,6 +17,7 @@ class Article < ApplicationRecord
   # scope :paginate, ->(page, per_page) { offset((page - 1) * per_page).limit(per_page) }
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
 
+  before_save :handle_time_zone, if: -> { schedule? && scheduled_at_changed? }
   before_save :schedule_publication, if: :should_schedule?
   before_save :cleanup_empty_social_media_posts
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
@@ -123,6 +124,12 @@ class Article < ApplicationRecord
     became_published = saved_change_to_status? && status_previously_was != "publish"
 
     became_published || saved_change_to_send_newsletter?
+  end
+
+  def handle_time_zone
+    # Make sure scheduled_at is interpreted correctly
+    # This ensures Rails knows this time is already in the application time zone
+    self.scheduled_at = scheduled_at.in_time_zone(CacheableSettings.site_info[:time_zone]).utc if scheduled_at.present?
   end
 
   def handle_newsletter

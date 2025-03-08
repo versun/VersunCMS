@@ -2,7 +2,6 @@ require "will_paginate/array"
 class ArticlesController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ] # %i 是一种字面量符号数组的简写方式，表示[:index]
   before_action :set_article, only: %i[ show edit update destroy ]
-  before_action :set_time_zone, only: [ :new, :edit ]
 
   # GET / or /articles.json
   def index
@@ -115,9 +114,5 @@ class ArticlesController < ApplicationController
       :created_at,
       social_media_posts_attributes: [ :id, :_destroy, :platform, :url ]
     )
-  end
-
-  def set_time_zone
-    Time.zone = Setting.time_zone rescue "UTC"
   end
 end

@@ -91,11 +91,11 @@
       <fieldset class="bordered-container bordered-fieldset">
         <legend>Actions</legend>
           <div>
-            <%= form.select :status, Article.statuses.keys, { prompt: 'choose a status', selected: 'draft' }, { id: 'status_select', required: true } %>
+            <%= form.select :status, Article.statuses.keys, { prompt: 'choose a status', selected: article.status.presence || 'draft' }, { id: 'status_select', required: true } %>
           </div>
 
           <div class="scheduled-at" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
-            <%= form.datetime_field :scheduled_at %>
+            <%= form.datetime_field :scheduled_at, value: article.scheduled_at&.in_time_zone %>
             Current Date Time: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %>
           </div>
         
