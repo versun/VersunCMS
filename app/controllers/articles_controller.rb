@@ -111,6 +111,6 @@ class ArticlesController < ApplicationController
                             :crosspost_bluesky,
                             :send_newsletter,
                             :created_at,
-                            social_media_posts_attributes: [ :id, :_destroy, :platform, :url ] ])
+                            social_media_posts_attributes: [ [ :id, :_destroy, :platform, :url ] ] ])
   end
 end
