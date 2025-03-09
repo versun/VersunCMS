@@ -100,19 +100,17 @@ class ArticlesController < ApplicationController
   end
 
   def article_params
-    params.require(:article).permit(
-      :title,
-      :content,
-      :status,
-      :slug,
-      :description,
-      :scheduled_at,
-      :crosspost_mastodon,
-      :crosspost_twitter,
-      :crosspost_bluesky,
-      :send_newsletter,
-      :created_at,
-      social_media_posts_attributes: [ :id, :_destroy, :platform, :url ]
-    )
+    params.expect(article: [ :title,
+                            :content,
+                            :status,
+                            :slug,
+                            :description,
+                            :scheduled_at,
+                            :crosspost_mastodon,
+                            :crosspost_twitter,
+                            :crosspost_bluesky,
+                            :send_newsletter,
+                            :created_at,
+                            social_media_posts_attributes: [ :id, :_destroy, :platform, :url ] ])
   end
 end

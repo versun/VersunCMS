@@ -76,13 +76,11 @@ class PagesController < ApplicationController
   end
 
   def page_params
-    params.require(:page).permit(
-      :title,
-      :content,
-      :status,
-      :slug,
-      :page_order,
-      :redirect_url
-    )
+    params.expect(page: [ :title,
+                         :content,
+                         :status,
+                         :slug,
+                         :page_order,
+                         :redirect_url ])
   end
 end

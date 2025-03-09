@@ -38,20 +38,18 @@ class SettingsController < ApplicationController
   private
 
   def setting_params
-    params.require(:setting).permit(
-      :title,
-      :description,
-      :author,
-      :url,
-      :footer,
-      :custom_css,
-      :time_zone,
-      :head_code,
-      :giscus,
-      :file,
-      :tool_code,
-      social_links: {},
-      static_files: {}
-    )
+    params.expect(setting: [ :title,
+                            :description,
+                            :author,
+                            :url,
+                            :footer,
+                            :custom_css,
+                            :time_zone,
+                            :head_code,
+                            :giscus,
+                            :file,
+                            :tool_code,
+                            social_links: {},
+                            static_files: {} ])
   end
 end
