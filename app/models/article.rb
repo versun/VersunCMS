@@ -67,7 +67,7 @@ class Article < ApplicationRecord
   end
 
   def should_schedule?
-    schedule? && scheduled_at_changed?
+    schedule? #&& scheduled_at_changed?
   end
 
   def schedule_publication
