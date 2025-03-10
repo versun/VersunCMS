@@ -1,3 +1,6 @@
+# 2025-03-10
+将 article.rb 的 schedule_publication 函数放在 after_save 后面执行，保证有 article.id，否则会创建 job 失败
+
 # 2025-03-06
 将analytics页面公开
 
