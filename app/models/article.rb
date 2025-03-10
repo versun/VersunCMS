@@ -18,8 +18,8 @@ class Article < ApplicationRecord
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
 
   before_save :handle_time_zone, if: -> { schedule? && scheduled_at_changed? }
-  before_save :schedule_publication, if: :should_schedule?
   before_save :cleanup_empty_social_media_posts
+  after_save :schedule_publication, if: :should_schedule?
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
   after_save :handle_newsletter, if: -> { Setting.table_exists? }
 
