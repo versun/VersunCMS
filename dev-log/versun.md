@@ -1,5 +1,6 @@
 # 2025-03-10
-将 article.rb 的 schedule_publication 函数放在 after_save 后面执行，保证有 article.id，否则会创建 job 失败
+- 将 article.rb 的 schedule_publication 函数放在 after_save 后面执行，保证有 article.id，否则会创建 job 失败
+- 将 publish_scheduled 的函数，更新 article 的创建时间为发布的当前时间，以便在首页显示正确的顺序
 
 # 2025-03-06
 将analytics页面公开

@@ -44,7 +44,7 @@ class Article < ApplicationRecord
   end
 
   def publish_scheduled
-    update(status: :publish, scheduled_at: nil) if should_publish?
+    update(status: :publish, scheduled_at: nil, created_at: Time.current) if should_publish?
   end
 
   private
