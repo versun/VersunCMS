@@ -2,12 +2,10 @@
   <%= @article.title %> | <%= site_settings[:title] %>
 <% end %>
 <article>
+  <small style="color:grey">created: <%= @article.created_at.to_date %>, updated: <%= @article.updated_at.to_date %></small>
   <h2><%= @article.title %></h2>
   <%= @article.content %>
 </article>
-<div>
-  <small style="color:grey">created: <%= @article.created_at.to_date %>, updated: <%= @article.updated_at.to_date %></small>
-</div>
 
 <% if @article.social_media_posts.present? %>
   <br>
