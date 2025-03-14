@@ -2,7 +2,6 @@
   <%= @article.title %> | <%= site_settings[:title] %>
 <% end %>
 <article>
-  <small><%= @article.created_at.to_date %></small>
   <h2><%= @article.title %></h2>
   <%= @article.content %>
 </article>
@@ -20,6 +19,10 @@
     <%= link_to "Bluesky", bluesky_url, target: "_blank" %>.
   <% end %>
 <% end %>
+<br>
+<small style="color:grey">created: <%= @article.created_at.to_date %></small><br>
+<small style="color:grey">updated: <%= @article.updated_at.to_date %></small>
+
 <hr>
 <div class="giscus"></div>
 <%= raw site_settings[:giscus] %>
