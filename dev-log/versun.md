@@ -1,3 +1,6 @@
+# 2025-03-15
+对接了 algolia search 功能，是真好用，免费层也够个人使用了，还有 AI，不要太香
+
 # 2025-03-12
 给 publish scheduled article job 添加了 cancel_old_jobs 函数，保证每个 article 同时只有一个job在运行
 
