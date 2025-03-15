@@ -26,7 +26,12 @@ class Article < ApplicationRecord
     algoliasearch do
       attribute :title, :slug, :description, :plain_content
       attribute :plain_content do
-        content.to_plain_text
+        text = content.to_plain_text
+        ALGOLIA_MAX_BYTESIZE = ENV.fetch("ALGOLIA_MAX_BYTESIZE", 8192)
+        if text.bytesize > ALGOLIA_MAX_BYTESIZE
+          text = text.byteslice(0, ALGOLIA_MAX_BYTESIZE) + "..."
+        end
+        text
       end
       searchableAttributes [ "title", "slug", "description", "plain_content" ]
     end
