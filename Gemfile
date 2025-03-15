@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 ## for blog
-gem "git"
+
 # gem "html_truncator"
 gem "ruby-vips"
 gem "mastodon-api", require: "mastodon"
@@ -70,6 +70,8 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+  gem "git"
+  gem "solargraph"
 end
 
 group :test do
