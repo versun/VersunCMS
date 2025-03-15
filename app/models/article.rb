@@ -26,9 +26,9 @@ class Article < ApplicationRecord
     algoliasearch do
       attribute :title, :slug, :description, :plain_content
       attribute :plain_content do
-        text = content.to_plain_text
-        algolia_max_characters = ENV.fetch("ALGOLIA_MAX_CHARACTERS", "3000").to_i
-        if text.bytesize > algolia_max_characters
+        text = content.to_trix_html # 以包含超链接的url
+        algolia_max_characters = ENV.fetch("ALGOLIA_MAX_CHARACTERS", "3500").to_i
+        if text.size > algolia_max_characters
           text = text.truncate(algolia_max_characters)
         end
         text
