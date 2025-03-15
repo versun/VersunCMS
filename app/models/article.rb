@@ -28,22 +28,22 @@ class Article < ApplicationRecord
       attribute :plain_content do
         content.to_plain_text
       end
-      searchableAttributes ['title', 'slug', 'description', 'plain_content']
+      searchableAttributes [ "title", "slug", "description", "plain_content" ]
     end
 
   else
 
     include PgSearch::Model
     pg_search_scope :search_content,
-                    against: [:title, :slug, :description],
+                    against: [ :title, :slug, :description ],
                     associated_against: {
-                      rich_text_content: [:body]
+                      rich_text_content: [ :body ]
                     },
                     using: {
                       tsearch: {
                         prefix: true,
                         any_word: true,
-                        dictionary: 'simple'
+                        dictionary: "simple"
                       },
                       trigram: {
                         threshold: 0.3

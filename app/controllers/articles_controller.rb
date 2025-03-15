@@ -13,7 +13,7 @@ class ArticlesController < ApplicationController
         if params[:q].present?
           if defined?(ENABLE_ALGOLIASEARCH)
             # 使用Algolia搜索
-            algolia_results = Article.algolia_search(params[:q], {hitsPerPage: @per_page, page: @page - 1}) # Algolia页码从0开始
+            algolia_results = Article.algolia_search(params[:q], { hitsPerPage: @per_page, page: @page - 1 }) # Algolia页码从0开始
 
             # 获取Algolia的结果总数
             @total_count = algolia_results.size
