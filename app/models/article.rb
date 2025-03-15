@@ -25,14 +25,15 @@ class Article < ApplicationRecord
 
   # 配置单表搜索作用域
   pg_search_scope :search_content,
-                  against: :title,
+                  against: [:title, :slug, :description],
                   associated_against: {
-                    rich_text_content: :body
+                    rich_text_content: [:body]
                   },
                   using: {
                     tsearch: {
                       prefix: true,
-                      dictionary: "english"
+                      any_word: true,
+                      dictionary: 'simple'
                     },
                     trigram: {
                       threshold: 0.3
