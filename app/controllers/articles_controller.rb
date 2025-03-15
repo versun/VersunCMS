@@ -11,9 +11,19 @@ class ArticlesController < ApplicationController
         @per_page = 10
 
         @articles = if params[:q].present?
-                      Article.search_content(params[:q])
+                      # 先执行搜索
+                      search_results = Article.search(params[:q], {
+                        sort: ['created_at:desc'],
+                        page: @page,
+                        hitsPerPage: @per_page
+                      })
+
+                      # 获取ID列表并应用published scope和分页
+                      article_ids = search_results.map(&:id)
+
+                      # 使用will_paginate/array处理分页
+                      Article.where(id: article_ids)
                              .published
-                             .includes(:rich_text_content)
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
         else

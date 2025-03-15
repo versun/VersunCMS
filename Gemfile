@@ -11,6 +11,7 @@ gem "feedjira"
 gem "will_paginate"
 gem "ahoy_matey"
 gem "mission_control-jobs"
+gem "meilisearch-rails"
 # gem "groupdate"
 ##
 

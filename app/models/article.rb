@@ -1,6 +1,5 @@
 class Article < ApplicationRecord
-  include PgSearch::Model
-  multisearchable against: [ :title, :content ]
+  include MeiliSearch::Rails
   has_rich_text :content
   has_many :social_media_posts, dependent: :destroy
   accepts_nested_attributes_for :social_media_posts, allow_destroy: true
@@ -23,21 +22,18 @@ class Article < ApplicationRecord
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
   after_save :handle_newsletter, if: -> { Setting.table_exists? }
 
-  # 配置单表搜索作用域
-  pg_search_scope :search_content,
-                  against: :title,
-                  associated_against: {
-                    rich_text_content: :body
-                  },
-                  using: {
-                    tsearch: {
-                      prefix: true,
-                      dictionary: "english"
-                    },
-                    trigram: {
-                      threshold: 0.3
-                    }
-                  }
+
+  meilisearch do
+    # 定义要索引的属性
+    attribute :content_plain_text do
+      content&.body&.to_plain_text
+    end
+    searchable_attributes [:title, :slug, :description, :content_plain_text]
+
+    # 可以添加其他需要的配置
+    filterable_attributes [:created_at, :updated_at]
+    sortable_attributes [:created_at, :updated_at]
+  end
 
   def to_param
     slug
