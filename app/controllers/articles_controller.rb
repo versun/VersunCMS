@@ -10,19 +10,31 @@ class ArticlesController < ApplicationController
         @page = params[:page].present? ? params[:page].to_i : 1
         @per_page = 10
 
-        @articles = if params[:q].present?
-                      Article.search_content(params[:q])
-                             .published
+        if params[:q].present?
+          if defined?(ENABLE_ALGOLIASEARCH)
+            # 使用Algolia搜索
+            algolia_results = Article.algolia_search(params[:q], {hitsPerPage: @per_page, page: @page - 1}) # Algolia页码从0开始
+
+            # 获取Algolia的结果总数
+            @total_count = algolia_results.size
+            @articles = algolia_results
+          else
+            # 使用传统搜索
+            @articles = Article.search_content(params[:q])
+                               .published
+                               .includes(:rich_text_content)
+                               .order(created_at: :desc)
+                               .paginate(page: @page, per_page: @per_page)
+            @total_count = @articles.total_entries
+          end
+        else
+          # 不搜索，只分页
+          @articles = Article.published
                              .includes(:rich_text_content)
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
-        else
-                      Article.published
-                             .order(created_at: :desc)
-                             .paginate(page: @page, per_page: @per_page)
+          @total_count = @articles.total_entries
         end
-
-        @total_count = @articles.count
       }
 
       format.rss {

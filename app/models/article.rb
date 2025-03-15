@@ -1,6 +1,4 @@
 class Article < ApplicationRecord
-  include PgSearch::Model
-  multisearchable against: [ :title, :content ]
   has_rich_text :content
   has_many :social_media_posts, dependent: :destroy
   accepts_nested_attributes_for :social_media_posts, allow_destroy: true
@@ -23,22 +21,35 @@ class Article < ApplicationRecord
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
   after_save :handle_newsletter, if: -> { Setting.table_exists? }
 
-  # 配置单表搜索作用域
-  pg_search_scope :search_content,
-                  against: [:title, :slug, :description],
-                  associated_against: {
-                    rich_text_content: [:body]
-                  },
-                  using: {
-                    tsearch: {
-                      prefix: true,
-                      any_word: true,
-                      dictionary: 'simple'
+  if defined?(ENABLE_ALGOLIASEARCH)
+    include AlgoliaSearch
+    algoliasearch do
+      attribute :title, :slug, :description, :plain_content
+      attribute :plain_content do
+        content.to_plain_text
+      end
+      searchableAttributes ['title', 'slug', 'description', 'plain_content']
+    end
+
+  else
+
+    include PgSearch::Model
+    pg_search_scope :search_content,
+                    against: [:title, :slug, :description],
+                    associated_against: {
+                      rich_text_content: [:body]
                     },
-                    trigram: {
-                      threshold: 0.3
+                    using: {
+                      tsearch: {
+                        prefix: true,
+                        any_word: true,
+                        dictionary: 'simple'
+                      },
+                      trigram: {
+                        threshold: 0.3
+                      }
                     }
-                  }
+  end
 
   def to_param
     slug
