@@ -27,9 +27,9 @@ class Article < ApplicationRecord
       attribute :title, :slug, :description, :plain_content
       attribute :plain_content do
         text = content.to_plain_text
-        ALGOLIA_MAX_BYTESIZE = ENV.fetch("ALGOLIA_MAX_BYTESIZE", 8192)
-        if text.bytesize > ALGOLIA_MAX_BYTESIZE
-          text = text.byteslice(0, ALGOLIA_MAX_BYTESIZE) + "..."
+        algolia_max_characters = ENV.fetch("ALGOLIA_MAX_CHARACTERS", "3000").to_i
+        if text.bytesize > algolia_max_characters
+          text = text.truncate(algolia_max_characters)
         end
         text
       end
