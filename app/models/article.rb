@@ -23,7 +23,7 @@ class Article < ApplicationRecord
 
   if defined?(ENABLE_ALGOLIASEARCH)
     include AlgoliaSearch
-    algoliasearch do
+    algoliasearch if: :published? do
       attribute :title, :slug, :description, :plain_content
       attribute :plain_content do
         text = content.to_trix_html # 以包含超链接的url
