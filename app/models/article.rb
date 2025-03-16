@@ -23,7 +23,7 @@ class Article < ApplicationRecord
 
   if defined?(ENABLE_ALGOLIASEARCH)
     include AlgoliaSearch
-    algoliasearch if: :published? do
+    algoliasearch if: :should_index? do
       attribute :title, :slug, :description, :plain_content
       attribute :plain_content do
         text = content.to_trix_html # 以包含超链接的url
@@ -54,6 +54,10 @@ class Article < ApplicationRecord
                         threshold: 0.3
                       }
                     }
+  end
+
+  def should_index?
+      status == "publish" || status == "shared"
   end
 
   def to_param
