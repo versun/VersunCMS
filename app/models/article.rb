@@ -35,7 +35,7 @@ class Article < ApplicationRecord
       end
       attribute :links do
         doc = Nokogiri::HTML.fragment(content.to_trix_html)
-        links = doc.css('a').map { |link| link['href'] }.compact
+        links = doc.css("a").map { |link| link["href"] }.compact
         links.uniq
       end
       searchableAttributes [ "title", "slug", "description", "plain_content", "links" ]
