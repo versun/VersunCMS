@@ -24,16 +24,21 @@ class Article < ApplicationRecord
   if defined?(ENABLE_ALGOLIASEARCH)
     include AlgoliaSearch
     algoliasearch if: :should_index? do
-      attribute :title, :slug, :description, :plain_content
+      attribute :title, :slug, :description, :plain_content, :links
       attribute :plain_content do
-        text = content.to_trix_html # 以包含超链接的url
+        text = content.to_plain_text # 以包含超链接的url
         algolia_max_characters = ENV.fetch("ALGOLIA_MAX_CHARACTERS", "3500").to_i
         if text.size > algolia_max_characters
           text = text.truncate(algolia_max_characters)
         end
         text
       end
-      searchableAttributes [ "title", "slug", "description", "plain_content" ]
+      attribute :links do
+        doc = Nokogiri::HTML.fragment(content.to_trix_html)
+        links = doc.css('a').map { |link| link['href'] }.compact
+        links.uniq
+      end
+      searchableAttributes [ "title", "slug", "description", "plain_content", "links" ]
     end
 
   else
