@@ -39,9 +39,11 @@ Rails.application.routes.draw do
   get "/feed.xml" => redirect("/feed")
   get "/feed" => "articles#index", format: "rss"
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
-
+  resources :statuses
   get "/admin" => "admin#posts"
   # get "/admin/analytics" => "analytics#index", as: "analytics"
+  get "/admin/statuses" => "admin#statuses"
+  get "/admin/statuses/new", to: "statuses#new"
   get "/admin/posts" => "admin#posts"
   get "/admin/posts/new", to: "articles#new"
   get "/admin/pages" => "admin#pages"

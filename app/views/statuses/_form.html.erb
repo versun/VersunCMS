@@ -1,0 +1,75 @@
+<%= form_with(model: status) do |form| %>
+  <% if status.errors.any? %>
+    <div style="color: red">
+      <h3><%= pluralize(status.errors.count, "error") %> prohibited this status from being saved:</h3>
+
+      <ul>
+        <% status.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div>
+      <%= form.label :title, "status:" %>
+      <%= form.text_area :text %><br/>
+
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>CrossPost</legend>
+
+        <% if Crosspost.find_by(platform: 'mastodon')&.enabled? %>
+          <div>
+            <%= form.check_box :crosspost_mastodon %>
+            <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
+              <%= form.fields_for :social_media_posts, status.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
+                <% if post_form.object.platform == 'mastodon' %>
+                  <%= post_form.text_field :url, placeholder: "Post URL" %>
+                  <%= post_form.hidden_field :platform, value: "mastodon" %>
+                <% end %>
+              <% end %>
+          </div>
+        <% end %>
+
+        <% if Crosspost.find_by(platform: 'twitter')&.enabled? %>
+          <div>
+            <%= form.check_box :crosspost_twitter %>
+            <%= form.label :crosspost_twitter, "Post to Twitter" %>
+              <%= form.fields_for :social_media_posts, status.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
+                <% if post_form.object.platform == 'twitter' %>
+                  <%= post_form.text_field :url, placeholder: "Post URL" %>
+                  <%= post_form.hidden_field :platform, value: "twitter" %>
+                <% end %>
+              <% end %>
+          </div>
+        <% end %>
+
+        <% if Crosspost.find_by(platform: 'bluesky')&.enabled? %>
+          <div>
+            <%= form.check_box :crosspost_bluesky %>
+            <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
+              <%= form.fields_for :social_media_posts, status.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
+              <% if post_form.object.platform == 'bluesky' %>
+                <%= post_form.text_field :url, placeholder: "Post URL" %>
+                <%= post_form.hidden_field :platform, value: "bluesky" %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%= link_to "Go to Cross Post Settings", crossposts_path %>
+      </fieldset>
+
+      <fieldset class="bordered-container bordered-fieldset">
+        <legend>Actions</legend>
+          <div>
+          <%= form.submit "save" %>
+          <% if status.persisted? %>
+            <%= link_to "delete", status_path(status.slug), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
+          <% end %>
+        </div>
+      </fieldset>
+
+
+  </div>
+
+<% end %>

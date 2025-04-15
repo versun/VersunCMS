@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_04_054957) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_21_223129) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -198,11 +198,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_04_054957) do
   create_table "social_media_posts", force: :cascade do |t|
     t.string "platform", null: false
     t.string "url", null: false
-    t.bigint "article_id", null: false
+    t.bigint "article_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "status_id"
     t.index ["article_id", "platform"], name: "index_social_media_posts_on_article_id_and_platform", unique: true
     t.index ["article_id"], name: "index_social_media_posts_on_article_id"
+    t.index ["status_id"], name: "index_social_media_posts_on_status_id"
+  end
+
+  create_table "statuses", force: :cascade do |t|
+    t.string "text"
+    t.boolean "crosspost_mastodon", default: true, null: false
+    t.boolean "crosspost_twitter", default: true, null: false
+    t.boolean "crosspost_bluesky", default: true, null: false
+    t.json "crosspost_urls", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "users", force: :cascade do |t|
@@ -217,4 +229,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_04_054957) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "social_media_posts", "articles"
+  add_foreign_key "social_media_posts", "statuses"
 end

@@ -3,14 +3,17 @@ class AdminController < ApplicationController
     @scope = Article.all
     @posts = fetch_articles(@scope)
     @path = admin_posts_path
-    # render 'admin/article_list'
   end
 
   def pages
     @scope = Page.all
     @posts = fetch_articles(@scope, sort_by: :page_order)
     @path = admin_pages_path
-    # render 'admin/article_list'
+  end
+
+  def statuses
+    @posts = Status.all.paginate(page: @page, per_page: @per_page).order(:created_at => :desc)
+    @path = admin_statuses_path
   end
 
   private

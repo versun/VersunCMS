@@ -1,0 +1,9 @@
+<div class="status-list">
+  <% @posts.each do |status|%>
+  <hr>
+    <%= status.created_at %>
+    <%= status.text %>
+  <% end %>
+</div>
+<hr>
+<%= will_paginate @posts %>

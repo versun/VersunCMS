@@ -1,0 +1,10 @@
+<!-- % content_for :title, "Status Admin" % --->
+
+<%= render 'admin_bar' %>
+<%= link_to "New", admin_statuses_new_path %>
+<% if @posts %>
+<%= render 'status_list', posts: @posts %>
+<% else %>
+<p>No Posts Found</p>
+<% end %>
+
