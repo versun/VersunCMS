@@ -8,8 +8,16 @@ module ActiveSupport
     parallelize(workers: :number_of_processors)
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
-    # fixtures :all
+    fixtures :all
 
     # Add more helper methods to be used by all tests here...
+  end
+end
+
+module ActionDispatch
+  class IntegrationTest
+    def sign_in_as(user)
+      post session_url, params: { email: user.email, password: "password" }
+    end
   end
 end
