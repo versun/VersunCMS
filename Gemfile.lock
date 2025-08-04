@@ -114,7 +114,7 @@ GEM
     bindex (0.8.1)
     bootsnap (1.18.4)
       msgpack (~> 1.2)
-    brakeman (7.0.2)
+    brakeman (7.1.0)
       racc
     buftok (0.3.0)
     builder (3.3.0)
