@@ -34,6 +34,15 @@ module Integrations
     def post(article)
       return unless @settings&.enabled?
       status_text = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
+      
+      # 获取文章第一张图片
+      first_image = article.first_image_attachment
+      media_id = nil
+      
+      if first_image
+        media_id = upload_image(first_image)
+      end
+      
       uri = URI.join(@settings[:server_url], "/api/v1/statuses")
 
       begin
@@ -41,10 +50,15 @@ module Integrations
         http.use_ssl = uri.scheme == "https"
 
         request = Net::HTTP::Post.new(uri)
-        request.set_form_data(
+        form_data = {
           status: status_text,
           visibility: "public"
-        )
+        }
+        
+        # 如果有图片，添加媒体ID
+        form_data[:media_ids] = [media_id] if media_id
+        
+        request.set_form_data(form_data)
         request["Authorization"] = "Bearer #{@settings.access_token}"
 
         response = http.request(request)
@@ -101,6 +115,48 @@ module Integrations
         slug,
         host: Setting.first.url.sub(%r{https?://}, "")
       )
+    end
+
+    def upload_image(blob)
+      return nil unless blob&.content_type&.start_with?('image/')
+      
+      begin
+        uri = URI.join(@settings[:server_url], "/api/v2/media")
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = uri.scheme == "https"
+
+        request = Net::HTTP::Post.new(uri)
+        request["Authorization"] = "Bearer #{@settings.access_token}"
+
+        # 创建multipart表单数据
+        boundary = "----WebKitFormBoundary#{SecureRandom.hex(16)}"
+        request["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
+
+        # 下载图片数据
+        image_data = blob.download
+        
+        body = []
+        body << "--#{boundary}\r\n"
+        body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{blob.filename}\"\r\n"
+        body << "Content-Type: #{blob.content_type}\r\n\r\n"
+        body << image_data
+        body << "\r\n--#{boundary}--\r\n"
+
+        request.body = body.join
+
+        response = http.request(request)
+
+        if response.is_a?(Net::HTTPSuccess)
+          media_data = JSON.parse(response.body)
+          return media_data["id"]
+        else
+          Rails.logger.error "Failed to upload image to Mastodon: #{response.code} - #{response.body}"
+          return nil
+        end
+      rescue => e
+        Rails.logger.error "Error uploading image to Mastodon: #{e.message}"
+        return nil
+      end
     end
   end
 end

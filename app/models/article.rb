@@ -130,33 +130,28 @@ class Article < ApplicationRecord
   end
 
   def should_send_newsletter?
-    # 以下情况下应该发送邮件
-    # 1. 文章状态从非发布状态变为发布状态，且 send_newsletter 为 true
-    # 2. 文章状态为发布状态，且 send_newsletter 从 false 变为 true
-    # 以下情况下不应该发送邮件
-    # 1. 文章状态为非发布状态
-    # 2. 文章状态为发布状态，但 send_newsletter 为 false
-    # 3. 文章状态为发布状态，但 send_newsletter 没有变化，依旧是 true，因为这种情况下不是首次发布，只是内容更新
-    # 例子：
-    # 1. 新建文章，状态为草稿，send_newsletter 为 false，不发送邮件
-    # 2. 新建文章，状态为草稿，send_newsletter 为 true，不发送邮件
-    # 3. 新建文章，状态为发布，send_newsletter 为 false，不发送邮件
-    # 4. 新建文章，状态为发布，send_newsletter 为 true，发送邮件
-    # 5. 更新文章，状态从草稿变为发布，send_newsletter 为 false，不发送邮件
-    # 6. 更新文章，状态从草稿变为发布，send_newsletter 为 true，发送邮件
-    # 7. 更新文章，状态从发布变为发布，send_newsletter 变为 true，发送邮件
-    # 8. 更新文章，状态从发布变为发布，send_newsletter 没有变化，不发送邮件
-    # 9. 更新文章，状态从发布变为草稿，send_newsletter 为 false，不发送邮件
-    # 10. 更新文章，状态从发布变为草稿，send_newsletter 为 true，不发送邮件
-    # 11. 更新文章，状态从草稿变为草稿，send_newsletter 为 false，不发送邮件
-    # 12. 更新文章，状态从草稿变为草稿，send_newsletter 为 true，不发送邮件
+    return false unless publish?
+    return false unless Listmonk.first&.enabled?
 
-    return false unless publish? && send_newsletter?
-
-    # 检查文章是否从非发布状态变为发布状态
     became_published = saved_change_to_status? && status_previously_was != "publish"
+    first_send = send_newsletter? && became_published
+    re_send = send_newsletter? && saved_change_to_send_newsletter?
 
-    became_published || saved_change_to_send_newsletter?
+    first_send || re_send
+  end
+
+  # 提取文章内容中的第一张图片，用于crosspost
+  def first_image_attachment
+    return nil unless content.present?
+    
+    # 从Action Text内容中获取所有附件
+    attachments = content.body.attachments
+    
+    # 找到第一个图片附件
+    attachments.find do |attachment|
+      blob = attachment.blob
+      blob&.content_type&.start_with?('image/')
+    end&.blob
   end
 
   def handle_newsletter
