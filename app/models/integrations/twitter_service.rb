@@ -36,11 +36,11 @@ module Integrations
 
       client = create_client
       tweet = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
-      
+
       # 获取文章第一张图片
       first_image = article.first_image_attachment
       media_ids = []
-      
+
       if first_image
         media_id = upload_image(client, first_image)
         media_ids << media_id if media_id
@@ -49,10 +49,10 @@ module Integrations
       begin
         user = client.get("users/me")
         username = user["data"]["username"] if user && user["data"]
-        
+
         tweet_data = { text: tweet }
         tweet_data[:media] = { media_ids: media_ids } if media_ids.any?
-        
+
         response = client.post("tweets", tweet_data.to_json)
 
         id = response["data"]["id"] if response && response["data"] && response["data"]["id"]
@@ -134,27 +134,27 @@ module Integrations
     end
 
     def upload_image(client, blob)
-      return nil unless blob&.content_type&.start_with?('image/')
-      
+      return nil unless blob&.content_type&.start_with?("image/")
+
       begin
         # 下载图片数据
         image_data = blob.download
-        
+
         # 创建临时文件
-        temp_file = Tempfile.new(['image', File.extname(blob.filename.to_s)])
+        temp_file = Tempfile.new([ "image", File.extname(blob.filename.to_s) ])
         temp_file.binmode
         temp_file.write(image_data)
         temp_file.rewind
-        
+
         # 上传图片到Twitter
         response = client.post("media/upload", {
           media: temp_file,
           media_type: blob.content_type
         })
-        
+
         temp_file.close
         temp_file.unlink
-        
+
         response["media_id_string"] if response && response["media_id_string"]
       rescue => e
         Rails.logger.error "Error uploading image to Twitter: #{e.message}"

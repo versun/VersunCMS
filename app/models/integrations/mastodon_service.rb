@@ -34,15 +34,15 @@ module Integrations
     def post(article)
       return unless @settings&.enabled?
       status_text = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
-      
+
       # 获取文章第一张图片
       first_image = article.first_image_attachment
       media_id = nil
-      
+
       if first_image
         media_id = upload_image(first_image)
       end
-      
+
       uri = URI.join(@settings[:server_url], "/api/v1/statuses")
 
       begin
@@ -54,10 +54,10 @@ module Integrations
           status: status_text,
           visibility: "public"
         }
-        
+
         # 如果有图片，添加媒体ID
-        form_data[:media_ids] = [media_id] if media_id
-        
+        form_data[:media_ids] = [ media_id ] if media_id
+
         request.set_form_data(form_data)
         request["Authorization"] = "Bearer #{@settings.access_token}"
 
@@ -118,8 +118,8 @@ module Integrations
     end
 
     def upload_image(blob)
-      return nil unless blob&.content_type&.start_with?('image/')
-      
+      return nil unless blob&.content_type&.start_with?("image/")
+
       begin
         uri = URI.join(@settings[:server_url], "/api/v2/media")
         http = Net::HTTP.new(uri.host, uri.port)
@@ -134,7 +134,7 @@ module Integrations
 
         # 下载图片数据
         image_data = blob.download
-        
+
         body = []
         body << "--#{boundary}\r\n"
         body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{blob.filename}\"\r\n"
@@ -148,14 +148,14 @@ module Integrations
 
         if response.is_a?(Net::HTTPSuccess)
           media_data = JSON.parse(response.body)
-          return media_data["id"]
+          media_data["id"]
         else
           Rails.logger.error "Failed to upload image to Mastodon: #{response.code} - #{response.body}"
-          return nil
+          nil
         end
       rescue => e
         Rails.logger.error "Error uploading image to Mastodon: #{e.message}"
-        return nil
+        nil
       end
     end
   end

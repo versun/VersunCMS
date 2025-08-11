@@ -53,11 +53,11 @@ module Integrations
       return unless @settings&.enabled?
 
       content = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description)
-      
+
       # 获取文章第一张图片
       first_image = article.first_image_attachment
       embed = nil
-      
+
       if first_image
         embed = upload_image_embed(first_image)
       end
@@ -96,10 +96,10 @@ module Integrations
 
       body = {
         repo: @user_did, collection: "app.bsky.feed.post",
-        record: { 
-          text: message, 
-          createdAt: Time.now.iso8601, 
-          langs: [ "en" ], 
+        record: {
+          text: message,
+          createdAt: Time.now.iso8601,
+          langs: [ "en" ],
           facets: facets,
           embed: embed
         }
@@ -250,13 +250,13 @@ module Integrations
     end
 
     def upload_image_embed(blob)
-      return nil unless blob&.content_type&.start_with?('image/')
-      
+      return nil unless blob&.content_type&.start_with?("image/")
+
       begin
         # 上传图片获取blob
         blob_data = upload_blob(blob)
         return nil unless blob_data
-        
+
         # 创建图片embed
         {
           "$type" => "app.bsky.embed.images",
@@ -275,11 +275,11 @@ module Integrations
 
     def upload_blob(blob)
       return nil unless blob
-      
+
       begin
         # 下载图片数据
         image_data = blob.download
-        
+
         uri = URI("#{@server_url}/com.atproto.repo.uploadBlob")
         request = Net::HTTP::Post.new(uri)
         request["Content-Type"] = blob.content_type

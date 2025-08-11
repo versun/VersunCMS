@@ -143,14 +143,14 @@ class Article < ApplicationRecord
   # 提取文章内容中的第一张图片，用于crosspost
   def first_image_attachment
     return nil unless content.present?
-    
+
     # 从Action Text内容中获取所有附件
     attachments = content.body.attachments
-    
+
     # 找到第一个图片附件
     attachments.find do |attachment|
       blob = attachment.blob
-      blob&.content_type&.start_with?('image/')
+      blob&.content_type&.start_with?("image/")
     end&.blob
   end
 
