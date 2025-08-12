@@ -1,0 +1,7 @@
+bottle
+peewee
+bcrypt
+markdown2
+huey
+pytest
+httpx
