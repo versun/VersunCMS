@@ -13,10 +13,10 @@ module Tools
     def generate_csv
       begin
         articles = Article.all
-        
+
         csv_data = CSV.generate(headers: true) do |csv|
-          csv << ['ID', 'Title', 'Slug', 'Description', 'Status', 'Scheduled At', 'Created At', 'Updated At', 'Is Page', 'Page Order']
-          
+          csv << [ "ID", "Title", "Slug", "Description", "Status", "Scheduled At", "Created At", "Updated At", "Is Page", "Page Order" ]
+
           articles.each do |article|
             csv << [
               article.id,
@@ -32,7 +32,7 @@ module Tools
             ]
           end
         end
-        
+
         csv_data
       rescue => e
         @error_message = "导出失败: #{e.message}"
