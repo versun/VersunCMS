@@ -12,6 +12,8 @@ gem "will_paginate"
 gem "ahoy_matey"
 gem "mission_control-jobs"
 gem "algoliasearch-rails"
+gem "csv"
+gem "zip"
 
 # gem "groupdate"
 ##
