@@ -171,7 +171,7 @@ GEM
     fugit (1.11.1)
       et-orbi (~> 1, >= 1.2.11)
       raabro (~> 1.4)
-    git (4.0.4)
+    git (4.0.5)
       activesupport (>= 5.0)
       addressable (~> 2.8)
       process_executer (~> 4.0)
