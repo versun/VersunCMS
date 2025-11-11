@@ -60,6 +60,7 @@ class ArticlesController < ApplicationController
 
   # GET /1/edit
   def edit
+    render "admin/articles/edit"
   end
 
   # POST / or /articles.json
@@ -67,7 +68,7 @@ class ArticlesController < ApplicationController
     @article = Article.new(article_params)
     respond_to do |format|
       if @article.save
-        format.html { redirect_to admin_posts_path, notice: "Created successfully." }
+        format.html { redirect_to admin_articles_path, notice: "Created successfully." }
         format.json { render :show, status: :created, location: @article }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -80,7 +81,7 @@ class ArticlesController < ApplicationController
   def update
     respond_to do |format|
       if @article.update(article_params)
-        format.html { redirect_to admin_posts_path, notice: "Updated successfully." }
+        format.html { redirect_to admin_articles_path, notice: "Updated successfully." }
         format.json { render :show, status: :ok, location: @article }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -100,7 +101,7 @@ class ArticlesController < ApplicationController
     end
 
     respond_to do |format|
-      format.html { redirect_to admin_posts_path, status: :see_other, notice: notice_message }
+      format.html { redirect_to admin_articles_path, status: :see_other, notice: notice_message }
       format.json { head :no_content }
     end
   end

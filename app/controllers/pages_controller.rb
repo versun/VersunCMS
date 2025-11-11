@@ -21,6 +21,7 @@ class PagesController < ApplicationController
 
   # GET /1/edit
   def edit
+    render "admin/pages/edit"
   end
 
   # POST / or /Pages.json

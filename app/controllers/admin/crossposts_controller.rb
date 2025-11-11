@@ -1,4 +1,4 @@
-class CrosspostsController < ApplicationController
+class Admin::CrosspostsController < Admin::BaseController
   def index
     @mastodon = Crosspost.mastodon
     @twitter = Crosspost.twitter
@@ -14,10 +14,10 @@ class CrosspostsController < ApplicationController
 
     if @settings.update(crosspost_params)
       # Rails.logger.info "Successfully updated Crosspost"
-      redirect_to crossposts_path, notice: "CrossPost settings updated successfully."
+      redirect_to admin_crossposts_path, notice: "CrossPost settings updated successfully."
     else
       # Rails.logger.error "Failed to update Crosspost: #{@settings.errors.full_messages}"
-      redirect_to crossposts_path, alert: @settings.errors.full_messages.join(", ")
+      redirect_to admin_crossposts_path, alert: @settings.errors.full_messages.join(", ")
     end
   end
 

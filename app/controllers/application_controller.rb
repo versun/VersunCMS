@@ -1,7 +1,6 @@
 class ApplicationController < ActionController::Base
   include CacheableSettings
   before_action :set_time_zone
-  after_action :track_action
 
   include Authentication
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
@@ -9,12 +8,6 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   helper_method :navbar_items
-
-  protected
-
-  def track_action
-    ahoy.track "Viewed", request.path_parameters
-  end
 
   private
 

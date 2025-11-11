@@ -1,4 +1,4 @@
-class NewslettersController < ApplicationController
+class Admin::NewslettersController < Admin::BaseController
   before_action :set_listmonk, only: [ :edit ]
 
   def edit
