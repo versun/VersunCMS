@@ -3,7 +3,7 @@ require "test_helper"
 
 class AdminControllerTest < ActionDispatch::IntegrationTest
   test "should get posts" do
-    get admin_posts_url
+    get admin_articles_url
     assert_response :success
   end
 

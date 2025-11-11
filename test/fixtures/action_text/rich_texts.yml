@@ -2,28 +2,3 @@
 #   record: name_of_fixture (ClassOfFixture)
 #   name: content
 #   body: <p>In a <i>million</i> stars!</p>
-one:
-  record: published_post_1 (Article)
-  name: content
-  body: <p>Welcome to my blog! This is my first post about web development. Today, we'll explore the basics of HTML and CSS.</p>
-
-two:
-  record: draft_post_1 (Article)
-  name: content
-  body: <p>In this post, we'll dive into the world of Ruby on Rails. Learn how to set up your first Rails application and understand the MVC architecture.</p>
-
-three:
-  record: published_page_1 (Article)
-  name: content
-  body: <p>JavaScript frameworks have revolutionized front-end development. Let's compare React, Vue, and Angular to help you choose the right one for your project.</p>
-
-four:
-  record: scheduled_post_1 (Article)
-  name: content
-  body: <p>Database optimization is crucial for application performance. Here are some tips and tricks to improve your SQL queries and database structure.</p>
-
-five:
-  record: trashed_post_1 (Article)
-  name: content
-  body: <p>Exploring the world of DevOps Learn about continuous integration, deployment pipelines, and infrastructure as code.</p>
-

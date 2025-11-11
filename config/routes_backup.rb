@@ -2,13 +2,10 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "articles#index"
   get "/analytics" => "analytics#index"
-  
-  # User authentication and management
   resources :users
   resource :session
   resources :passwords
 
-  # Settings
   resource :setting, only: [ :edit, :update, :destroy ] do
     collection do
       post :upload
@@ -16,30 +13,7 @@ Rails.application.routes.draw do
     end
   end
 
-  # Admin namespace - 统一所有后台管理功能
   namespace :admin do
-    # Admin root now points to articles index
-    get "/", to: "articles#index", as: :root
-    
-    # Content management
-    resources :articles, path: "posts" do
-      collection do
-        get :drafts
-        get :scheduled
-      end
-      member do
-        patch :publish
-        patch :unpublish
-      end
-    end
-    
-    resources :pages do
-      member do
-        patch :reorder
-      end
-    end
-    
-    # System management
     resources :newsletters, only: [:edit, :update]
     resources :exports, only: [:new, :create]
     resources :import, only: [ :index ] do
@@ -52,12 +26,10 @@ Rails.application.routes.draw do
         post :verify
       end
     end
-    
-    # Jobs and system monitoring
-    mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end
 
-  # Health check and feeds
+  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
+  # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
   get "/rss" => redirect("/feed")
   get "/rss.xml" => redirect("/feed")
@@ -65,7 +37,18 @@ Rails.application.routes.draw do
   get "/feed" => "articles#index", format: "rss"
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
-  # Public article and page routes
+  get "/admin" => "admin#posts"
+  # get "/admin/analytics" => "analytics#index", as: "analytics"
+  get "/admin/posts" => "admin#posts"
+  get "/admin/posts/new", to: "articles#new"
+  get "/admin/pages" => "admin#pages"
+  get "/admin/pages/new", to: "pages#new"
+
+
+
+
+  mount MissionControl::Jobs::Engine, at: "/admin/jobs", as: "admin_jobs"
+
   scope path: Rails.application.config.article_route_prefix do
     get "/" => "articles#index", as: :articles
     get "/:slug" => "articles#show", as: :article
@@ -77,6 +60,7 @@ Rails.application.routes.draw do
 
   resources :pages, param: :slug
 
+  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
