@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 ## for blog
 gem 'lexxy', '~> 0.1.4.beta'
+gem "sqlite3"
 # gem "html_truncator"
 gem "ruby-vips"
 gem "mastodon-api", require: "mastodon"
@@ -73,12 +74,10 @@ group :development do
   gem "web-console"
   gem "git"
   gem "solargraph"
-  gem "sqlite3"
 end
 
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
-  gem "sqlite3"
 end
