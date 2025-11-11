@@ -66,7 +66,7 @@ module Integrations
         if response.is_a?(Net::HTTPSuccess)
           json_response = JSON.parse(response.body)
           ActivityLog.create!(
-            action: "crosspost",
+            action: "completed",
             target: "crosspost",
             level: :info,
             description: "Successfully posted article #{article.title} to Mastodon"
@@ -75,7 +75,7 @@ module Integrations
           json_response["url"]
         else
           ActivityLog.create!(
-            action: "crosspost",
+            action: "failed",
             target: "crosspost",
             level: :error,
             description: "Failed to post article #{article.title} to Mastodon: #{e.message}"
@@ -84,7 +84,7 @@ module Integrations
         end
       rescue => e
         ActivityLog.create!(
-          action: "crosspost",
+          action: "failed",
           target: "crosspost",
           level: :error,
           description: "Failed to post article #{article.title} to Mastodon: #{e.message}"

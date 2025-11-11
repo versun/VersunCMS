@@ -29,7 +29,7 @@ class Listmonk < ApplicationRecord
       end
     rescue => e
       ActivityLog.create!(
-        action: "newsletter",
+        action: "failed",
         target: "newsletter",
         level: :error,
         description: e.message
@@ -61,7 +61,7 @@ class Listmonk < ApplicationRecord
       end
     rescue => e
       ActivityLog.create!(
-        action: "newsletter",
+        action: "failed",
         target: "newsletter",
         level: :error,
         description: e.message
@@ -95,7 +95,7 @@ class Listmonk < ApplicationRecord
 
       if campaign_id
         ActivityLog.create!(
-          action: "newsletter",
+          action: "completed",
           target: "newsletter",
           level: :info,
           description: "Create Campaign successfully! Title:#{article.title},Campaign ID:#{campaign_id}"
@@ -107,7 +107,7 @@ class Listmonk < ApplicationRecord
       campaign_id
     rescue => e
       ActivityLog.create!(
-        action: "newsletter",
+        action: "failed",
         target: "newsletter",
         level: :error,
         description: e.message
@@ -135,7 +135,7 @@ class Listmonk < ApplicationRecord
 
       if response.is_a?(Net::HTTPSuccess)
         ActivityLog.create!(
-          action: "newsletter",
+          action: "completed",
           target: "newsletter",
           level: :info,
           description: "Send Campaign successfully! Title:#{article.title},Campaign ID:#{campaign_id}"
@@ -147,7 +147,7 @@ class Listmonk < ApplicationRecord
       true
     rescue => e
       ActivityLog.create!(
-        action: "newsletter",
+        action: "failed",
         target: "newsletter",
         level: :error,
         description: e.message

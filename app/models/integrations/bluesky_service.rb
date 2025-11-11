@@ -65,7 +65,7 @@ module Integrations
       begin
         posted_url = skeet(content, embed)
         ActivityLog.create!(
-          action: "crosspost",
+          action: "start",
           target: "crosspost",
           level: :info,
           description: "Successfully posted article #{article.title} to Bluesky"
@@ -74,7 +74,7 @@ module Integrations
         posted_url
       rescue => e
         ActivityLog.create!(
-          action: "crosspost",
+          action: "failed",
           target: "crosspost",
           level: :error,
           description: "Failed to post article #{article.title} to Bluesky: #{e.message}"

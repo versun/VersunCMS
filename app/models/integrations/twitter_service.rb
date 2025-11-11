@@ -57,7 +57,7 @@ module Integrations
 
         id = response["data"]["id"] if response && response["data"] && response["data"]["id"]
         ActivityLog.create!(
-          action: "crosspost",
+          action: "completed",
           target: "crosspost",
           level: :info,
           description: "Successfully posted article #{article.title} to Twitter"
@@ -66,7 +66,7 @@ module Integrations
         "https://x.com/#{username}/status/#{id}" if username && id
       rescue => e
         ActivityLog.create!(
-          action: "crosspost",
+          action: "failed",
           target: "crosspost",
           level: :error,
           description: "Failed to post article #{article.title} to X: #{e.message}"
