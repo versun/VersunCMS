@@ -43,3 +43,6 @@
 # Replit
 .replit
 replit.nix
+
+/app/assets/builds/*
+!/app/assets/builds/.keep

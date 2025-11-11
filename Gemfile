@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 ## for blog
-
+gem 'lexxy', '~> 0.1.4.beta'
 # gem "html_truncator"
 gem "ruby-vips"
 gem "mastodon-api", require: "mastodon"
@@ -9,17 +9,16 @@ gem "aws-sdk-s3"
 gem "open-uri"
 gem "feedjira"
 gem "will_paginate"
-gem "ahoy_matey"
 gem "mission_control-jobs"
 gem "algoliasearch-rails"
 gem "csv"
-gem "zip"
+# gem "zip"  # 使用rubyzip代替
 
 # gem "groupdate"
 ##
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.0.0"
+gem "rails", "~> 8.1.1"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 gem "pg"
@@ -74,6 +73,7 @@ group :development do
   gem "web-console"
   gem "git"
   gem "solargraph"
+  gem "sqlite3"
 end
 
 group :test do
@@ -82,3 +82,5 @@ group :test do
   gem "selenium-webdriver"
   gem "sqlite3"
 end
+
+gem "tailwindcss-rails", "~> 4.4"
