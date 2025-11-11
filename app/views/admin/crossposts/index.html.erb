@@ -1,11 +1,10 @@
-<%= render 'admin/admin_bar' %>
 <h3>CrossPost Settings</h3>
 <fieldset>
   <legend><h4>Mastodon</h4></legend>
   <p class="text-muted">Get credentials: Open Mastodon -> Preferences -> Development -> New application | Scope: profile,write:statuses</p>
-  <%= form_with(model: @mastodon, url: crosspost_path(@mastodon.platform), method: :patch) do |f| %>
+  <%= form_with(model: @mastodon, url: admin_crosspost_path(@mastodon.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'mastodon' %>
-    
+
     <div class="form-group">
       <%= f.label :enabled, "Enable Mastodon CrossPost" %>
       <%= f.check_box :enabled %>
@@ -41,9 +40,9 @@
 <fieldset>
   <legend><h4>X</h4></legend>
   <p class="text-muted">First, obtain X credentials from <a href="https://developer.x.com">https://developer.x.com</a>.</p>
-  <%= form_with(model: @twitter, url: crosspost_path(@twitter.platform), method: :patch) do |f| %>
+  <%= form_with(model: @twitter, url: admin_crosspost_path(@twitter.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'twitter' %>
-    
+
     <div class="form-group">
       <%= f.label :enabled, "Enable X CrossPost" %>
       <%= f.check_box :enabled %>
@@ -79,7 +78,7 @@
 <fieldset>
   <legend><h4>Bluesky</h4></legend>
   <p class="text-muted">Get credentials: Log in to your Bluesky account and generate an App Password in settings.</p>
-  <%= form_with(model: @bluesky, url: crosspost_path(@bluesky.platform), method: :patch) do |f| %>
+  <%= form_with(model: @bluesky, url: admin_crosspost_path(@bluesky.platform), method: :patch) do |f| %>
     <%= f.hidden_field :platform, value: 'bluesky' %>
 
     <div class="form-group">
@@ -145,14 +144,14 @@
 <script>
 document.addEventListener('turbo:load', function() {
   const verifyButtons = document.querySelectorAll('.verify-btn');
-  
+
   verifyButtons.forEach(button => {
     button.addEventListener('click', function() {
       const platform = this.dataset.platform;
       const form = this.closest('form');
       const formData = new FormData(form);
       const button = this;
-      
+
       // Convert FormData to JSON object
       const jsonData = {};
       formData.forEach((value, key) => {
@@ -161,13 +160,13 @@ document.addEventListener('turbo:load', function() {
           jsonData[cleanKey] = value;
         }
       });
-      
+
       // Disable button and show loading state
       button.disabled = true;
       const originalText = button.innerHTML;
       button.innerHTML = 'Verifying...';
-      
-      fetch(`/crossposts/${platform}/verify`, {
+
+      fetch(`/admin/crossposts/${platform}/verify`, {
         method: 'POST',
         body: JSON.stringify({ crosspost: jsonData }),
         headers: {

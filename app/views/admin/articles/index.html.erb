@@ -1,0 +1,34 @@
+<% content_for :title, "Posts|Admin" %>
+
+<div class="admin-articles">
+  <%= render 'admin/shared/post_status', scope: @articles %>
+  <%= link_to "New", new_admin_article_path %>
+
+  <% if @articles.any? %>
+    <div class="articles-admin">
+      <% @articles.each do |post| %>
+
+        <div class="row-actions">
+            <%= link_to "view", article_path(post) %> |
+            <%= link_to "edit", edit_article_path(post) %> |
+            <% if post.status != "trash" %>
+              <%= link_to "trash", article_path(post),
+                    data: { turbo_method: :delete } %> |
+            <% else %>
+              <%= link_to "delete", article_path(post),
+                    data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } %> |
+            <% end %>
+
+            <%= link_to post.title, edit_article_path(post), class:"title" %>
+        </div>
+      <% end %>
+      <hr>
+      <%= will_paginate @articles %>
+    </div>
+  <% else %>
+    <div class="no-content">
+      <p>No posts found.</p>
+      <%= link_to "Create your first article", new_admin_article_path, class: "admin-button primary" %>
+    </div>
+  <% end %>
+</div>

@@ -1,19 +1,10 @@
-<%= render 'admin/admin_bar' %>
-<h3>Import Data</h3>
-<%= form_tag from_rss_tools_import_index_path, multipart: true do %>
-  <%= label_tag :url, "RSS URL:" %>
-  <%= text_field_tag :url, nil, required: true%><br>
-  <%= check_box_tag :import_images, '1' %>
-  <%= label_tag :import_images, "Import Images" %><br>
-  <%= submit_tag "Import From RSS", class: "admin-button" %>
-<% end %>
-<br>
-<h5 class="mb-0">Import History</h5>
+<h3 class="mb-0">Audits</h3>
 <table class="table table-striped">
   <thead>
   <tr>
     <th>Time</th>
     <th>Level</th>
+    <th>Action</th>
     <th>Description</th>
   </tr>
   </thead>
@@ -34,6 +25,7 @@
                                  end %>">
             <%= log.level&.capitalize || 'Unknown' %>
           </span></td>
+      <td><%= log.action %></td>
       <td><%= log.description %></td>
     </tr>
   <% end %>

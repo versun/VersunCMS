@@ -1,0 +1,21 @@
+<header class="admin-header">
+  <table width="100%">
+    <tr>
+      <td>
+        | <%= link_to "Posts", admin_articles_path, class: "admin-nav-link" %> |
+        <%= link_to "Pages", admin_pages_path, class: "admin-nav-link" %> |
+      </td>
+      <td>
+        <%= link_to "Export", new_admin_export_path, class: "tool-link" %> |
+        <%= link_to "Import", admin_import_index_path, class: "tool-link" %> |
+        <%= link_to "Crosspost", admin_crossposts_path, class: "tool-link" %> |
+        <%= link_to "Newsletter", edit_admin_newsletter_path(1), class: "tool-link" %> |
+        <%= link_to "Jobs", admin_jobs_path, class: "tool-link" %> |
+        <%= link_to "Settings", edit_setting_path, class: "admin-nav-link" %> |
+      </td>
+      <td align="right">
+        <%= button_to "Logout", session_path, method: :delete, data: { turbo_method: :delete }, class: "admin-button" %>
+      </td>
+    </tr>
+  </table>
+</header>

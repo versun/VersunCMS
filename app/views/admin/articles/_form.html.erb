@@ -1,10 +1,10 @@
-<%= form_with(model: article) do |form| %>
-  <% if article.errors.any? %>
+<%= form_with(model: [:admin,@article]) do |form| %>
+  <% if @article.errors.any? %>
     <div style="color: red">
-      <h3><%= pluralize(article.errors.count, "error") %> prohibited this article from being saved:</h3>
+      <h3><%= pluralize(@article.errors.count, "error") %> prohibited this article from being saved:</h3>
 
       <ul>
-        <% article.errors.each do |error| %>
+        <% @article.errors.each do |error| %>
           <li><%= error.full_message %></li>
         <% end %>
       </ul>
@@ -20,7 +20,7 @@
         <%= form.label :created_at, "created at:" %>
         <%= form.datetime_field :created_at %>
       </fieldset>
-      
+
       <fieldset class="bordered-container bordered-fieldset">
         <legend>Content</legend>
         <%= form.rich_text_area :content, required: true %>
@@ -30,15 +30,15 @@
         <legend>Description</legend>
         <%= form.text_area :description, rows: 3, cols:50 %>
       </fieldset>
-      
+
       <fieldset class="bordered-container bordered-fieldset">
         <legend>CrossPost</legend>
-        
+
         <% if Crosspost.find_by(platform: 'mastodon')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_mastodon %>
             <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
-              <%= form.fields_for :social_media_posts, article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
+              <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
                 <% if post_form.object.platform == 'mastodon' %>
                   <%= post_form.text_field :url, placeholder: "Post URL" %>
                   <%= post_form.hidden_field :platform, value: "mastodon" %>
@@ -46,12 +46,12 @@
               <% end %>
           </div>
         <% end %>
-        
+
         <% if Crosspost.find_by(platform: 'twitter')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_twitter %>
             <%= form.label :crosspost_twitter, "Post to Twitter" %>
-              <%= form.fields_for :social_media_posts, article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
+              <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
                 <% if post_form.object.platform == 'twitter' %>
                   <%= post_form.text_field :url, placeholder: "Post URL" %>
                   <%= post_form.hidden_field :platform, value: "twitter" %>
@@ -59,12 +59,12 @@
               <% end %>
           </div>
         <% end %>
-        
+
         <% if Crosspost.find_by(platform: 'bluesky')&.enabled? %>
           <div>
             <%= form.check_box :crosspost_bluesky %>
             <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
-              <%= form.fields_for :social_media_posts, article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
+              <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
               <% if post_form.object.platform == 'bluesky' %>
                 <%= post_form.text_field :url, placeholder: "Post URL" %>
                 <%= post_form.hidden_field :platform, value: "bluesky" %>
@@ -72,8 +72,8 @@
             <% end %>
           </div>
         <% end %>
-        
-        <%= link_to "Go to Cross Post Settings", crossposts_path %>
+
+        <%= link_to "Go to Cross Post Settings", admin_crossposts_path %>
       </fieldset>
 
       <fieldset class="bordered-container bordered-fieldset">
@@ -84,30 +84,30 @@
             <%= form.label :send_newsletter, "Send Newsletter" %>
           </div>
         <% end %>
-        <%= link_to "Go to Newsletter Settings", newsletter_path %>
+        <%= link_to "Go to Newsletter Settings", edit_admin_newsletter_path(1) %>
 
       </fieldset>
 
       <fieldset class="bordered-container bordered-fieldset">
         <legend>Actions</legend>
           <div>
-            <%= form.select :status, Article.statuses.keys, { prompt: 'choose a status', selected: article.status.presence || 'draft' }, { id: 'status_select', required: true } %>
+            <%= form.select :status, Article.statuses.keys, { prompt: 'choose a status', selected: @article.status.presence || 'draft' }, { id: 'status_select', required: true } %>
           </div>
 
           <div class="scheduled-at" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
-            <%= form.datetime_field :scheduled_at, value: article.scheduled_at&.in_time_zone %>
+            <%= form.datetime_field :scheduled_at, value: @article.scheduled_at&.in_time_zone %>
             Current Date Time: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %>
           </div>
-        
+
           <div>
           <%= form.submit "save" %>
-          <% if article.persisted? %>
-            <%= link_to "delete", article_path(article.slug), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
+          <% if @article.persisted? %>
+            <%= link_to "delete", article_path(@article.slug), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
           <% end %>
         </div>
       </fieldset>
 
-      
+
   </div>
 
 <% end %>

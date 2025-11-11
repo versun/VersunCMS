@@ -1,0 +1,28 @@
+<% content_for :title, "Pages|Admin" %>
+
+<%= render 'admin/shared/post_status', scope: @pages %>
+<%= link_to "New", new_admin_page_path %>
+<% if @pages %>
+  <div class="articles-admin">
+    <% @pages.each do |post| %>
+
+      <div class="row-actions">
+          <%= link_to "view", page_path(post) %> |
+          <%= link_to "edit", edit_page_path(post) %> |
+          <% if post.status != "trash" %>
+            <%= link_to "trash", page_path(post),
+                  data: { turbo_method: :delete } %> |
+          <% else %>
+            <%= link_to "delete", page_path(post),
+                  data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } %> |
+          <% end %>
+
+          <%= link_to post.title, edit_page_path(post), class:"title" %>
+      </div>
+    <% end %>
+    <hr>
+    <%= will_paginate @pages %>
+  </div>
+<% else %>
+<p>No Pages Found</p>
+<% end %>

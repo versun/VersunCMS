@@ -1,4 +1,4 @@
-<%= render 'admin/admin_bar' %>
+<%= render 'admin/shared/header' %>
 
 <%= form_with(model: @setting) do |form| %>
   <% if @setting.errors.any? %>
@@ -34,7 +34,7 @@
 
   <div class="field">
     <b><%= form.label :time_zone, "Timezone" %></b>
-    <%= form.select :time_zone, 
+    <%= form.select :time_zone,
                  timezone_options,
                  { selected: @setting.time_zone || "UTC" },
                  { class: "form-select" } %>
@@ -54,19 +54,19 @@
     <b><%= form.label :tool_code, 'Tool Code' %></b><br>
     <%= form.text_area :tool_code %>
   </div>
-  
+
   <div class="field">
     <b><%= form.label :footer, 'Footer' %></b>
     <%= form.rich_text_area :footer %>
   </div>
-      
+
   <div class="field">
     <b><%= form.label :custom_css, 'Custom CSS' %></b><br>
     <%= form.text_area :custom_css %>
   </div>
-    
+
   <div class="field">
-    <%= render 'form_social_links', form:form %>
+    <%= render 'admin/settings/form_social_links', form:form %>
   </div>
 
   <div class="actions">
@@ -75,7 +75,7 @@
 <% end %>
 <hr>
 <div class="field">
-  <%= render 'form_static_files' %>
+  <%= render 'admin/settings/form_static_files' %>
 </div>
 
 <hr>

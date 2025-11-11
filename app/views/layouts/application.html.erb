@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    
+
     <title><%= content_for?(:title) ? yield(:title) : site_settings[:title] %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,10 +19,11 @@
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="apple-touch-icon" href="/icon.png">
     <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed">
-    
+
     <%# Includes all stylesheet files in app/views/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    
+    <%= stylesheet_link_tag "lexxy" %>
+
     <%= javascript_importmap_tags %>
     <%= raw site_settings[:head_code] %>
 
@@ -53,7 +54,7 @@
           </td>
         </tr>
       </table>
-                  
+
       <table width="100%">
         <tr>
           <td>
@@ -67,16 +68,17 @@
           </td>
         </tr>
       </table>
+      <%= yield :nav %>
     </header>
 
     <hr>
 
     <%= raw site_settings[:tool_code] %>
-    
-    <main> 
+
+    <main>
       <%= yield %>
     </main>
-    
+
     <hr>
 
     <%= render 'components/footer', site_settings: site_settings %>
