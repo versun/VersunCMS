@@ -1,0 +1,37 @@
+<h3>Newsletter Settings</h3>
+
+<%= form_with(model: @listmonk, url: admin_newsletters_path, method: :patch) do |form| %>
+  <div class="form-group">
+    <%= form.label :enabled, "Enable Newsletter" %>
+    <%= form.check_box :enabled %>
+  </div>
+
+  <div>
+    <%= form.label :url, "Listmonk URL" %>
+    <%= form.text_field :url, placeholder: "https://example.com"%>
+  </div>
+
+  <div>
+    <%= form.label :username, "Username" %>
+    <%= form.text_field :username %>
+  </div>
+
+  <div>
+    <%= form.label :api_key, "API Key" %>
+    <%= form.text_field :api_key %>
+  </div>
+
+  <% if @lists.present? %>
+    <div>
+      <%= form.label :list_id, "List" %>
+      <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @selected_list), include_blank: "Select a List" %>
+      <%= form.label :template_id, "Template" %>
+      <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @selected_template), include_blank: "Select a Template" %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.submit "Save" %>
+  </div>
+<% end %>
+<%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>

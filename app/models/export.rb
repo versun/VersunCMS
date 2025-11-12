@@ -43,9 +43,9 @@ class Export
       export_crossposts
       export_listmonks
       export_pages
-      # export_settings
-      # export_social_media_posts
-      # export_users
+      export_settings
+      export_social_media_posts
+      export_users
 
       # 创建ZIP文件
       create_zip_file
@@ -227,6 +227,7 @@ class Export
 
       # 构建完整的URL
       full_url = build_full_url(original_url)
+      Rails.logger.info "Attempting to download from URL: #{full_url}"
 
       # 下载文件
       URI.open(full_url) do |remote_file|
@@ -237,11 +238,12 @@ class Export
 
       # 返回相对路径
       new_url = "attachments/#{record_type}_#{record_id}/#{new_filename}"
-      Rails.logger.info "Downloaded attachment: #{filename} -> #{new_filename}"
+      Rails.logger.info "Successfully downloaded attachment: #{filename} -> #{new_filename}"
 
       new_url
     rescue => e
       Rails.logger.error "Error downloading attachment #{original_url}: #{e.message}"
+      Rails.logger.error "Full URL attempted: #{build_full_url(original_url)}"
       nil
     end
   end
@@ -250,8 +252,15 @@ class Export
     return original_url if original_url.start_with?('http')
 
     # 如果是相对路径，使用应用的基础URL
-    base_url = Setting.first&.url || "https://example.com"
-    base_url.chomp('/') + original_url
+    base_url = Setting.first&.url.presence || ENV['BASE_URL'].presence || "http://localhost:3000"
+    base_url = base_url.chomp('/')
+    
+    # 确保URL格式正确
+    if original_url.start_with?('/')
+      "#{base_url}#{original_url}"
+    else
+      "#{base_url}/#{original_url}"
+    end
   end
 
   def extract_blob_from_url(url)
@@ -264,8 +273,12 @@ class Export
 
     signed_id = match[1]
     begin
-      ActiveStorage::Blob.find_signed(signed_id)
-    rescue
+      # 尝试找到对应的blob
+      blob = ActiveStorage::Blob.find_signed(signed_id)
+      Rails.logger.info "Found blob for signed_id #{signed_id}: #{blob&.filename}"
+      blob
+    rescue => e
+      Rails.logger.error "Failed to find blob for signed_id #{signed_id}: #{e.message}"
       nil
     end
   end

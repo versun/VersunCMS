@@ -9,7 +9,7 @@ class ListmonkSenderJob < ApplicationJob
     article = Article.find(article_id)
     listmonk = Listmonk.first
     ActivityLog.create!(
-      action: "started",
+      action: "initiated",
       target: "newsletter",
       level: :info,
       description: "Performing newsletter for article #{article.title}"

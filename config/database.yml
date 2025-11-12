@@ -21,18 +21,33 @@ sqlite3: &sqlite3
 
 development:
     primary:
-        <<: *sqlite3
-        database: db/development.sqlite3
+        <<: *postgresql
+        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } %>
     cache:
-        <<: *sqlite3
-        database: db/development_cache.sqlite3
-    cable:
-        <<: *sqlite3
-        database: db/development_cable.sqlite3
+        <<: *postgresql
+        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cache" %>
+        migrations_paths: db/cache_migrate
     queue:
-        <<: *sqlite3
-        database: db/development_queue.sqlite3
+        <<: *postgresql
+        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_queue" %>
         migrations_paths: db/queue_migrate
+    cable:
+        <<: *postgresql
+        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cable" %>
+        migrations_paths: db/cable_migrate
+#     primary:
+#         <<: *sqlite3
+#         database: db/development.sqlite3
+#     cache:
+#         <<: *sqlite3
+#         database: db/development_cache.sqlite3
+#     cable:
+#         <<: *sqlite3
+#         database: db/development_cable.sqlite3
+#     queue:
+#         <<: *sqlite3
+#         database: db/development_queue.sqlite3
+#         migrations_paths: db/queue_migrate
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".

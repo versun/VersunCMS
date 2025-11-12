@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "articles#index"
   get "/analytics" => "analytics#index"
-  
+
   # User authentication and management
   resources :users
   resource :session
@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   namespace :admin do
     # Admin root now points to articles index
     get "/", to: "articles#index", as: :root
-    
+
     # Content management
     resources :articles, path: "posts" do
       collection do
@@ -32,27 +32,23 @@ Rails.application.routes.draw do
         patch :unpublish
       end
     end
-    
+
     resources :pages do
       member do
         patch :reorder
       end
     end
-    
+
     # System management
-    resources :newsletters, only: [:edit, :update]
-    resources :exports, only: [:new, :create]
-    resources :import, only: [ :index ] do
-      collection do
-        post :from_rss
-      end
-    end
+    resources :newsletters, only: [:index, :update]
+    resources :exports, only: [:index, :create]
+    resources :imports, only: [ :index, :create ]
     resources :crossposts, only: [ :index, :update ] do
       member do
         post :verify
       end
     end
-    
+
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end

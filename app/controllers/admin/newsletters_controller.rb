@@ -1,7 +1,7 @@
 class Admin::NewslettersController < Admin::BaseController
-  before_action :set_listmonk, only: [ :edit ]
+  before_action :set_listmonk, only: [ :index ]
 
-  def edit
+  def index
     if @listmonk.api_key.present? && @listmonk.url.present? && @listmonk.username.present?
       @lists = @listmonk.fetch_lists
       @templates = @listmonk.fetch_templates

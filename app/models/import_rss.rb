@@ -1,4 +1,4 @@
-class RssImport
+class ImportRss
   require "feedjira"
   require "cgi"
   require "open-uri"
@@ -11,7 +11,7 @@ class RssImport
 
   def import_data
     ActivityLog.create!(
-      action: "start",
+      action: "initiated",
       target: "import",
       level: :info,
       description: "Start Import from: #{@url}, import images: #{@import_images}"
@@ -53,7 +53,7 @@ class RssImport
                     )
     end
     ActivityLog.create!(
-      action: "Completed",
+      action: "completed",
       target: "import",
       level: :info,
       description: "Import successfully from: #{@url}, import images: #{@import_images}"
@@ -62,7 +62,7 @@ class RssImport
   rescue StandardError => e
     @error_message = e.message
     ActivityLog.create!(
-      action: "Failed",
+      action: "failed",
       target: "import",
       level: :error,
       description: "Import failed from: #{@url}, import images: #{@import_images}, error: #{e.message}"

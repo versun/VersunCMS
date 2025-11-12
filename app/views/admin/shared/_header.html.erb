@@ -6,10 +6,10 @@
         <%= link_to "Pages", admin_pages_path, class: "admin-nav-link" %> |
       </td>
       <td>
-        <%= link_to "Export", new_admin_export_path, class: "tool-link" %> |
-        <%= link_to "Import", admin_import_index_path, class: "tool-link" %> |
+        <%= link_to "Export", admin_exports_path, class: "tool-link" %> |
+        <%= link_to "Import", admin_imports_path, class: "tool-link" %> |
         <%= link_to "Crosspost", admin_crossposts_path, class: "tool-link" %> |
-        <%= link_to "Newsletter", edit_admin_newsletter_path(1), class: "tool-link" %> |
+        <%= link_to "Newsletter", admin_newsletters_path, class: "tool-link" %> |
         <%= link_to "Jobs", admin_jobs_path, class: "tool-link" %> |
         <%= link_to "Settings", edit_setting_path, class: "admin-nav-link" %> |
       </td>
