@@ -21,33 +21,18 @@ sqlite3: &sqlite3
 
 development:
     primary:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } %>
+        <<: *sqlite3
+        database: db/development.sqlite3
     cache:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cache" %>
-        migrations_paths: db/cache_migrate
-    queue:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_queue" %>
-        migrations_paths: db/queue_migrate
+        <<: *sqlite3
+        database: db/development_cache.sqlite3
     cable:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cable" %>
-        migrations_paths: db/cable_migrate
-#     primary:
-#         <<: *sqlite3
-#         database: db/development.sqlite3
-#     cache:
-#         <<: *sqlite3
-#         database: db/development_cache.sqlite3
-#     cable:
-#         <<: *sqlite3
-#         database: db/development_cable.sqlite3
-#     queue:
-#         <<: *sqlite3
-#         database: db/development_queue.sqlite3
-#         migrations_paths: db/queue_migrate
+        <<: *sqlite3
+        database: db/development_cable.sqlite3
+    queue:
+        <<: *sqlite3
+        database: db/development_queue.sqlite3
+        migrations_paths: db/queue_migrate
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -71,17 +56,17 @@ test:
 # is mounted as a persistent Docker volume in config/deploy.yml.
 production:
     primary:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } %>
+        <<: *sqlite3
+        database: storage/production.sqlite3
     cache:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cache" %>
+        <<: *sqlite3
+        database: storage/production_cache.sqlite3
         migrations_paths: db/cache_migrate
     queue:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_queue" %>
+        <<: *sqlite3
+        database: storage/production_queue.sqlite3
         migrations_paths: db/queue_migrate
     cable:
-        <<: *postgresql
-        database: <%= ENV.fetch("DATABASE") { "versuncms_production" } + "_cable" %>
+        <<: *sqlite3
+        database: storage/production_cable.sqlite3
         migrations_paths: db/cable_migrate
