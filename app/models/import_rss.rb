@@ -89,6 +89,11 @@ class ImportRss
           attachment = ActionText::Attachment.from_attachable(blob)
           relative_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
           attachment.node["url"] = relative_url
+          
+          # 确保SGID也是正确的
+          correct_sgid = blob.to_sgid.to_s
+          attachment.node["sgid"] = correct_sgid
+          
           img.replace(attachment.node.to_html)
         end
       rescue StandardError => e

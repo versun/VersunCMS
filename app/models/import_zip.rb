@@ -12,8 +12,6 @@ class ImportZip
     @zip_path = zip_path
     @error_message = nil
     @import_dir = Rails.root.join("tmp", "imports", "import_#{Time.current.strftime('%Y%m%d_%H%M%S')}")
-    
-    # 创建导入目录
     FileUtils.mkdir_p(@import_dir)
   end
 
@@ -24,16 +22,13 @@ class ImportZip
       level: :info,
       description: "Start ZIP import from: #{@zip_path}"
     )
-
-    # 解压ZIP文件
     extract_zip_file
-
-    # 导入各个数据表
     import_activity_logs
     import_articles
     import_crossposts
     import_listmonks
     import_pages
+    import_settings
 
     ActivityLog.create!(
       action: "completed",
@@ -41,10 +36,6 @@ class ImportZip
       level: :info,
       description: "ZIP import completed successfully from: #{@zip_path}"
     )
-
-    # 清理临时目录
-    FileUtils.rm_rf(@import_dir)
-    
     true
   rescue StandardError => e
     @error_message = e.message
@@ -55,6 +46,8 @@ class ImportZip
       description: "ZIP import failed from: #{@zip_path}, error: #{e.message}"
     )
     false
+  ensure
+    FileUtils.rm_rf(@import_dir) if @import_dir && File.directory?(@import_dir)
   end
 
   def error_message
@@ -65,21 +58,13 @@ class ImportZip
 
   def extract_zip_file
     Rails.logger.info "Extracting ZIP file: #{@zip_path}"
-    
     Zip::File.open(@zip_path) do |zip_file|
       zip_file.each do |entry|
-        # 跳过目录条目
         next if entry.directory?
-        
-        # 构建解压路径
         extract_path = File.join(@import_dir.to_s, entry.name)
         FileUtils.mkdir_p(File.dirname(extract_path))
-        
-        # 手动写入文件内容，避免ZIP库的权限问题
         begin
-          File.open(extract_path, 'wb') do |f|
-            f.write(entry.get_input_stream.read)
-          end
+          File.open(extract_path, 'wb') { |f| f.write(entry.get_input_stream.read) }
           Rails.logger.info "Extracted: #{entry.name} -> #{extract_path}"
         rescue => e
           Rails.logger.error "Failed to extract #{entry.name}: #{e.message}"
@@ -87,16 +72,15 @@ class ImportZip
         end
       end
     end
-    
     Rails.logger.info "ZIP file extracted to: #{@import_dir}"
   end
 
+  # 逐表/模型的导入实现（见原文，不做结构性大调整，只优化部分细节，保持原接口用法）
   def import_activity_logs
     csv_path = File.join(@import_dir, 'activity_logs.csv')
     return unless File.exist?(csv_path)
 
     Rails.logger.info "Importing activity logs..."
-    
     CSV.foreach(csv_path, headers: true) do |row|
       ActivityLog.create!(
         action: row['action'],
@@ -107,7 +91,6 @@ class ImportZip
         updated_at: row['updated_at']
       )
     end
-    
     Rails.logger.info "Activity logs imported successfully"
   end
 
@@ -118,18 +101,16 @@ class ImportZip
     Rails.logger.info "Importing articles..."
     imported_count = 0
     skipped_count = 0
-    
     CSV.foreach(csv_path, headers: true) do |row|
-      # 检查是否已存在相同slug的文章
       if Article.exists?(slug: row['slug'])
         Rails.logger.info "Article with slug '#{row['slug']}' already exists, skipping..."
         skipped_count += 1
         next
       end
-      
-      # 处理文章内容（恢复附件引用）
-      processed_content = process_imported_content(row['content'])
-      
+      article_id = row['id'].presence || "article_#{imported_count + skipped_count}"
+      content = row['content'].presence || ""
+      processed_content = process_imported_content(content, article_id, 'article')
+      processed_content = fix_content_sgid_references(processed_content)
       Article.create!(
         title: row['title'],
         slug: row['slug'],
@@ -146,7 +127,6 @@ class ImportZip
       )
       imported_count += 1
     end
-    
     Rails.logger.info "Articles import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
 
@@ -156,17 +136,8 @@ class ImportZip
 
     Rails.logger.info "Importing crossposts..."
     imported_count = 0
-    skipped_count = 0
-    
     CSV.foreach(csv_path, headers: true) do |row|
-      # 检查是否已存在相同平台的crosspost
-      if Crosspost.exists?(platform: row['platform'])
-        Rails.logger.info "Crosspost for platform '#{row['platform']}' already exists, skipping..."
-        skipped_count += 1
-        next
-      end
-      
-      Crosspost.create!(
+      Crosspost.update(
         platform: row['platform'],
         server_url: row['server_url'],
         client_key: row['client_key'],
@@ -183,27 +154,16 @@ class ImportZip
       )
       imported_count += 1
     end
-    
-    Rails.logger.info "Crossposts import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.logger.info "Crossposts import completed: #{imported_count} imported"
   end
 
   def import_listmonks
     csv_path = File.join(@import_dir, 'listmonks.csv')
     return unless File.exist?(csv_path)
-
     Rails.logger.info "Importing listmonks..."
     imported_count = 0
-    skipped_count = 0
-    
     CSV.foreach(csv_path, headers: true) do |row|
-      # 检查是否已存在相同URL的listmonk
-      if Listmonk.exists?(url: row['url'])
-        Rails.logger.info "Listmonk with URL '#{row['url']}' already exists, skipping..."
-        skipped_count += 1
-        next
-      end
-      
-      Listmonk.create!(
+      Listmonk.find_or_create_by(
         url: row['url'],
         username: row['username'],
         api_key: row['api_key'],
@@ -215,29 +175,25 @@ class ImportZip
       )
       imported_count += 1
     end
-    
-    Rails.logger.info "Listmonks import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.logger.info "Listmonks import completed: #{imported_count} imported"
   end
 
   def import_pages
     csv_path = File.join(@import_dir, 'pages.csv')
     return unless File.exist?(csv_path)
-
     Rails.logger.info "Importing pages..."
     imported_count = 0
     skipped_count = 0
-    
     CSV.foreach(csv_path, headers: true) do |row|
-      # 检查是否已存在相同slug的页面
       if Page.exists?(slug: row['slug'])
         Rails.logger.info "Page with slug '#{row['slug']}' already exists, skipping..."
         skipped_count += 1
         next
       end
-      
-      # 处理页面内容（恢复附件引用）
-      processed_content = process_imported_content(row['content'])
-      
+      page_id = row['id'].presence || "page_#{imported_count + skipped_count}"
+      content = row['content'].presence || ""
+      processed_content = process_imported_content(content, page_id, 'page')
+      processed_content = fix_content_sgid_references(processed_content)
       Page.create!(
         title: row['title'],
         slug: row['slug'],
@@ -250,144 +206,307 @@ class ImportZip
       )
       imported_count += 1
     end
-    
     Rails.logger.info "Pages import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
 
-  def process_imported_content(content)
-    return content if content.blank?
+  def import_settings
+    csv_path = File.join(@import_dir, 'settings.csv')
+    return unless File.exist?(csv_path)
+    Rails.logger.info "Importing settings..."
+    imported_count = 0
+    # 只允许有一个 Setting
+    existing_setting = Setting.first
+    if existing_setting
+      csv_data = CSV.read(csv_path, headers: true).first
+      return unless csv_data
+      social_links = parse_json_field(csv_data['social_links'])
+      static_files = parse_json_field(csv_data['static_files'])
+      existing_setting.update!(
+        title: csv_data['title'],
+        description: csv_data['description'],
+        author: csv_data['author'],
+        url: csv_data['url'],
+        time_zone: csv_data['time_zone'] || 'UTC',
+        giscus: csv_data['giscus'],
+        tool_code: csv_data['tool_code'],
+        head_code: csv_data['head_code'],
+        custom_css: csv_data['custom_css'],
+        social_links: social_links,
+        static_files: static_files || {},
+        created_at: csv_data['created_at'],
+        updated_at: csv_data['updated_at']
+      )
+      imported_count += 1
+    else
+      CSV.foreach(csv_path, headers: true) do |row|
+        social_links = parse_json_field(row['social_links'])
+        static_files = parse_json_field(row['static_files'])
+        Setting.create!(
+          title: row['title'],
+          description: row['description'],
+          author: row['author'],
+          url: row['url'],
+          time_zone: row['time_zone'] || 'UTC',
+          giscus: row['giscus'],
+          tool_code: row['tool_code'],
+          head_code: row['head_code'],
+          custom_css: row['custom_css'],
+          social_links: social_links,
+          static_files: static_files || {},
+          created_at: row['created_at'],
+          updated_at: row['updated_at']
+        )
+        imported_count += 1
+      end
+    end
+    # 富文本 footer
+    footer_csv_path = File.join(@import_dir, 'setting_footers.csv')
+    if File.exist?(footer_csv_path)
+      Rails.logger.info "Importing setting footer content..."
+      CSV.foreach(footer_csv_path, headers: true) do |row|
+        setting = Setting.first
+        content = row['content'].presence || ""
+        if setting && content.present?
+          processed_content = process_setting_footer_content(content, setting.id, 'setting')
+          processed_content = fix_content_sgid_references(processed_content)
+          setting.update!(footer: processed_content)
+          Rails.logger.info "Updated setting footer content"
+        end
+      end
+    end
+    Rails.logger.info "Settings import completed: #{imported_count} imported"
+  rescue StandardError => e
+    Rails.logger.error "Error importing settings: #{e.message}"
+    raise
+  end
 
+  # ----- 内容和附件处理通用工具方法 -----
+  def process_imported_content(content, record_id = nil, record_type = nil)
+    return content if content.blank?
+    record_id ||= "unknown"
+    record_type ||= "content"
+    Rails.logger.info "process_imported_content called with record_id: #{record_id}, record_type: #{record_type}"
     doc = Nokogiri::HTML.fragment(content)
-    
-    # 处理附件引用，重新上传到Active Storage
-    doc.css('action-text-attachment').each do |attachment|
-      process_imported_attachment(attachment)
-    end
-    
-    doc.css('figure[data-trix-attachment]').each do |figure|
-      process_imported_figure(figure)
-    end
-    
-    doc.css('img').each do |img|
-      process_imported_image(img)
-    end
-    
+
+    doc.css('action-text-attachment').each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
+    doc.css('figure[data-trix-attachment]').each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
+    doc.css('img').each { |img| safe_process { process_imported_image_element(img, record_id, record_type) } }
+
     doc.to_html
   end
 
-  def process_imported_attachment(attachment)
+  def process_imported_attachment_element(attachment, record_id = nil, record_type = nil)
+    record_id ||= "unknown"
+    record_type ||= "attachment"
+    return unless attachment.respond_to?(:[])
+    content_type = attachment['content-type']
     original_url = attachment['url']
-    return unless original_url.present?
-    
-    # 检查是否是相对路径（导出的附件）
-    if original_url.include?('attachments/')
-      # 从本地导入的附件路径中提取文件
-      attachment_path = File.join(@import_dir, original_url)
-      return unless File.exist?(attachment_path)
-      
-      begin
-        # 重新上传到Active Storage
+    filename = attachment['filename']
+    return unless original_url.present? && filename.present?
+
+    if is_local_attachment?(original_url)
+      attachment_path = safe_join_path(@import_dir, original_url)
+      if File.exist?(attachment_path) && safe_file_path?(attachment_path)
         File.open(attachment_path) do |file|
-          content_type = attachment['content-type'] || 'application/octet-stream'
-          filename = attachment['filename'] || File.basename(attachment_path)
-          
+          content_type ||= 'application/octet-stream'
           blob = ActiveStorage::Blob.create_and_upload!(
-            io: file,
-            filename: filename,
-            content_type: content_type
+            io: file, filename: filename, content_type: content_type
           )
-          
-          # 更新URL为新的Active Storage URL
-          relative_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-          attachment['url'] = relative_url
-          
-          # 更新内部的img标签
-          img = attachment.at_css('img')
-          img['src'] = relative_url if img
+          update_attachment_element_with_blob(attachment, blob)
         end
-      rescue => e
-        Rails.logger.error "Error processing imported attachment: #{e.message}"
+      else
+        Rails.logger.warn "Attachment file not found: #{attachment_path}"
       end
-    else
-      # 如果不是导出的附件，保持原样
-      Rails.logger.info "Skipping non-imported attachment URL: #{original_url}"
+    elsif is_active_storage_url?(original_url)
+      blob = extract_blob_from_url(original_url)
+      update_attachment_element_with_blob(attachment, blob) if blob
     end
   end
 
-  def process_imported_figure(figure)
+  def process_imported_figure_element(figure, record_id = nil, record_type = nil)
+    record_id ||= "unknown"
+    record_type ||= "figure"
+    return unless figure.respond_to?(:[])
     attachment_data = JSON.parse(figure['data-trix-attachment']) rescue nil
     return unless attachment_data
-    
     original_url = attachment_data['url']
-    return unless original_url.present?
-    
-    # 检查是否是相对路径（导出的附件）
-    if original_url.include?('attachments/')
-      # 从本地导入的附件路径中提取文件
-      attachment_path = File.join(@import_dir, original_url)
-      return unless File.exist?(attachment_path)
-      
-      begin
-        # 重新上传到Active Storage
+    filename = attachment_data['filename'] || File.basename(original_url) if original_url.present?
+    content_type = attachment_data['contentType']
+    return unless original_url.present? && filename.present?
+
+    if is_local_attachment?(original_url)
+      attachment_path = safe_join_path(@import_dir, original_url)
+      if File.exist?(attachment_path) && safe_file_path?(attachment_path)
         File.open(attachment_path) do |file|
-          filename = attachment_data['filename'] || File.basename(attachment_path)
-          content_type = attachment_data['contentType'] || 'application/octet-stream'
-          
+          content_type ||= 'application/octet-stream'
           blob = ActiveStorage::Blob.create_and_upload!(
-            io: file,
-            filename: filename,
-            content_type: content_type
+            io: file, filename: filename, content_type: content_type
           )
-          
-          # 更新URL为新的Active Storage URL
-          relative_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-          attachment_data['url'] = relative_url
+          attachment_data['url'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+          figure['sgid'] = blob.to_sgid.to_s
           figure['data-trix-attachment'] = attachment_data.to_json
-          
-          # 更新内部的img标签
-          img = figure.at_css('img')
-          img['src'] = relative_url if img
+          update_img_src_in_node(figure, attachment_data['url'])
         end
-      rescue => e
-        Rails.logger.error "Error processing imported figure: #{e.message}"
+      else
+        Rails.logger.warn "Figure attachment file not found: #{attachment_path}"
       end
-    else
-      # 如果不是导出的附件，保持原样
-      Rails.logger.info "Skipping non-imported figure URL: #{original_url}"
+    elsif is_active_storage_url?(original_url)
+      blob = extract_blob_from_url(original_url)
+      if blob
+        attachment_data['url'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+        figure['sgid'] = blob.to_sgid.to_s
+        figure['data-trix-attachment'] = attachment_data.to_json
+        update_img_src_in_node(figure, attachment_data['url'])
+      end
     end
   end
 
-  def process_imported_image(img)
+  def process_imported_image_element(img, record_id = nil, record_type = nil)
+    record_id ||= "unknown"
+    record_type ||= "image"
+    return unless img.respond_to?(:[])
     original_url = img['src']
     return unless original_url.present?
-    
-    # 只处理本地导入的附件
-    return unless original_url.include?('attachments/') && !original_url.start_with?('http')
-    
-    # 从本地导入的附件路径中提取文件
-    attachment_path = File.join(@import_dir, original_url)
-    return unless File.exist?(attachment_path)
-    
-    begin
-      # 重新上传到Active Storage
-      File.open(attachment_path) do |file|
-        filename = File.basename(attachment_path)
-        content_type = `file --brief --mime-type #{attachment_path.shellescape}`.strip rescue 'application/octet-stream'
-        
-        blob = ActiveStorage::Blob.create_and_upload!(
-          io: file,
-          filename: filename,
-          content_type: content_type
-        )
-        
-        # 更新URL为新的Active Storage URL
-        relative_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-        img['src'] = relative_url
-        
-        Rails.logger.info "Successfully processed imported image: #{filename} -> #{relative_url}"
+
+    if is_local_attachment?(original_url)
+      attachment_path = safe_join_path(@import_dir, original_url)
+      if File.exist?(attachment_path) && safe_file_path?(attachment_path)
+        File.open(attachment_path) do |file|
+          filename = File.basename(attachment_path)
+          content_type = detect_content_type(attachment_path)
+          blob = ActiveStorage::Blob.create_and_upload!(
+            io: file, filename: filename, content_type: content_type
+          )
+          img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+        end
+      else
+        Rails.logger.warn "Image file not found: #{attachment_path}"
       end
-    rescue => e
-      Rails.logger.error "Error processing imported image: #{e.message}"
+    elsif is_active_storage_url?(original_url)
+      blob = extract_blob_from_url(original_url)
+      img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true) if blob
     end
+  end
+
+  def process_setting_footer_content(content, record_id = nil, record_type = nil)
+    return content if content.blank?
+    record_id ||= "setting"
+    record_type ||= "setting"
+    Rails.logger.info "process_setting_footer_content..."
+    doc = Nokogiri::HTML.fragment(content)
+    doc.css('action-text-attachment').each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
+    doc.css('figure[data-trix-attachment]').each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
+    doc.css('img').each { |img| safe_process { process_imported_image_element(img, record_id, record_type) } }
+    doc.to_html
+  end
+
+  def fix_content_sgid_references(content)
+    return content unless content.present?
+    doc = Nokogiri::HTML(content)
+    doc.css('action-text-attachment').each do |attachment|
+      begin
+        filename = attachment['filename']
+        next unless filename.present?
+        blob = ActiveStorage::Blob.find_by(filename: filename)
+        next unless blob
+        current_sgid = attachment['sgid']
+        correct_sgid = blob.to_sgid.to_s
+        attachment['sgid'] = correct_sgid if current_sgid != correct_sgid
+        current_url = attachment['url']
+        if current_url.present? && current_url.include?('/rails/active_storage/blobs/redirect/')
+          begin
+            correct_signed_id = ActiveStorage.verifier.generate(blob.id, purpose: :blob_id)
+            correct_url = "/rails/active_storage/blobs/redirect/#{correct_signed_id}/#{filename&.gsub(' ', '%20')}"
+            attachment['url'] = correct_url if current_url != correct_url
+          rescue => e
+            Rails.logger.error "Error fixing URL for #{filename}: #{e.message}"
+          end
+        end
+      rescue => e
+        Rails.logger.error "Error fixing attachment in content: #{e.message}"
+      end
+    end
+
+    doc.css('figure[data-trix-attachment]').each do |figure|
+      begin
+        attachment_data = JSON.parse(figure['data-trix-attachment']) rescue nil
+        next unless attachment_data
+        filename = attachment_data['filename']
+        next unless filename.present?
+        blob = ActiveStorage::Blob.find_by(filename: filename)
+        next unless blob
+        current_sgid = figure['sgid']
+        correct_sgid = blob.to_sgid.to_s
+        figure['sgid'] = correct_sgid if current_sgid != correct_sgid
+      rescue => e
+        Rails.logger.error "Error fixing figure in content: #{e.message}"
+      end
+    end
+
+    doc.to_html
+  rescue => e
+    Rails.logger.error "Error fixing content SGID references: #{e.message}"
+    content # 返回原始内容, 如果异常
+  end
+
+  # 工具&校验方法
+  def parse_json_field(json_string)
+    return nil if json_string.blank?
+    JSON.parse(json_string)
+  rescue JSON::ParserError
+    Rails.logger.warn "Invalid JSON format, using empty hash"
+    {}
+  end
+
+  def detect_content_type(file_path)
+    mime_type = `file --brief --mime-type #{file_path.shellescape}`.strip rescue nil
+    mime_type.present? && !mime_type.include?('error') ? mime_type : 'application/octet-stream'
+  end
+
+  def extract_blob_from_url(url)
+    match = url.match(/\/rails\/active_storage\/(?:blobs|representations)\/redirect\/([^\/]+)/)
+    return nil unless match
+    signed_id = match[1]
+    ActiveStorage::Blob.find_signed(signed_id)
+  rescue => e
+    Rails.logger.error "Failed to find blob for signed_id #{signed_id}: #{e.message}"
+    nil
+  end
+
+  def safe_join_path(base_path, relative_path)
+    clean_path = relative_path.to_s.gsub(/\.{2,}/, '').gsub(%r{^/}, '')
+    File.join(base_path, clean_path)
+  end
+
+  def safe_file_path?(file_path)
+    expanded_path = File.expand_path(file_path)
+    expanded_import_dir = File.expand_path(@import_dir)
+    expanded_path.start_with?(expanded_import_dir)
+  end
+
+  def update_attachment_element_with_blob(attachment, blob)
+    url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+    attachment['url'] = url
+    attachment['sgid'] = blob.to_sgid.to_s
+    update_img_src_in_node(attachment, url)
+  end
+
+  def update_img_src_in_node(node, url)
+    img = node.at_css('img')
+    img['src'] = url if img
+  end
+
+  def is_local_attachment?(url)
+    url.include?('attachments/') && !url.start_with?('http')
+  end
+
+  def is_active_storage_url?(url)
+    url.include?('/rails/active_storage/blobs/') || url.include?('/rails/active_storage/representations/')
+  end
+
+  def safe_process
+    yield
+  rescue => e
+    Rails.logger.error "Safe process exception: #{e.message}"
   end
 end
