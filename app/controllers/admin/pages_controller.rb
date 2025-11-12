@@ -1,5 +1,5 @@
 class Admin::PagesController < Admin::BaseController
-  before_action :set_page, only: [:show, :edit, :update, :destroy, :reorder]
+  before_action :set_page, only: [ :show, :edit, :update, :destroy, :reorder ]
 
   def index
     @scope = Page.all

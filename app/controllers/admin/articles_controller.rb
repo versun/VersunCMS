@@ -1,5 +1,5 @@
 class Admin::ArticlesController < Admin::BaseController
-  before_action :set_article, only: [:show, :edit, :update, :destroy, :publish, :unpublish]
+  before_action :set_article, only: [ :show, :edit, :update, :destroy, :publish, :unpublish ]
 
   def index
     @scope = Article.all
@@ -89,6 +89,6 @@ class Admin::ArticlesController < Admin::BaseController
   end
 
   def article_params
-    params.require(:article).permit(:title, :content, :excerpt, :slug, :status, :published_at, :meta_description, :tags, :description, :created_at, :scheduled_at, :send_newsletter, :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, social_media_posts_attributes: [:id, :platform, :url, :_destroy])
+    params.require(:article).permit(:title, :content, :excerpt, :slug, :status, :published_at, :meta_description, :tags, :description, :created_at, :scheduled_at, :send_newsletter, :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, social_media_posts_attributes: [ :id, :platform, :url, :_destroy ])
   end
 end

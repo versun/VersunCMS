@@ -7,10 +7,10 @@ class ExportDataJob < ApplicationJob
 
     if success
       # 将文件移动到tmp文件夹
-      tmp_dir = Rails.root.join('tmp', 'exports')
+      tmp_dir = Rails.root.join("tmp", "exports")
       FileUtils.mkdir_p(tmp_dir)
 
-      timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
+      timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
       new_filename = "versuncms_export_#{timestamp}.zip"
       tmp_path = File.join(tmp_dir, new_filename)
 
@@ -22,9 +22,9 @@ class ExportDataJob < ApplicationJob
 
       # 创建ActivityLog记录
       ActivityLog.create!(
-        action: 'completed',
-        target: 'export',
-        level: 'info',
+        action: "completed",
+        target: "export",
+        level: "info",
         description: "数据导出完成:#{download_url}"
       )
 
@@ -32,9 +32,9 @@ class ExportDataJob < ApplicationJob
     else
       # 创建ActivityLog记录失败信息
       ActivityLog.create!(
-        action: 'failed',
-        target: 'export',
-        level: 'error',
+        action: "failed",
+        target: "export",
+        level: "error",
         description: "数据导出失败:#{exporter.error_message}",
       )
 

@@ -8,9 +8,9 @@ class ImportFromZipJob < ApplicationJob
     if success
       # 创建ActivityLog记录
       ActivityLog.create!(
-        action: 'completed',
-        target: 'import',
-        level: 'info',
+        action: "completed",
+        target: "import",
+        level: "info",
         description: "ZIP导入任务完成: #{File.basename(zip_path)}"
       )
 
@@ -18,9 +18,9 @@ class ImportFromZipJob < ApplicationJob
     else
       # 创建ActivityLog记录失败信息
       ActivityLog.create!(
-        action: 'failed',
-        target: 'import',
-        level: 'error',
+        action: "failed",
+        target: "import",
+        level: "error",
         description: "ZIP导入任务失败: #{importer.error_message}",
       )
 
@@ -28,7 +28,7 @@ class ImportFromZipJob < ApplicationJob
     end
 
     # 清理上传的临时文件
-    if zip_path.include?('/tmp/uploads/') && File.exist?(zip_path)
+    if zip_path.include?("/tmp/uploads/") && File.exist?(zip_path)
       FileUtils.rm_f(zip_path)
       Rails.logger.info "Cleaned up temporary upload file: #{zip_path}"
     end

@@ -4,7 +4,7 @@ class Admin::BaseController < ApplicationController
 
   # before_action :authenticate_user!
   # before_action :require_admin_privileges
-  layout 'admin'
+  layout "admin"
   private
 
   def require_admin_privileges

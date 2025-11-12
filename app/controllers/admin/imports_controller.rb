@@ -41,7 +41,7 @@ class Admin::ImportsController < Admin::BaseController
     temp_file = Rails.root.join("tmp", "uploads", "import_#{Time.current.to_i}_#{uploaded_file.original_filename}")
     FileUtils.mkdir_p(File.dirname(temp_file))
 
-    File.open(temp_file, 'wb') do |f|
+    File.open(temp_file, "wb") do |f|
       f.write(uploaded_file.read)
     end
 

@@ -12,7 +12,7 @@ class Export
     @zip_path = nil
     @error_message = nil
     @export_dir = Rails.root.join("export", "export_#{Time.current.strftime('%Y%m%d_%H%M%S')}")
-    @attachments_dir = File.join(@export_dir, 'attachments')
+    @attachments_dir = File.join(@export_dir, "attachments")
 
     # 创建导出目录
     FileUtils.mkdir_p(@export_dir)
@@ -65,7 +65,7 @@ class Export
   def export_activity_logs
     Rails.logger.info "Exporting activity_logs..."
 
-    CSV.open(File.join(@export_dir, 'activity_logs.csv'), 'w', write_headers: true, headers: %w[id action target level description created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "activity_logs.csv"), "w", write_headers: true, headers: %w[id action target level description created_at updated_at]) do |csv|
       ActivityLog.order(:id).find_each do |log|
         csv << [
           log.id,
@@ -85,7 +85,7 @@ class Export
   def export_articles
     Rails.logger.info "Exporting articles and attachments..."
 
-    CSV.open(File.join(@export_dir, 'articles.csv'), 'w', write_headers: true, headers: %w[id title slug description content status scheduled_at crosspost_mastodon crosspost_twitter crosspost_bluesky send_newsletter created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "articles.csv"), "w", write_headers: true, headers: %w[id title slug description content status scheduled_at crosspost_mastodon crosspost_twitter crosspost_bluesky send_newsletter created_at updated_at]) do |csv|
       Article.order(:id).find_each do |article|
         # 处理文章内容和附件
         processed_content = process_article_content(article)
@@ -120,18 +120,18 @@ class Export
     doc = Nokogiri::HTML.fragment(content_html)
 
     # 处理action-text-attachment标签
-    doc.css('action-text-attachment').each do |attachment|
-      process_attachment_element(attachment, article.id, 'article')
+    doc.css("action-text-attachment").each do |attachment|
+      process_attachment_element(attachment, article.id, "article")
     end
 
     # 处理figure标签（Trix编辑器格式）
-    doc.css('figure[data-trix-attachment]').each do |figure|
-      process_figure_element(figure, article.id, 'article')
+    doc.css("figure[data-trix-attachment]").each do |figure|
+      process_figure_element(figure, article.id, "article")
     end
 
     # 处理img标签
-    doc.css('img').each do |img|
-      process_image_element(img, article.id, 'article')
+    doc.css("img").each do |img|
+      process_image_element(img, article.id, "article")
     end
 
     doc.to_html
@@ -139,11 +139,11 @@ class Export
 
   def process_attachment_element(attachment, record_id, record_type)
     begin
-      content_type = attachment['content-type']
-      original_url = attachment['url']
-      filename = attachment['filename']
+      content_type = attachment["content-type"]
+      original_url = attachment["url"]
+      filename = attachment["filename"]
 
-      return unless content_type&.start_with?('image/') && original_url.present? && filename.present?
+      return unless content_type&.start_with?("image/") && original_url.present? && filename.present?
 
       Rails.logger.info "Processing attachment: #{filename} (#{original_url})"
 
@@ -152,11 +152,11 @@ class Export
 
       if new_url
         # 更新attachment标签的URL
-        attachment['url'] = new_url
+        attachment["url"] = new_url
 
         # 更新内部的img标签
-        img = attachment.at_css('img')
-        img['src'] = new_url if img
+        img = attachment.at_css("img")
+        img["src"] = new_url if img
       end
     rescue => e
       Rails.logger.error "Error processing attachment element: #{e.message}"
@@ -165,14 +165,14 @@ class Export
 
   def process_figure_element(figure, record_id, record_type)
     begin
-      attachment_data = JSON.parse(figure['data-trix-attachment']) rescue nil
+      attachment_data = JSON.parse(figure["data-trix-attachment"]) rescue nil
       return unless attachment_data
 
-      content_type = attachment_data['contentType']
-      original_url = attachment_data['url']
-      filename = attachment_data['filename'] || File.basename(original_url)
+      content_type = attachment_data["contentType"]
+      original_url = attachment_data["url"]
+      filename = attachment_data["filename"] || File.basename(original_url)
 
-      return unless content_type&.start_with?('image/') && original_url.present?
+      return unless content_type&.start_with?("image/") && original_url.present?
 
       Rails.logger.info "Processing figure attachment: #{filename} (#{original_url})"
 
@@ -181,12 +181,12 @@ class Export
 
       if new_url
         # 更新attachment数据
-        attachment_data['url'] = new_url
-        figure['data-trix-attachment'] = attachment_data.to_json
+        attachment_data["url"] = new_url
+        figure["data-trix-attachment"] = attachment_data.to_json
 
         # 更新内部的img标签
-        img = figure.at_css('img')
-        img['src'] = new_url if img
+        img = figure.at_css("img")
+        img["src"] = new_url if img
       end
     rescue => e
       Rails.logger.error "Error processing figure element: #{e.message}"
@@ -195,11 +195,11 @@ class Export
 
   def process_image_element(img, record_id, record_type)
     begin
-      original_url = img['src']
+      original_url = img["src"]
       return unless original_url.present?
 
       # 检查是否是本地存储的附件URL
-      if original_url.include?('/rails/active_storage/blobs/') || original_url.include?('/rails/active_storage/representations/')
+      if original_url.include?("/rails/active_storage/blobs/") || original_url.include?("/rails/active_storage/representations/")
         Rails.logger.info "Processing image element: #{original_url}"
 
         # 尝试从Active Storage获取blob信息
@@ -207,7 +207,7 @@ class Export
         if blob
           filename = blob.filename.to_s
           new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
-          img['src'] = new_url if new_url
+          img["src"] = new_url if new_url
         end
       end
     rescue => e
@@ -231,7 +231,7 @@ class Export
 
       # 下载文件
       URI.open(full_url) do |remote_file|
-        File.open(local_path, 'wb') do |local_file|
+        File.open(local_path, "wb") do |local_file|
           local_file.write(remote_file.read)
         end
       end
@@ -249,14 +249,14 @@ class Export
   end
 
   def build_full_url(original_url)
-    return original_url if original_url.start_with?('http')
+    return original_url if original_url.start_with?("http")
 
     # 如果是相对路径，使用应用的基础URL
-    base_url = Setting.first&.url.presence || ENV['BASE_URL'].presence || "http://localhost:3000"
-    base_url = base_url.chomp('/')
-    
+    base_url = Setting.first&.url.presence || ENV["BASE_URL"].presence || "http://localhost:3000"
+    base_url = base_url.chomp("/")
+
     # 确保URL格式正确
-    if original_url.start_with?('/')
+    if original_url.start_with?("/")
       "#{base_url}#{original_url}"
     else
       "#{base_url}/#{original_url}"
@@ -286,7 +286,7 @@ class Export
   def export_crossposts
     Rails.logger.info "Exporting crossposts..."
 
-    CSV.open(File.join(@export_dir, 'crossposts.csv'), 'w', write_headers: true, headers: %w[id platform server_url client_key client_secret access_token access_token_secret api_key api_key_secret username app_password enabled created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "crossposts.csv"), "w", write_headers: true, headers: %w[id platform server_url client_key client_secret access_token access_token_secret api_key api_key_secret username app_password enabled created_at updated_at]) do |csv|
       Crosspost.order(:id).find_each do |crosspost|
         csv << [
           crosspost.id,
@@ -313,7 +313,7 @@ class Export
   def export_listmonks
     Rails.logger.info "Exporting listmonks..."
 
-    CSV.open(File.join(@export_dir, 'listmonks.csv'), 'w', write_headers: true, headers: %w[id url username api_key list_id template_id enabled created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "listmonks.csv"), "w", write_headers: true, headers: %w[id url username api_key list_id template_id enabled created_at updated_at]) do |csv|
       Listmonk.order(:id).find_each do |listmonk|
         csv << [
           listmonk.id,
@@ -335,7 +335,7 @@ class Export
   def export_pages
     Rails.logger.info "Exporting pages..."
 
-    CSV.open(File.join(@export_dir, 'pages.csv'), 'w', write_headers: true, headers: %w[id title slug content status redirect_url page_order created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "pages.csv"), "w", write_headers: true, headers: %w[id title slug content status redirect_url page_order created_at updated_at]) do |csv|
       Page.order(:id).find_each do |page|
         # 处理页面内容（如果有富文本内容的话）
         content = page.content.present? ? process_page_content(page) : ""
@@ -366,16 +366,16 @@ class Export
     doc = Nokogiri::HTML.fragment(content_html)
 
     # 处理附件（与文章类似）
-    doc.css('action-text-attachment').each do |attachment|
-      process_attachment_element(attachment, page.id, 'page')
+    doc.css("action-text-attachment").each do |attachment|
+      process_attachment_element(attachment, page.id, "page")
     end
 
-    doc.css('figure[data-trix-attachment]').each do |figure|
-      process_figure_element(figure, page.id, 'page')
+    doc.css("figure[data-trix-attachment]").each do |figure|
+      process_figure_element(figure, page.id, "page")
     end
 
-    doc.css('img').each do |img|
-      process_image_element(img, page.id, 'page')
+    doc.css("img").each do |img|
+      process_image_element(img, page.id, "page")
     end
 
     doc.to_html
@@ -384,7 +384,7 @@ class Export
   def export_settings
     Rails.logger.info "Exporting settings..."
 
-    CSV.open(File.join(@export_dir, 'settings.csv'), 'w', write_headers: true, headers: %w[id title description author url time_zone head_code custom_css social_links footer tool_code giscus created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "settings.csv"), "w", write_headers: true, headers: %w[id title description author url time_zone head_code custom_css social_links footer tool_code giscus created_at updated_at]) do |csv|
       Setting.order(:id).find_each do |setting|
         # 处理footer内容（如果有富文本内容的话）
         footer_content = setting.footer.present? ? process_setting_footer(setting) : ""
@@ -420,16 +420,16 @@ class Export
     doc = Nokogiri::HTML.fragment(footer_html)
 
     # 处理附件
-    doc.css('action-text-attachment').each do |attachment|
-      process_attachment_element(attachment, setting.id, 'setting')
+    doc.css("action-text-attachment").each do |attachment|
+      process_attachment_element(attachment, setting.id, "setting")
     end
 
-    doc.css('figure[data-trix-attachment]').each do |figure|
-      process_figure_element(figure, setting.id, 'setting')
+    doc.css("figure[data-trix-attachment]").each do |figure|
+      process_figure_element(figure, setting.id, "setting")
     end
 
-    doc.css('img').each do |img|
-      process_image_element(img, setting.id, 'setting')
+    doc.css("img").each do |img|
+      process_image_element(img, setting.id, "setting")
     end
 
     doc.to_html
@@ -438,7 +438,7 @@ class Export
   def export_social_media_posts
     Rails.logger.info "Exporting social_media_posts..."
 
-    CSV.open(File.join(@export_dir, 'social_media_posts.csv'), 'w', write_headers: true, headers: %w[id article_id platform url created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "social_media_posts.csv"), "w", write_headers: true, headers: %w[id article_id platform url created_at updated_at]) do |csv|
       SocialMediaPost.order(:id).find_each do |post|
         csv << [
           post.id,
@@ -457,7 +457,7 @@ class Export
   def export_users
     Rails.logger.info "Exporting users..."
 
-    CSV.open(File.join(@export_dir, 'users.csv'), 'w', write_headers: true, headers: %w[id user_name created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "users.csv"), "w", write_headers: true, headers: %w[id user_name created_at updated_at]) do |csv|
       User.order(:id).find_each do |user|
         csv << [
           user.id,
@@ -478,20 +478,20 @@ class Export
     # 修复：使用Zip::OutputStream替代不存在的Zip::File::CREATE常量以兼容rubyzip 3.2.2
     Zip::OutputStream.open(@zip_path) do |zos|
       # 添加CSV文件
-      Dir.glob(File.join(@export_dir.to_s, '*.csv')).each do |file|
+      Dir.glob(File.join(@export_dir.to_s, "*.csv")).each do |file|
         zos.put_next_entry(File.basename(file))
         zos.write(File.read(file))
       end
 
       # 添加附件目录
       if Dir.exist?(@attachments_dir) && !Dir.empty?(@attachments_dir)
-        Dir.glob(File.join(@attachments_dir, '**', '*')).each do |file|
+        Dir.glob(File.join(@attachments_dir, "**", "*")).each do |file|
           next unless File.file?(file)
 
           # 计算在zip中的相对路径（相对于导出根目录）
           relative_path = Pathname.new(file).relative_path_from(@export_dir).to_s
           # 规范化为 zip 友好的分隔符（可选）
-          relative_path = relative_path.tr('\\', '/')
+          relative_path = relative_path.tr("\\", "/")
 
           zos.put_next_entry(relative_path)
           zos.write(File.binread(file))

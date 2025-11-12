@@ -40,8 +40,8 @@ Rails.application.routes.draw do
     end
 
     # System management
-    resources :newsletters, only: [:index, :update]
-    resources :exports, only: [:index, :create]
+    resources :newsletters, only: [ :index, :update ]
+    resources :exports, only: [ :index, :create ]
     resources :imports, only: [ :index, :create ]
     resources :crossposts, only: [ :index, :update ] do
       member do

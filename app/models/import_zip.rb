@@ -64,7 +64,7 @@ class ImportZip
         extract_path = File.join(@import_dir.to_s, entry.name)
         FileUtils.mkdir_p(File.dirname(extract_path))
         begin
-          File.open(extract_path, 'wb') { |f| f.write(entry.get_input_stream.read) }
+          File.open(extract_path, "wb") { |f| f.write(entry.get_input_stream.read) }
           Rails.logger.info "Extracted: #{entry.name} -> #{extract_path}"
         rescue => e
           Rails.logger.error "Failed to extract #{entry.name}: #{e.message}"
@@ -77,53 +77,53 @@ class ImportZip
 
   # 逐表/模型的导入实现（见原文，不做结构性大调整，只优化部分细节，保持原接口用法）
   def import_activity_logs
-    csv_path = File.join(@import_dir, 'activity_logs.csv')
+    csv_path = File.join(@import_dir, "activity_logs.csv")
     return unless File.exist?(csv_path)
 
     Rails.logger.info "Importing activity logs..."
     CSV.foreach(csv_path, headers: true) do |row|
       ActivityLog.create!(
-        action: row['action'],
-        target: row['target'],
-        level: row['level'],
-        description: row['description'],
-        created_at: row['created_at'],
-        updated_at: row['updated_at']
+        action: row["action"],
+        target: row["target"],
+        level: row["level"],
+        description: row["description"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
       )
     end
     Rails.logger.info "Activity logs imported successfully"
   end
 
   def import_articles
-    csv_path = File.join(@import_dir, 'articles.csv')
+    csv_path = File.join(@import_dir, "articles.csv")
     return unless File.exist?(csv_path)
 
     Rails.logger.info "Importing articles..."
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
-      if Article.exists?(slug: row['slug'])
+      if Article.exists?(slug: row["slug"])
         Rails.logger.info "Article with slug '#{row['slug']}' already exists, skipping..."
         skipped_count += 1
         next
       end
-      article_id = row['id'].presence || "article_#{imported_count + skipped_count}"
-      content = row['content'].presence || ""
-      processed_content = process_imported_content(content, article_id, 'article')
+      article_id = row["id"].presence || "article_#{imported_count + skipped_count}"
+      content = row["content"].presence || ""
+      processed_content = process_imported_content(content, article_id, "article")
       processed_content = fix_content_sgid_references(processed_content)
       Article.create!(
-        title: row['title'],
-        slug: row['slug'],
-        description: row['description'],
+        title: row["title"],
+        slug: row["slug"],
+        description: row["description"],
         content: processed_content,
-        status: row['status'],
-        scheduled_at: row['scheduled_at'],
-        crosspost_mastodon: row['crosspost_mastodon'],
-        crosspost_twitter: row['crosspost_twitter'],
-        crosspost_bluesky: row['crosspost_bluesky'],
-        send_newsletter: row['send_newsletter'],
-        created_at: row['created_at'],
-        updated_at: row['updated_at']
+        status: row["status"],
+        scheduled_at: row["scheduled_at"],
+        crosspost_mastodon: row["crosspost_mastodon"],
+        crosspost_twitter: row["crosspost_twitter"],
+        crosspost_bluesky: row["crosspost_bluesky"],
+        send_newsletter: row["send_newsletter"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
       )
       imported_count += 1
     end
@@ -131,26 +131,26 @@ class ImportZip
   end
 
   def import_crossposts
-    csv_path = File.join(@import_dir, 'crossposts.csv')
+    csv_path = File.join(@import_dir, "crossposts.csv")
     return unless File.exist?(csv_path)
 
     Rails.logger.info "Importing crossposts..."
     imported_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       Crosspost.update(
-        platform: row['platform'],
-        server_url: row['server_url'],
-        client_key: row['client_key'],
-        client_secret: row['client_secret'],
-        access_token: row['access_token'],
-        access_token_secret: row['access_token_secret'],
-        api_key: row['api_key'],
-        api_key_secret: row['api_key_secret'],
-        username: row['username'],
-        app_password: row['app_password'],
-        enabled: row['enabled'],
-        created_at: row['created_at'],
-        updated_at: row['updated_at']
+        platform: row["platform"],
+        server_url: row["server_url"],
+        client_key: row["client_key"],
+        client_secret: row["client_secret"],
+        access_token: row["access_token"],
+        access_token_secret: row["access_token_secret"],
+        api_key: row["api_key"],
+        api_key_secret: row["api_key_secret"],
+        username: row["username"],
+        app_password: row["app_password"],
+        enabled: row["enabled"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
       )
       imported_count += 1
     end
@@ -158,20 +158,20 @@ class ImportZip
   end
 
   def import_listmonks
-    csv_path = File.join(@import_dir, 'listmonks.csv')
+    csv_path = File.join(@import_dir, "listmonks.csv")
     return unless File.exist?(csv_path)
     Rails.logger.info "Importing listmonks..."
     imported_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       Listmonk.find_or_create_by(
-        url: row['url'],
-        username: row['username'],
-        api_key: row['api_key'],
-        list_id: row['list_id'],
-        template_id: row['template_id'],
-        enabled: row['enabled'],
-        created_at: row['created_at'],
-        updated_at: row['updated_at']
+        url: row["url"],
+        username: row["username"],
+        api_key: row["api_key"],
+        list_id: row["list_id"],
+        template_id: row["template_id"],
+        enabled: row["enabled"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
       )
       imported_count += 1
     end
@@ -179,30 +179,30 @@ class ImportZip
   end
 
   def import_pages
-    csv_path = File.join(@import_dir, 'pages.csv')
+    csv_path = File.join(@import_dir, "pages.csv")
     return unless File.exist?(csv_path)
     Rails.logger.info "Importing pages..."
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
-      if Page.exists?(slug: row['slug'])
+      if Page.exists?(slug: row["slug"])
         Rails.logger.info "Page with slug '#{row['slug']}' already exists, skipping..."
         skipped_count += 1
         next
       end
-      page_id = row['id'].presence || "page_#{imported_count + skipped_count}"
-      content = row['content'].presence || ""
-      processed_content = process_imported_content(content, page_id, 'page')
+      page_id = row["id"].presence || "page_#{imported_count + skipped_count}"
+      content = row["content"].presence || ""
+      processed_content = process_imported_content(content, page_id, "page")
       processed_content = fix_content_sgid_references(processed_content)
       Page.create!(
-        title: row['title'],
-        slug: row['slug'],
+        title: row["title"],
+        slug: row["slug"],
         content: processed_content,
-        status: row['status'],
-        redirect_url: row['redirect_url'],
-        page_order: row['page_order'],
-        created_at: row['created_at'],
-        updated_at: row['updated_at']
+        status: row["status"],
+        redirect_url: row["redirect_url"],
+        page_order: row["page_order"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
       )
       imported_count += 1
     end
@@ -210,7 +210,7 @@ class ImportZip
   end
 
   def import_settings
-    csv_path = File.join(@import_dir, 'settings.csv')
+    csv_path = File.join(@import_dir, "settings.csv")
     return unless File.exist?(csv_path)
     Rails.logger.info "Importing settings..."
     imported_count = 0
@@ -219,55 +219,55 @@ class ImportZip
     if existing_setting
       csv_data = CSV.read(csv_path, headers: true).first
       return unless csv_data
-      social_links = parse_json_field(csv_data['social_links'])
-      static_files = parse_json_field(csv_data['static_files'])
+      social_links = parse_json_field(csv_data["social_links"])
+      static_files = parse_json_field(csv_data["static_files"])
       existing_setting.update!(
-        title: csv_data['title'],
-        description: csv_data['description'],
-        author: csv_data['author'],
-        url: csv_data['url'],
-        time_zone: csv_data['time_zone'] || 'UTC',
-        giscus: csv_data['giscus'],
-        tool_code: csv_data['tool_code'],
-        head_code: csv_data['head_code'],
-        custom_css: csv_data['custom_css'],
+        title: csv_data["title"],
+        description: csv_data["description"],
+        author: csv_data["author"],
+        url: csv_data["url"],
+        time_zone: csv_data["time_zone"] || "UTC",
+        giscus: csv_data["giscus"],
+        tool_code: csv_data["tool_code"],
+        head_code: csv_data["head_code"],
+        custom_css: csv_data["custom_css"],
         social_links: social_links,
         static_files: static_files || {},
-        created_at: csv_data['created_at'],
-        updated_at: csv_data['updated_at']
+        created_at: csv_data["created_at"],
+        updated_at: csv_data["updated_at"]
       )
       imported_count += 1
     else
       CSV.foreach(csv_path, headers: true) do |row|
-        social_links = parse_json_field(row['social_links'])
-        static_files = parse_json_field(row['static_files'])
+        social_links = parse_json_field(row["social_links"])
+        static_files = parse_json_field(row["static_files"])
         Setting.create!(
-          title: row['title'],
-          description: row['description'],
-          author: row['author'],
-          url: row['url'],
-          time_zone: row['time_zone'] || 'UTC',
-          giscus: row['giscus'],
-          tool_code: row['tool_code'],
-          head_code: row['head_code'],
-          custom_css: row['custom_css'],
+          title: row["title"],
+          description: row["description"],
+          author: row["author"],
+          url: row["url"],
+          time_zone: row["time_zone"] || "UTC",
+          giscus: row["giscus"],
+          tool_code: row["tool_code"],
+          head_code: row["head_code"],
+          custom_css: row["custom_css"],
           social_links: social_links,
           static_files: static_files || {},
-          created_at: row['created_at'],
-          updated_at: row['updated_at']
+          created_at: row["created_at"],
+          updated_at: row["updated_at"]
         )
         imported_count += 1
       end
     end
     # 富文本 footer
-    footer_csv_path = File.join(@import_dir, 'setting_footers.csv')
+    footer_csv_path = File.join(@import_dir, "setting_footers.csv")
     if File.exist?(footer_csv_path)
       Rails.logger.info "Importing setting footer content..."
       CSV.foreach(footer_csv_path, headers: true) do |row|
         setting = Setting.first
-        content = row['content'].presence || ""
+        content = row["content"].presence || ""
         if setting && content.present?
-          processed_content = process_setting_footer_content(content, setting.id, 'setting')
+          processed_content = process_setting_footer_content(content, setting.id, "setting")
           processed_content = fix_content_sgid_references(processed_content)
           setting.update!(footer: processed_content)
           Rails.logger.info "Updated setting footer content"
@@ -288,9 +288,9 @@ class ImportZip
     Rails.logger.info "process_imported_content called with record_id: #{record_id}, record_type: #{record_type}"
     doc = Nokogiri::HTML.fragment(content)
 
-    doc.css('action-text-attachment').each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
-    doc.css('figure[data-trix-attachment]').each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
-    doc.css('img').each { |img| safe_process { process_imported_image_element(img, record_id, record_type) } }
+    doc.css("action-text-attachment").each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
+    doc.css("figure[data-trix-attachment]").each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
+    doc.css("img").each { |img| safe_process { process_imported_image_element(img, record_id, record_type) } }
 
     doc.to_html
   end
@@ -299,16 +299,16 @@ class ImportZip
     record_id ||= "unknown"
     record_type ||= "attachment"
     return unless attachment.respond_to?(:[])
-    content_type = attachment['content-type']
-    original_url = attachment['url']
-    filename = attachment['filename']
+    content_type = attachment["content-type"]
+    original_url = attachment["url"]
+    filename = attachment["filename"]
     return unless original_url.present? && filename.present?
 
     if is_local_attachment?(original_url)
       attachment_path = safe_join_path(@import_dir, original_url)
       if File.exist?(attachment_path) && safe_file_path?(attachment_path)
         File.open(attachment_path) do |file|
-          content_type ||= 'application/octet-stream'
+          content_type ||= "application/octet-stream"
           blob = ActiveStorage::Blob.create_and_upload!(
             io: file, filename: filename, content_type: content_type
           )
@@ -327,25 +327,25 @@ class ImportZip
     record_id ||= "unknown"
     record_type ||= "figure"
     return unless figure.respond_to?(:[])
-    attachment_data = JSON.parse(figure['data-trix-attachment']) rescue nil
+    attachment_data = JSON.parse(figure["data-trix-attachment"]) rescue nil
     return unless attachment_data
-    original_url = attachment_data['url']
-    filename = attachment_data['filename'] || File.basename(original_url) if original_url.present?
-    content_type = attachment_data['contentType']
+    original_url = attachment_data["url"]
+    filename = attachment_data["filename"] || File.basename(original_url) if original_url.present?
+    content_type = attachment_data["contentType"]
     return unless original_url.present? && filename.present?
 
     if is_local_attachment?(original_url)
       attachment_path = safe_join_path(@import_dir, original_url)
       if File.exist?(attachment_path) && safe_file_path?(attachment_path)
         File.open(attachment_path) do |file|
-          content_type ||= 'application/octet-stream'
+          content_type ||= "application/octet-stream"
           blob = ActiveStorage::Blob.create_and_upload!(
             io: file, filename: filename, content_type: content_type
           )
-          attachment_data['url'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-          figure['sgid'] = blob.to_sgid.to_s
-          figure['data-trix-attachment'] = attachment_data.to_json
-          update_img_src_in_node(figure, attachment_data['url'])
+          attachment_data["url"] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+          figure["sgid"] = blob.to_sgid.to_s
+          figure["data-trix-attachment"] = attachment_data.to_json
+          update_img_src_in_node(figure, attachment_data["url"])
         end
       else
         Rails.logger.warn "Figure attachment file not found: #{attachment_path}"
@@ -353,10 +353,10 @@ class ImportZip
     elsif is_active_storage_url?(original_url)
       blob = extract_blob_from_url(original_url)
       if blob
-        attachment_data['url'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-        figure['sgid'] = blob.to_sgid.to_s
-        figure['data-trix-attachment'] = attachment_data.to_json
-        update_img_src_in_node(figure, attachment_data['url'])
+        attachment_data["url"] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+        figure["sgid"] = blob.to_sgid.to_s
+        figure["data-trix-attachment"] = attachment_data.to_json
+        update_img_src_in_node(figure, attachment_data["url"])
       end
     end
   end
@@ -365,7 +365,7 @@ class ImportZip
     record_id ||= "unknown"
     record_type ||= "image"
     return unless img.respond_to?(:[])
-    original_url = img['src']
+    original_url = img["src"]
     return unless original_url.present?
 
     if is_local_attachment?(original_url)
@@ -381,7 +381,7 @@ class ImportZip
           signed_id = blob.signed_id
           filename = blob.filename.to_s
           new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
-          img['src'] = new_url
+          img["src"] = new_url
         end
       else
         Rails.logger.warn "Image file not found: #{attachment_path}"
@@ -392,7 +392,7 @@ class ImportZip
       signed_id = blob.signed_id
       filename = blob.filename.to_s
       new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
-      img['src'] = new_url
+      img["src"] = new_url
     end
   end
 
@@ -402,24 +402,24 @@ class ImportZip
     record_type ||= "setting"
     Rails.logger.info "process_setting_footer_content..."
     doc = Nokogiri::HTML.fragment(content)
-    doc.css('action-text-attachment').each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
-    doc.css('figure[data-trix-attachment]').each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
-    doc.css('img').each { |img| safe_process { process_imported_image_element(img, record_id, record_type) } }
+    doc.css("action-text-attachment").each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
+    doc.css("figure[data-trix-attachment]").each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
+    doc.css("img").each { |img| safe_process { process_imported_image_element(img, record_id, record_type) } }
     doc.to_html
   end
 
   def fix_content_sgid_references(content)
     return content unless content.present?
     doc = Nokogiri::HTML(content)
-    doc.css('action-text-attachment').each do |attachment|
+    doc.css("action-text-attachment").each do |attachment|
       begin
-        filename = attachment['filename']
+        filename = attachment["filename"]
         next unless filename.present?
         blob = ActiveStorage::Blob.find_by(filename: filename)
         next unless blob
-        current_sgid = attachment['sgid']
+        current_sgid = attachment["sgid"]
         correct_sgid = blob.to_sgid.to_s
-        attachment['sgid'] = correct_sgid if current_sgid != correct_sgid
+        attachment["sgid"] = correct_sgid if current_sgid != correct_sgid
         if blob && blob.filename.present?
           correct_signed_id = blob.signed_id
           correct_url = Rails.application.routes.url_helpers.rails_blob_path(
@@ -427,24 +427,24 @@ class ImportZip
             filename: blob.filename.to_s,
             only_path: true
           )
-          attachment['url'] = correct_url
+          attachment["url"] = correct_url
         end
       rescue => e
         Rails.logger.error "Error fixing attachment in content: #{e.message}"
       end
     end
 
-    doc.css('figure[data-trix-attachment]').each do |figure|
+    doc.css("figure[data-trix-attachment]").each do |figure|
       begin
-        attachment_data = JSON.parse(figure['data-trix-attachment']) rescue nil
+        attachment_data = JSON.parse(figure["data-trix-attachment"]) rescue nil
         next unless attachment_data
-        filename = attachment_data['filename']
+        filename = attachment_data["filename"]
         next unless filename.present?
         blob = ActiveStorage::Blob.find_by(filename: filename)
         next unless blob
-        current_sgid = figure['sgid']
+        current_sgid = figure["sgid"]
         correct_sgid = blob.to_sgid.to_s
-        figure['sgid'] = correct_sgid if current_sgid != correct_sgid
+        figure["sgid"] = correct_sgid if current_sgid != correct_sgid
       rescue => e
         Rails.logger.error "Error fixing figure in content: #{e.message}"
       end
@@ -467,7 +467,7 @@ class ImportZip
 
   def detect_content_type(file_path)
     mime_type = `file --brief --mime-type #{file_path.shellescape}`.strip rescue nil
-    mime_type.present? && !mime_type.include?('error') ? mime_type : 'application/octet-stream'
+    mime_type.present? && !mime_type.include?("error") ? mime_type : "application/octet-stream"
   end
 
   def extract_blob_from_url(url)
@@ -481,7 +481,7 @@ class ImportZip
   end
 
   def safe_join_path(base_path, relative_path)
-    clean_path = relative_path.to_s.gsub(/\.{2,}/, '').gsub(%r{^/}, '')
+    clean_path = relative_path.to_s.gsub(/\.{2,}/, "").gsub(%r{^/}, "")
     File.join(base_path, clean_path)
   end
 
@@ -493,22 +493,22 @@ class ImportZip
 
   def update_attachment_element_with_blob(attachment, blob)
     url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-    attachment['url'] = url
-    attachment['sgid'] = blob.to_sgid.to_s
+    attachment["url"] = url
+    attachment["sgid"] = blob.to_sgid.to_s
     update_img_src_in_node(attachment, url)
   end
 
   def update_img_src_in_node(node, url)
-    img = node.at_css('img')
-    img['src'] = url if img
+    img = node.at_css("img")
+    img["src"] = url if img
   end
 
   def is_local_attachment?(url)
-    url.include?('attachments/') && !url.start_with?('http')
+    url.include?("attachments/") && !url.start_with?("http")
   end
 
   def is_active_storage_url?(url)
-    url.include?('/rails/active_storage/blobs/') || url.include?('/rails/active_storage/representations/')
+    url.include?("/rails/active_storage/blobs/") || url.include?("/rails/active_storage/representations/")
   end
 
   def safe_process
