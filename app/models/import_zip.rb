@@ -377,14 +377,22 @@ class ImportZip
           blob = ActiveStorage::Blob.create_and_upload!(
             io: file, filename: filename, content_type: content_type
           )
-          img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+          # img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+          signed_id = blob.signed_id
+          filename = blob.filename.to_s
+          new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
+          img['src'] = new_url
         end
       else
         Rails.logger.warn "Image file not found: #{attachment_path}"
       end
     elsif is_active_storage_url?(original_url)
       blob = extract_blob_from_url(original_url)
-      img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true) if blob
+      # img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true) if blob
+      signed_id = blob.signed_id
+      filename = blob.filename.to_s
+      new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
+      img['src'] = new_url
     end
   end
 
@@ -412,15 +420,14 @@ class ImportZip
         current_sgid = attachment['sgid']
         correct_sgid = blob.to_sgid.to_s
         attachment['sgid'] = correct_sgid if current_sgid != correct_sgid
-        current_url = attachment['url']
-        if current_url.present? && current_url.include?('/rails/active_storage/blobs/redirect/')
-          begin
-            correct_signed_id = ActiveStorage.verifier.generate(blob.id, purpose: :blob_id)
-            correct_url = "/rails/active_storage/blobs/redirect/#{correct_signed_id}/#{filename&.gsub(' ', '%20')}"
-            attachment['url'] = correct_url if current_url != correct_url
-          rescue => e
-            Rails.logger.error "Error fixing URL for #{filename}: #{e.message}"
-          end
+        if blob && blob.filename.present?
+          correct_signed_id = blob.signed_id
+          correct_url = Rails.application.routes.url_helpers.rails_blob_path(
+            signed_id: blob.signed_id,
+            filename: blob.filename.to_s,
+            only_path: true
+          )
+          attachment['url'] = correct_url
         end
       rescue => e
         Rails.logger.error "Error fixing attachment in content: #{e.message}"
