@@ -11,7 +11,7 @@ gem "open-uri"
 gem "feedjira"
 gem "will_paginate"
 gem "mission_control-jobs"
-gem "algoliasearch-rails"
+
 gem "csv"
 # gem "zip"  # 使用rubyzip代替
 

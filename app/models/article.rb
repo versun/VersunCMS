@@ -21,49 +21,25 @@ class Article < ApplicationRecord
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
   after_save :handle_newsletter, if: -> { Setting.table_exists? }
 
-  if defined?(ENABLE_ALGOLIASEARCH)
-    include AlgoliaSearch
-    algoliasearch if: :should_index? do
-      attribute :title, :slug, :description, :plain_content, :links
-      attribute :plain_content do
-        text = content.to_plain_text
-        algolia_max_characters = ENV.fetch("ALGOLIA_MAX_CHARACTERS", "3500").to_i
-        if text.size > algolia_max_characters
-          text = text.truncate(algolia_max_characters)
-        end
-        text
-      end
-      attribute :links do
-        doc = Nokogiri::HTML.fragment(content.to_trix_html)
-        links = doc.css("a").map { |link| link["href"] }.compact
-        links.uniq
-      end
-      searchableAttributes [ "title", "slug", "description", "plain_content", "links" ]
-    end
+  # SQLite原生搜索功能
+  scope :search_content, ->(query) {
+    return all if query.blank?
+    
+    # 简单的LIKE搜索，适用于SQLite
+    search_term = "%#{query}%"
+    
+    # 搜索标题、slug、描述和内容
+    where(
+      "title LIKE :term OR 
+       slug LIKE :term OR 
+       description LIKE :term OR
+       id IN (SELECT record_id FROM action_text_rich_texts 
+              WHERE record_type = 'Article' AND name = 'content' AND body LIKE :term)",
+      term: search_term
+    )
+  }
 
-  else
-
-    include PgSearch::Model
-    pg_search_scope :search_content,
-                    against: [ :title, :slug, :description ],
-                    associated_against: {
-                      rich_text_content: [ :body ]
-                    },
-                    using: {
-                      tsearch: {
-                        prefix: true,
-                        any_word: true,
-                        dictionary: "simple"
-                      },
-                      trigram: {
-                        threshold: 0.3
-                      }
-                    }
-  end
-
-  def should_index?
-      status == "publish" || status == "shared"
-  end
+  
 
   def to_param
     slug
