@@ -9,6 +9,7 @@
 #   end
 
 if Rails.env.development?
+    # 创建文章数据
     articles = [
     # Publish 状态的文章
     {
@@ -262,15 +263,16 @@ if Rails.env.development?
       content: "Arthur Conan Doyle's 'The Adventures of Sherlock Holmes' is a collection of short stories featuring the famous detective Sherlock Holmes and his sidekick Dr. John Watson.",
       status: "trash",
       slug: "the-adventures-of-sherlock-holmes"
-    },
+    }
+  ]
 
-    # Page 状态的文章
+  # 创建页面数据
+  pages = [
     {
       title: "About",
       content: "About",
       status: "publish",
       slug: "about",
-      is_page: true,
       page_order: 1
     },
     {
@@ -278,7 +280,6 @@ if Rails.env.development?
       content: "Projects",
       status: "publish",
       slug: "projects",
-      is_page: true,
       page_order: 2
     },
     {
@@ -286,7 +287,6 @@ if Rails.env.development?
       content: "Links",
       status: "draft",
       slug: "links",
-      is_page: true,
       page_order: 3
     }
   ]
@@ -305,17 +305,27 @@ if Rails.env.development?
     end
   end
 
+  # 创建文章
   articles.each do |article_data|
     article = Article.new(
       title: article_data[:title],
       status: article_data[:status],
-      slug: article_data[:slug],
-      is_page: article_data[:is_page] || false,
-      page_order: article_data[:page_order] || 0
+      slug: article_data[:slug]
     )
     article.content = article_data[:content]
-
     article.save!
+  end
+
+  # 创建页面
+  pages.each do |page_data|
+    page = Page.new(
+      title: page_data[:title],
+      status: page_data[:status],
+      slug: page_data[:slug],
+      page_order: page_data[:page_order]
+    )
+    page.content = page_data[:content]
+    page.save!
   end
 
   puts "Added #{Article.count} articles!"
