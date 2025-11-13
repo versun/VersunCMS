@@ -40,7 +40,7 @@ Rails.application.routes.draw do
     end
 
     # System management
-    resource :newsletter, only: [ :show, :update ], controller: 'newsletter'
+    resource :newsletter, only: [ :show, :update ], controller: "newsletter"
     resources :exports, only: [ :index, :create ]
     resources :imports, only: [ :index, :create ]
     resources :crossposts, only: [ :index, :update ] do

@@ -24,22 +24,22 @@ class Article < ApplicationRecord
   # SQLite原生搜索功能
   scope :search_content, ->(query) {
     return all if query.blank?
-    
+
     # 简单的LIKE搜索，适用于SQLite
     search_term = "%#{query}%"
-    
+
     # 搜索标题、slug、描述和内容
     where(
-      "title LIKE :term OR 
-       slug LIKE :term OR 
+      "title LIKE :term OR
+       slug LIKE :term OR
        description LIKE :term OR
-       id IN (SELECT record_id FROM action_text_rich_texts 
+       id IN (SELECT record_id FROM action_text_rich_texts
               WHERE record_type = 'Article' AND name = 'content' AND body LIKE :term)",
       term: search_term
     )
   }
 
-  
+
 
   def to_param
     slug
