@@ -1,6 +1,6 @@
 <h3>Newsletter Settings</h3>
 
-<%= form_with(model: @listmonk, url: admin_newsletter_path(@listmonk), method: :patch) do |form| %>
+<%= form_with(model: @listmonk, url: admin_newsletter_path, method: :patch) do |form| %>
   <div class="form-group">
     <%= form.label :enabled, "Enable Newsletter" %>
     <%= form.check_box :enabled %>
@@ -8,7 +8,7 @@
 
   <div>
     <%= form.label :url, "Listmonk URL" %>
-    <%= form.text_field :url, placeholder: "https://example.com"%>
+    <%= form.text_field :url, placeholder: "https://example.com" %>
   </div>
 
   <div>
@@ -24,14 +24,13 @@
   <% if @lists.present? %>
     <div>
       <%= form.label :list_id, "List" %>
-      <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @selected_list), include_blank: "Select a List" %>
+      <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @listmonk.list_id), include_blank: "Select a List" %>
       <%= form.label :template_id, "Template" %>
-      <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @selected_template), include_blank: "Select a Template" %>
+      <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @listmonk.template_id), include_blank: "Select a Template" %>
     </div>
   <% end %>
 
-  <div>
-    <%= form.submit "Save" %>
-  </div>
+  <div><%= form.submit "Save" %></div>
 <% end %>
+
 <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>

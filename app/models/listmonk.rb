@@ -5,6 +5,11 @@ class Listmonk < ApplicationRecord
   validates :username, presence: true
   validates :url, presence: true, format: { with: URI.regexp, message: "格式无效" }
 
+  # 检查是否已配置完成所有必要字段
+  def configured?
+    api_key.present? && username.present? && url.present?
+  end
+
   # 获取所有列表
   def fetch_lists
     begin
