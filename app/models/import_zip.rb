@@ -23,7 +23,6 @@ class ImportZip
       description: "Start ZIP import from: #{@zip_path}"
     )
     extract_zip_file
-    import_activity_logs
     import_articles
     import_crossposts
     import_listmonks
@@ -73,25 +72,6 @@ class ImportZip
       end
     end
     Rails.logger.info "ZIP file extracted to: #{@import_dir}"
-  end
-
-  # 逐表/模型的导入实现（见原文，不做结构性大调整，只优化部分细节，保持原接口用法）
-  def import_activity_logs
-    csv_path = File.join(@import_dir, "activity_logs.csv")
-    return unless File.exist?(csv_path)
-
-    Rails.logger.info "Importing activity logs..."
-    CSV.foreach(csv_path, headers: true) do |row|
-      ActivityLog.create!(
-        action: row["action"],
-        target: row["target"],
-        level: row["level"],
-        description: row["description"],
-        created_at: row["created_at"],
-        updated_at: row["updated_at"]
-      )
-    end
-    Rails.logger.info "Activity logs imported successfully"
   end
 
   def import_articles
