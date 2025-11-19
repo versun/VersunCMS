@@ -4,43 +4,50 @@ published_post_1:
   title: Published Post
   slug: published-post
   status: publish
-  is_page: false
-  page_order: 0
+  description: This is a published post for testing
+  crosspost_mastodon: false
+  crosspost_twitter: false
+  crosspost_bluesky: false
+  send_newsletter: false
   scheduled_at: null
-  crosspost_urls: {}
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>
 
 draft_post_1:
   title: Draft Post
   slug: draft-post
   status: draft
-  is_page: false
-  page_order: 0
+  description: This is a draft post for testing
+  crosspost_mastodon: false
+  crosspost_twitter: false
+  crosspost_bluesky: false
+  send_newsletter: false
   scheduled_at: null
-  crosspost_urls: {}
-
-published_page_1:
-  title: Published Page
-  slug: published-page
-  status: publish
-  is_page: true
-  page_order: 1
-  scheduled_at: null
-  crosspost_urls: {}
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>
 
 scheduled_post_1:
   title: Scheduled Post
   slug: scheduled-post
   status: schedule
-  is_page: false
-  page_order: 0
+  description: This is a scheduled post for testing
+  crosspost_mastodon: false
+  crosspost_twitter: false
+  crosspost_bluesky: false
+  send_newsletter: false
   scheduled_at: <%= 1.day.from_now %>
-  crosspost_urls: {}
+  created_at: <%= 3.days.ago %>
+  updated_at: <%= 3.days.ago %>
 
 trashed_post_1:
   title: Trashed Post
   slug: trashed-post
   status: trash
-  is_page: false
-  page_order: 0
+  description: This is a trashed post for testing
+  crosspost_mastodon: false
+  crosspost_twitter: false
+  crosspost_bluesky: false
+  send_newsletter: false
   scheduled_at: null
-  crosspost_urls: {}
+  created_at: <%= 4.days.ago %>
+  updated_at: <%= 4.days.ago %>
