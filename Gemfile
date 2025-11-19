@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 ## for blog
-gem "lexxy", "~> 0.1.4.beta"
+gem "lexxy", "~> 0.1.20.beta"
 gem "sqlite3"
 # gem "html_truncator"
 gem "ruby-vips"

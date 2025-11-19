@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+    versuncms:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: versuncms:latest
+        environment:
+            - RAILS_ENV=production
+            - RAILS_MASTER_KEY=你的master.key内容 # 请替换实际值
+        ports:
+            - "80:80"
+        restart: unless-stopped
+        volumes:
+            - versuncms_storage:/rails/storage
+            - versuncms_public:/rails/public
+
+volumes:
+    versuncms_storage:
+    versuncms_public:

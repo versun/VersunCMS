@@ -16,20 +16,6 @@ module VersunCms
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
-    config.mission_control.jobs.base_controller_class = "AdminController"
-    config.mission_control.jobs.http_basic_auth_enabled = false
-
-    # Set the article route prefix, default: example.com/article_slug
-    config.article_route_prefix = ENV.fetch("ARTICLE_ROUTE_PREFIX", "")
-    def self.git_version
-      @git_version ||= begin
-        if File.exist?("REVISION")
-          File.read("REVISION").strip[0..7]
-        else
-          "NA"
-        end
-      end
-    end
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
