@@ -14,11 +14,11 @@ class WordpressExportTest < ActiveSupport::TestCase
 
   test "should create valid WXR document" do
     doc = @export.send(:create_wxr_document)
-    
+
     assert_not_nil doc
     assert_not_nil doc.at_css("rss")
     assert_not_nil doc.at_css("channel")
-    
+
     # 检查命名空间
     rss = doc.at_css("rss")
     assert_equal "2.0", rss["version"]
@@ -28,7 +28,7 @@ class WordpressExportTest < ActiveSupport::TestCase
   test "should add site info" do
     doc = @export.send(:create_wxr_document)
     @export.send(:add_site_info, doc)
-    
+
     channel = doc.at_css("channel")
     assert_not_nil channel.at_css("title")
     assert_not_nil channel.at_css("link")
@@ -51,9 +51,9 @@ class WordpressExportTest < ActiveSupport::TestCase
   test "should create XML file" do
     doc = @export.send(:create_wxr_document)
     @export.send(:save_xml_file, doc)
-    
+
     assert File.exist?(@export.export_path)
-    
+
     # 验证XML格式
     xml_content = File.read(@export.export_path)
     doc = Nokogiri::XML(xml_content)

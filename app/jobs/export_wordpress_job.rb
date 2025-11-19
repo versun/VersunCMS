@@ -12,11 +12,11 @@ class ExportWordpressJob < ApplicationJob
 
       # 获取生成的文件路径
       exported_file = exporter.export_path
-      
+
       if File.exist?(exported_file)
         timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
-        new_filename = exported_file.end_with?('.zip') ? 
-          "versuncms_wordpress_export_#{timestamp}.zip" : 
+        new_filename = exported_file.end_with?(".zip") ?
+          "versuncms_wordpress_export_#{timestamp}.zip" :
           "versuncms_wordpress_export_#{timestamp}.xml"
         tmp_path = File.join(tmp_dir, new_filename)
 

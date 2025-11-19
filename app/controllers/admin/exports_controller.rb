@@ -5,7 +5,7 @@ class Admin::ExportsController < Admin::BaseController
 
   def create
     export_type = params[:export_type] || "default"
-    
+
     case export_type
     when "wordpress"
       ExportWordpressJob.perform_later
@@ -28,7 +28,7 @@ class Admin::ExportsController < Admin::BaseController
     else
       flash[:alert] = "不支持的导出类型"
     end
-    
+
     redirect_to admin_exports_path
   end
 end

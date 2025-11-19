@@ -43,7 +43,7 @@ Rails.application.routes.draw do
     resource :newsletter, only: [ :show, :update ], controller: "newsletter"
     resources :exports, only: [ :index, :create ]
     resources :imports, only: [ :index, :create ]
-    
+
     # 导出文件下载
     get "downloads/:filename", to: "downloads#show", as: :download, constraints: { filename: /[^\/]+/ }
     resources :crossposts, only: [ :index, :update ] do
