@@ -5,6 +5,7 @@ class CreateCrossposts < ActiveRecord::Migration[8.0]
       t.string :server_url  # for mastodon
       t.string :access_token
       t.string :access_token_secret
+      t.string :client_secret
       t.string :client_key
       t.string :username
       t.string :api_key

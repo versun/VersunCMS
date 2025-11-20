@@ -18,7 +18,7 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
 
   @articles.each do |post|
     xml.url do
-      xml.loc [ site_settings[:url], Rails.application.config.article_route_prefix, post.slug ].reject(&:blank?).join("/")
+      xml.loc [ site_settings[:url], Rails.application.config.x.article_route_prefix, post.slug ].reject(&:blank?).join("/")
       xml.lastmod post.updated_at.strftime("%Y-%m-%d")
       xml.changefreq "weekly"
       xml.priority 0.8

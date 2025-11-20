@@ -65,7 +65,7 @@ Rails.application.routes.draw do
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
   # Public article and page routes
-  scope path: Rails.application.config.article_route_prefix do
+  scope path: Rails.application.config.x.article_route_prefix do
     get "/" => "articles#index", as: :articles
     get "/:slug" => "articles#show", as: :article
     get "/:slug/edit" => "articles#edit", as: :edit_article
