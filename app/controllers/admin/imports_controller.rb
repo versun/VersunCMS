@@ -42,7 +42,7 @@ class Admin::ImportsController < Admin::BaseController
     FileUtils.mkdir_p(File.dirname(temp_file))
 
     File.open(temp_file, "wb") do |f|
-      f.write(uploaded_file.read)
+      IO.copy_stream(uploaded_file, f)
     end
 
     # 执行导入任务
