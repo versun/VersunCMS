@@ -49,3 +49,7 @@ replit.nix
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Ignore key files for decrypting credentials and more.
+/config/*.key
+
