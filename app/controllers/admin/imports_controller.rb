@@ -14,7 +14,7 @@ class Admin::ImportsController < Admin::BaseController
   def create
     if params[:url].present?
       # RSS导入
-      ImportFromRSSJob.perform_later(params[:url], params[:import_images])
+      ImportFromRssJob.perform_later(params[:url], params[:import_images])
       redirect_to admin_imports_path, notice: "RSS Import in progress, please check the logs for details"
     elsif params[:zip_file].present?
       # ZIP文件导入
