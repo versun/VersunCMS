@@ -38,7 +38,7 @@ class Export
     begin
       Rails.logger.info "Starting data export to: #{@export_dir}"
 
-      #export_activity_logs
+      # export_activity_logs
       export_articles
       export_crossposts
       export_listmonks

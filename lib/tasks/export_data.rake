@@ -16,7 +16,7 @@ namespace :export do
     puts "Export directory: #{export_dir}"
 
     # 导出各个模型数据
-    #export_activity_logs(export_dir)
+    # export_activity_logs(export_dir)
     export_articles(export_dir, attachments_dir)
     export_crossposts(export_dir)
     export_listmonks(export_dir)
