@@ -1,11 +1,11 @@
-<h3 class="mb-0">操作记录</h3>
+<h3 class="mb-0">Audits</h3>
 <table class="table table-striped">
   <thead>
   <tr>
-    <th>时间</th>
-    <th>级别</th>
-    <th>操作</th>
-    <th>描述</th>
+    <th>Time</th>
+    <th>Level</th>
+    <th>Action</th>
+    <th>Description</th>
   </tr>
   </thead>
   <tbody>
@@ -28,11 +28,10 @@
       <td><%= log.action %></td>
       <td>
         <% if log.description&.include?('/tmp/exports/') %>
-          <%# 解析下载链接 %>
           <% filename = log.description.split('/').last %>
           <% if filename.present? %>
             <%= log.description.split(':').first %>:
-            <%= link_to "下载 #{filename}", admin_download_path(filename), 
+            <%= link_to "Download #{filename}", admin_download_path(filename),
                 class: "btn btn-sm btn-primary ml-2",
                 download: filename %>
           <% else %>
