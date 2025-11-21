@@ -1,24 +1,24 @@
 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-  <h3 class="text-2xl font-bold text-gray-800 mb-6">数据导出</h3>
+  <h3 class="text-2xl font-bold text-gray-800 mb-6">Export Data</h3>
   
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <!-- 默认导出 -->
     <div class="border border-gray-200 rounded-lg p-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">默认格式导出</h4>
-      <p class="text-gray-600 mb-4">导出为CSV格式的数据文件，包含所有文章、页面、设置等内容。</p>
+      <h4 class="text-lg font-semibold text-gray-700 mb-2">CSV Format Export</h4>
+      <p class="text-gray-600 mb-4">Export data in CSV format, including all articles, pages, settings, etc.</p>
       <%= form_with url: admin_exports_path, method: :post, local: true, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :export_type, 'default' %>
-        <%= f.submit "导出默认格式", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200" %>
+        <%= f.submit "Export Default Format", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200" %>
       <% end %>
     </div>
     
     <!-- WordPress导出 -->
     <div class="border border-gray-200 rounded-lg p-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">WordPress格式导出</h4>
-      <p class="text-gray-600 mb-4">导出为WordPress WXR格式的XML文件，可直接导入到WordPress。</p>
+      <h4 class="text-lg font-semibold text-gray-700 mb-2">WordPress Export</h4>
+      <p class="text-gray-600 mb-4">Export data in WordPress WXR format, including all articles, pages, settings, etc.</p>
       <%= form_with url: admin_exports_path, method: :post, local: true, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :export_type, 'wordpress' %>
-        <%= f.submit "导出WordPress格式", class: "bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200" %>
+        <%= f.submit "Export WordPress Format", class: "bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200" %>
       <% end %>
     </div>
   </div>
@@ -37,6 +37,6 @@
 <% end %>
 
 <div class="bg-white rounded-lg shadow-md p-6">
-  <h4 class="text-lg font-semibold text-gray-700 mb-4">导出历史</h4>
+  <h4 class="text-lg font-semibold text-gray-700 mb-4">Export History</h4>
   <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
 </div>

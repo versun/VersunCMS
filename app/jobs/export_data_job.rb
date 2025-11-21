@@ -25,7 +25,7 @@ class ExportDataJob < ApplicationJob
         action: "completed",
         target: "export",
         level: "info",
-        description: "数据导出完成:#{download_url}"
+        description: "Data Export Finished:#{download_url}"
       )
 
       Rails.logger.info "Export completed successfully. File saved to: #{tmp_path}"
@@ -35,7 +35,7 @@ class ExportDataJob < ApplicationJob
         action: "failed",
         target: "export",
         level: "error",
-        description: "数据导出失败:#{exporter.error_message}",
+        description: "Data Export Failed:#{exporter.error_message}",
       )
 
       Rails.logger.error "Export failed: #{exporter.error_message}"

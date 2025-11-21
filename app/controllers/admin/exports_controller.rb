@@ -13,20 +13,20 @@ class Admin::ExportsController < Admin::BaseController
         action: "initiated",
         target: "wordpress_export",
         level: "info",
-        description: "WordPress导出任务已启动，请稍后检查结果。"
+        description: "WordPress Export Initiated"
       )
-      flash[:notice] = "WordPress导出任务已启动，请稍后检查结果。"
+      flash[:notice] = "WordPress Export Initiated"
     when "default"
       ExportDataJob.perform_later
       ActivityLog.create!(
         action: "initiated",
         target: "export",
         level: "info",
-        description: "数据导出任务已启动，请稍后检查结果。"
+        description: "Export Initiated"
       )
-      flash[:notice] = "数据导出任务已启动，请稍后检查结果。"
+      flash[:notice] = "Export Initiated"
     else
-      flash[:alert] = "不支持的导出类型"
+      flash[:alert] = "Unsupported export type"
     end
 
     redirect_to admin_exports_path
