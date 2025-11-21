@@ -136,12 +136,13 @@ module Integrations
     def upload_image(client, blob)
       return nil unless blob&.content_type&.start_with?("image/")
 
+      temp_file = nil
       begin
         # 下载图片数据
         image_data = blob.download
 
         # 创建临时文件
-        temp_file = Tempfile.new([ "image", File.extname(blob.filename.to_s) ])
+        temp_file = Tempfile.new(["image", File.extname(blob.filename.to_s)])
         temp_file.binmode
         temp_file.write(image_data)
         temp_file.rewind
@@ -152,13 +153,16 @@ module Integrations
           media_type: blob.content_type
         })
 
-        temp_file.close
-        temp_file.unlink
-
         response["media_id_string"] if response && response["media_id_string"]
       rescue => e
         Rails.logger.error "Error uploading image to Twitter: #{e.message}"
         nil
+      ensure
+        # 确保临时文件被清理
+        if temp_file
+          temp_file.close unless temp_file.closed?
+          temp_file.unlink
+        end
       end
     end
   end

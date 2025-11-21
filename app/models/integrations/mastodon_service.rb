@@ -196,14 +196,17 @@ module Integrations
         # 下载图片数据
         image_data = blob.download
 
-        body = []
-        body << "--#{boundary}\r\n"
-        body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{blob.filename}\"\r\n"
-        body << "Content-Type: #{blob.content_type}\r\n\r\n"
-        body << image_data
-        body << "\r\n--#{boundary}--\r\n"
+        # 构建 multipart 表单数据，确保正确的编码
+        # 所有部分都需要使用 ASCII-8BIT 编码以兼容二进制数据
+        body_parts = []
+        body_parts << "--#{boundary}\r\n"
+        body_parts << "Content-Disposition: form-data; name=\"file\"; filename=\"#{blob.filename}\"\r\n"
+        body_parts << "Content-Type: #{blob.content_type}\r\n\r\n"
+        body_parts << image_data
+        body_parts << "\r\n--#{boundary}--\r\n"
 
-        request.body = body.join
+        # 将所有部分强制转换为 ASCII-8BIT 编码并连接
+        request.body = body_parts.map { |part| part.force_encoding("ASCII-8BIT") }.join
 
         response = http.request(request)
 

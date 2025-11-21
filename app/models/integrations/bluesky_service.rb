@@ -9,7 +9,7 @@ module Integrations
 
       @username = @settings.username
       @password = @settings.app_password
-      @server_url = "https://bsky.social/xrpc" if @settings.server_url.blank?
+      @server_url = @settings.server_url.presence || "https://bsky.social/xrpc"
 
       if (token_data = Rails.cache.read(TOKEN_CACHE_KEY))
         process_tokens(token_data)
@@ -340,6 +340,9 @@ module Integrations
       return nil unless blob
 
       begin
+        # 确保token有效
+        verify_tokens
+
         # 下载图片数据
         image_data = blob.download
 
