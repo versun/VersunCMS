@@ -30,6 +30,12 @@
       <%= f.text_field :access_token %>
     </div>
 
+    <div class="form-group">
+      <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
+      <%= f.check_box :auto_fetch_comments %>
+      <small class="form-text text-muted">Automatically fetch and display comments from Mastodon every 30 minutes</small>
+    </div>
+
     <div class="form-actions">
       <%= f.submit "Save", class: 'btn btn-primary' %>
       <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'mastodon' } %>

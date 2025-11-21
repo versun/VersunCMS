@@ -1,6 +1,7 @@
 class Article < ApplicationRecord
   has_rich_text :content
   has_many :social_media_posts, dependent: :destroy
+  has_many :comments, dependent: :destroy
   accepts_nested_attributes_for :social_media_posts, allow_destroy: true
 
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]

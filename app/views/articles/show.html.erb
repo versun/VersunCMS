@@ -23,3 +23,28 @@
 <hr>
 <div class="giscus"></div>
 <%= raw site_settings[:giscus] %>
+
+<% if @article.comments.mastodon.any? %>
+  <hr>
+  <h3>Comments from Mastodon</h3>
+  <div class="mastodon-comments">
+    <% @article.comments.mastodon.each do |comment| %>
+      <div class="comment" style="margin-bottom: 1.5rem; padding: 1rem; border-left: 3px solid #6364FF;">
+        <div style="display: flex; align-items: start; gap: 0.75rem;">
+          <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 40px; height: 40px; border-radius: 50%;">
+          <div style="flex: 1;">
+            <div style="margin-bottom: 0.5rem;">
+              <strong><%= comment.author_name %></strong> 
+              <span style="color: #666;">@<%= comment.author_username %></span>
+              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago</small>
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+              <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
+            </div>
+            <%= link_to "View on Mastodon →", comment.url, target: "_blank", style: "font-size: 0.9rem; color: #6364FF;" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
