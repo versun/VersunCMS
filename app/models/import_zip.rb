@@ -75,11 +75,22 @@ class ImportZip
     Rails.logger.info "ZIP file extracted to: #{@import_dir}"
   end
 
+  # Find the directory containing CSV files
+  # This handles cases where ZIP files have a subdirectory wrapper
+  def find_csv_base_dir
+    # First check if CSV files are in the root import directory
+    return @import_dir if Dir.glob(File.join(@import_dir, "*.csv")).any?
+    
+    # Otherwise, search for the first subdirectory containing CSV files
+    Dir.glob(File.join(@import_dir, "*", "*.csv")).first&.then { |path| File.dirname(path) } || @import_dir
+  end
+
   def import_articles
-    csv_path = File.join(@import_dir, "articles.csv")
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "articles.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing articles..."
+    Rails.logger.info "Importing articles from: #{csv_path}"
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
@@ -112,10 +123,11 @@ class ImportZip
   end
 
   def import_crossposts
-    csv_path = File.join(@import_dir, "crossposts.csv")
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "crossposts.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing crossposts..."
+    Rails.logger.info "Importing crossposts from: #{csv_path}"
     imported_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       Crosspost.update(
@@ -139,9 +151,10 @@ class ImportZip
   end
 
   def import_listmonks
-    csv_path = File.join(@import_dir, "listmonks.csv")
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "listmonks.csv")
     return unless File.exist?(csv_path)
-    Rails.logger.info "Importing listmonks..."
+    Rails.logger.info "Importing listmonks from: #{csv_path}"
     imported_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       Listmonk.find_or_create_by(
@@ -160,9 +173,10 @@ class ImportZip
   end
 
   def import_pages
-    csv_path = File.join(@import_dir, "pages.csv")
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "pages.csv")
     return unless File.exist?(csv_path)
-    Rails.logger.info "Importing pages..."
+    Rails.logger.info "Importing pages from: #{csv_path}"
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
@@ -191,9 +205,10 @@ class ImportZip
   end
 
   def import_settings
-    csv_path = File.join(@import_dir, "settings.csv")
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "settings.csv")
     return unless File.exist?(csv_path)
-    Rails.logger.info "Importing settings..."
+    Rails.logger.info "Importing settings from: #{csv_path}"
     imported_count = 0
     # 只允许有一个 Setting
     existing_setting = Setting.first
@@ -241,7 +256,7 @@ class ImportZip
       end
     end
     # 富文本 footer
-    footer_csv_path = File.join(@import_dir, "setting_footers.csv")
+    footer_csv_path = File.join(base_dir, "setting_footers.csv")
     if File.exist?(footer_csv_path)
       Rails.logger.info "Importing setting footer content..."
       CSV.foreach(footer_csv_path, headers: true) do |row|
@@ -262,10 +277,11 @@ class ImportZip
   end
 
   def import_social_media_posts
-    csv_path = File.join(@import_dir, "social_media_posts.csv")
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "social_media_posts.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing social_media_posts..."
+    Rails.logger.info "Importing social_media_posts from: #{csv_path}"
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
@@ -498,7 +514,9 @@ class ImportZip
 
   def safe_join_path(base_path, relative_path)
     clean_path = relative_path.to_s.gsub(/\.{2,}/, "").gsub(%r{^/}, "")
-    File.join(base_path, clean_path)
+    # Use find_csv_base_dir if base_path is @import_dir
+    actual_base = (base_path == @import_dir) ? find_csv_base_dir : base_path
+    File.join(actual_base, clean_path)
   end
 
   def safe_file_path?(file_path)
