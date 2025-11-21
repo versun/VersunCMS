@@ -7,7 +7,7 @@ class ExportDataJob < ApplicationJob
 
     if success
       # 创建下载URL（使用Rails的静态文件服务）
-      download_url = exporter.zip_path 
+      download_url = exporter.zip_path
 
       # 创建ActivityLog记录
       ActivityLog.create!(
