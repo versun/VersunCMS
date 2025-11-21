@@ -285,23 +285,30 @@ class ImportZip
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
-      # 检查关联的 article 是否存在
-      article_id = row["article_id"]
-      unless Article.exists?(id: article_id)
-        Rails.logger.info "Article with id '#{article_id}' does not exist, skipping social_media_post..."
+      # 使用 article_slug 查找 article
+      article_slug = row["article_slug"]
+      unless article_slug.present?
+        Rails.logger.warn "article_slug not provided, skipping social_media_post..."
+        skipped_count += 1
+        next
+      end
+
+      article = Article.find_by(slug: article_slug)
+      unless article
+        Rails.logger.info "Article with slug '#{article_slug}' does not exist, skipping social_media_post..."
         skipped_count += 1
         next
       end
 
       # 检查是否已存在相同的记录（根据 article_id 和 platform）
-      if SocialMediaPost.exists?(article_id: article_id, platform: row["platform"])
-        Rails.logger.info "SocialMediaPost for article_id '#{article_id}' and platform '#{row['platform']}' already exists, skipping..."
+      if SocialMediaPost.exists?(article_id: article.id, platform: row["platform"])
+        Rails.logger.info "SocialMediaPost for article_id '#{article.id}' and platform '#{row['platform']}' already exists, skipping..."
         skipped_count += 1
         next
       end
 
       SocialMediaPost.create!(
-        article_id: article_id,
+        article_id: article.id,
         platform: row["platform"],
         url: row["url"],
         created_at: row["created_at"],

@@ -438,11 +438,12 @@ class Export
   def export_social_media_posts
     Rails.logger.info "Exporting social_media_posts..."
 
-    CSV.open(File.join(@export_dir, "social_media_posts.csv"), "w", write_headers: true, headers: %w[id article_id platform url created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "social_media_posts.csv"), "w", write_headers: true, headers: %w[id article_id article_slug platform url created_at updated_at]) do |csv|
       SocialMediaPost.order(:id).find_each do |post|
         csv << [
           post.id,
           post.article_id,
+          post.article&.slug,
           post.platform,
           post.url,
           post.created_at,
