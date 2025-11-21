@@ -1,6 +1,6 @@
 <p><b>Static Files</b></p>
 <div id="static-files">
-  <%= form_with url: upload_setting_path, multipart: true do |form|%>
+  <%= form_with url: upload_admin_setting_path, multipart: true do |form|%>
     <%= form.label :file, "Upload File" %>
     <%= form.file_field :file %>
     <%= form.submit "Upload" %>
@@ -11,7 +11,7 @@
     <% @files.each do |file| %>
       <tr>
         <td>
-          <%= button_to '删除', setting_path(filename: file),
+          <%= button_to '删除', admin_setting_path(filename: file),
                         method: :delete,
                         form: { data: { turbo_confirm: '确认删除该文件？' } },
                         class: 'btn-danger' %>

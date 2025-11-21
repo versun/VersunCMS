@@ -8,14 +8,6 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords
 
-  # Settings
-  resource :setting, only: [ :edit, :update, :destroy ] do
-    collection do
-      post :upload
-      delete :destroy
-    end
-  end
-
   # Admin namespace - 统一所有后台管理功能
   namespace :admin do
     # Admin root now points to articles index
@@ -40,6 +32,13 @@ Rails.application.routes.draw do
     end
 
     # System management
+    resource :setting, only: [ :edit, :update, :destroy ] do
+      collection do
+        post :upload
+        delete :destroy
+      end
+    end
+
     resource :newsletter, only: [ :show, :update ], controller: "newsletter"
     resources :exports, only: [ :index, :create ]
     resources :imports, only: [ :index, :create ]

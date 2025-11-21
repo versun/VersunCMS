@@ -1,6 +1,6 @@
 <%= render 'admin/shared/header' %>
 
-<%= form_with(model: @setting) do |form| %>
+<%= form_with(model: @setting, url: admin_setting_path) do |form| %>
   <% if @setting.errors.any? %>
     <div style="color: red">
       <h3><%= pluralize(@setting.errors.count, "error") %> prohibited this setting from being saved:</h3>
