@@ -11,7 +11,7 @@ class Export
   def initialize
     @zip_path = nil
     @error_message = nil
-    @export_dir = Rails.root.join("tmp", "export", "export_#{Time.current.strftime('%Y%m%d_%H%M%S')}")
+    @export_dir = Rails.root.join("tmp", "exports", "export_#{Time.current.strftime('%Y%m%d_%H%M%S')}")
     @attachments_dir = File.join(@export_dir, "attachments")
 
     # 创建导出目录

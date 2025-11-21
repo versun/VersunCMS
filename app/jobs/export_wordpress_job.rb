@@ -6,38 +6,18 @@ class ExportWordpressJob < ApplicationJob
     success = exporter.generate
 
     if success
-      # 将文件移动到tmp文件夹
-      tmp_dir = Rails.root.join("tmp", "exports")
-      FileUtils.mkdir_p(tmp_dir)
+      # 创建下载URL
+      download_url = exporter.export_path
 
-      # 获取生成的文件路径
-      exported_file = exporter.export_path
+      # 创建ActivityLog记录
+      ActivityLog.create!(
+        action: "completed",
+        target: "wordpress_export",
+        level: "info",
+        description: "WordPress Export Completed: #{download_url}"
+      )
 
-      if File.exist?(exported_file)
-        timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
-        new_filename = exported_file.end_with?(".zip") ?
-          "versuncms_wordpress_export_#{timestamp}.zip" :
-          "versuncms_wordpress_export_#{timestamp}.xml"
-        tmp_path = File.join(tmp_dir, new_filename)
-
-        # 移动文件到tmp目录
-        FileUtils.mv(exported_file, tmp_path)
-
-        # 创建下载URL
-        download_url = "/tmp/exports/#{new_filename}"
-
-        # 创建ActivityLog记录
-        ActivityLog.create!(
-          action: "completed",
-          target: "wordpress_export",
-          level: "info",
-          description: "WordPress导出完成: #{download_url}"
-        )
-
-        Rails.logger.info "WordPress export completed successfully. File saved to: #{tmp_path}"
-      else
-        handle_error("导出文件未生成")
-      end
+      Rails.logger.info "WordPress export completed successfully. File saved to: #{download_url}"
     else
       handle_error(exporter.error_message)
     end
@@ -54,7 +34,7 @@ class ExportWordpressJob < ApplicationJob
       action: "failed",
       target: "wordpress_export",
       level: "error",
-      description: "WordPress导出失败: #{error_message}"
+      description: "WordPress Export Failed: #{error_message}"
     )
   end
 end
