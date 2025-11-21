@@ -142,7 +142,7 @@ module Integrations
         image_data = blob.download
 
         # 创建临时文件
-        temp_file = Tempfile.new(["image", File.extname(blob.filename.to_s)])
+        temp_file = Tempfile.new([ "image", File.extname(blob.filename.to_s) ])
         temp_file.binmode
         temp_file.write(image_data)
         temp_file.rewind
