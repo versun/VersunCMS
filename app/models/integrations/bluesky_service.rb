@@ -122,6 +122,69 @@ module Integrations
       post_request("#{@server_url}/com.atproto.repo.deleteRecord", body: body)
     end
 
+    # Fetch comments (replies) for a Bluesky post
+    # Returns a hash with :comments array and :rate_limit info
+    def fetch_comments(post_url)
+      default_response = { comments: [], rate_limit: nil }
+      return default_response unless @settings&.enabled?
+      return default_response if post_url.blank?
+
+      begin
+        # Extract AT-URI from Bluesky URL
+        at_uri = extract_post_uri_from_url(post_url)
+        return default_response unless at_uri
+
+        # Ensure we have a valid token
+        verify_tokens
+
+        # Call Bluesky API to get thread with replies
+        # Using public API for better rate limits
+        api_url = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread"
+        uri = URI(api_url)
+        uri.query = URI.encode_www_form(uri: at_uri, depth: 10)
+
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.open_timeout = 5
+        http.read_timeout = 5
+
+        request = Net::HTTP::Get.new(uri)
+        # Optional: Add auth for better limits, but public API works
+        # request["Authorization"] = "Bearer #{@token}" if @token
+
+        response = http.request(request)
+
+        # Parse rate limit headers
+        rate_limit_info = parse_rate_limit_headers(response)
+        log_rate_limit_status(rate_limit_info)
+
+        # Handle rate limit exceeded
+        if response.code == '429'
+          handle_rate_limit_exceeded(rate_limit_info)
+          return { comments: [], rate_limit: rate_limit_info }
+        end
+
+        if response.is_a?(Net::HTTPSuccess)
+          thread_data = JSON.parse(response.body)
+          
+          # Get replies from thread (nested structure)
+          replies = thread_data.dig("thread", "replies") || []
+          
+          # Flatten nested replies into comment list
+          comments = flatten_thread_replies(replies)
+
+          { comments: comments, rate_limit: rate_limit_info }
+        else
+          Rails.logger.error "Failed to fetch Bluesky comments: #{response.code} - #{response.body}"
+          { comments: [], rate_limit: rate_limit_info }
+        end
+      rescue => e
+        Rails.logger.error "Error fetching Bluesky comments: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        default_response
+      end
+    end
+
     private
 
     def build_content(slug, title, content_text, description_text = nil)
@@ -301,6 +364,109 @@ module Integrations
         Rails.logger.error "Error uploading blob to Bluesky: #{e.message}"
         nil
       end
+    end
+
+    # Extract AT-URI from Bluesky URL
+    # URL format: https://bsky.app/profile/{handle}/post/{rkey}
+    # AT-URI format: at://{did}/app.bsky.feed.post/{rkey}
+    def extract_post_uri_from_url(url)
+      # Extract handle and rkey from URL
+      match = url.match(%r{bsky\.app/profile/([^/]+)/post/(\w+)})
+      return nil unless match
+
+      handle = match[1]
+      rkey = match[2]
+
+      # Resolve handle to DID
+      begin
+        resolve_uri = URI("https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle")
+        resolve_uri.query = URI.encode_www_form(handle: handle)
+        
+        response = Net::HTTP.get_response(resolve_uri)
+        if response.is_a?(Net::HTTPSuccess)
+          result = JSON.parse(response.body)
+          did = result["did"]
+          "at://#{did}/app.bsky.feed.post/#{rkey}"
+        else
+          Rails.logger.error "Failed to resolve Bluesky handle: #{handle}"
+          nil
+        end
+      rescue => e
+        Rails.logger.error "Error resolving Bluesky handle: #{e.message}"
+        nil
+      end
+    end
+
+    # Flatten nested thread replies into a flat comment list
+    def flatten_thread_replies(replies, depth = 0)
+      [].tap do |comments|
+        replies.each do |reply_item|
+          next unless reply_item["post"]  # Skip non-post items
+
+          post = reply_item["post"]
+          
+          # Add this reply as a comment
+          comments << {
+            external_id: post["uri"].split('/').last,  # Extract rkey from AT-URI
+            author_name: post["author"]["displayName"].presence || post["author"]["handle"],
+            author_username: post["author"]["handle"],
+            author_avatar_url: post["author"]["avatar"],
+            content: post["record"]["text"],
+            published_at: Time.parse(post["record"]["createdAt"]),
+            url: "https://bsky.app/profile/#{post["author"]["handle"]}/post/#{post["uri"].split('/').last}"
+          }
+
+          # Recursively process nested replies
+          if reply_item["replies"]&.any?
+            nested_comments = flatten_thread_replies(reply_item["replies"], depth + 1)
+            comments.concat(nested_comments)
+          end
+        end
+      end
+    end
+
+    # Parse rate limit headers from Bluesky API response
+    def parse_rate_limit_headers(response)
+      {
+        limit: response['RateLimit-Limit']&.to_i,
+        remaining: response['RateLimit-Remaining']&.to_i,
+        reset_at: response['RateLimit-Reset'] ? Time.at(response['RateLimit-Reset'].to_i) : nil
+      }
+    end
+
+    # Log rate limit status for monitoring
+    def log_rate_limit_status(rate_limit_info)
+      return unless rate_limit_info[:remaining]
+
+      # Bluesky has higher limits (3000/5min vs Mastodon 300/5min)
+      # So we use different thresholds
+      if rate_limit_info[:remaining] < 100
+        Rails.logger.warn "⚠️  Bluesky API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining (resets at #{rate_limit_info[:reset_at]})"
+        
+        ActivityLog.create!(
+          action: "warning",
+          target: "bluesky_api",
+          level: :warning,
+          description: "Bluesky API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+        )
+      elsif rate_limit_info[:remaining] < 500
+        Rails.logger.info "Bluesky API rate limit: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+      end
+    end
+
+    # Handle rate limit exceeded (429 response)
+    def handle_rate_limit_exceeded(rate_limit_info)
+      reset_time = rate_limit_info[:reset_at] || Time.current + 5.minutes
+      wait_seconds = [(reset_time - Time.current).to_i, 0].max
+
+      Rails.logger.error "🚫 Bluesky API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
+      
+      ActivityLog.create!(
+        action: "rate_limited",
+        target: "bluesky_api",
+        level: :error,
+        description: "Bluesky API rate limit exceeded. Waiting until #{reset_time}"
+      )
     end
   end
 end

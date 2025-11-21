@@ -13,13 +13,13 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
-  fetch_mastodon_comments:
-    class: FetchMastodonCommentsJob
-    schedule: every 30 minutes
+  fetch_social_comments:
+    class: FetchSocialCommentsJob
+    schedule: every day at 12:00
     queue: default
 
 development:
-  fetch_mastodon_comments:
-    class: FetchMastodonCommentsJob
-    schedule: every 30 minutes
+  fetch_social_comments:
+    class: FetchSocialCommentsJob
+    schedule: every day at 12:00
     queue: default

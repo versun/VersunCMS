@@ -45,7 +45,7 @@ class Export
       export_pages
       export_settings
       export_social_media_posts
-      export_users
+      #export_users
 
       # 创建ZIP文件
       create_zip_file

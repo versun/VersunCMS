@@ -33,7 +33,7 @@
     <div class="form-group">
       <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
       <%= f.check_box :auto_fetch_comments %>
-      <small class="form-text text-muted">Automatically fetch and display comments from Mastodon every 30 minutes</small>
+      <small class="form-text text-muted">Automatically fetch and display comments from Mastodon every day</small>
     </div>
 
     <div class="form-actions">
@@ -105,6 +105,12 @@
     <div class="form-group">
       <%= f.label :server_url, "Server URL" %>
       <%= f.text_field :server_url, placeholder: "https://bsky.social/xrpc" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
+      <%= f.check_box :auto_fetch_comments %>
+      <small class="form-text text-muted">Automatically fetch and display comments from Bluesky every day</small>
     </div>
 
     <div class="form-actions">
