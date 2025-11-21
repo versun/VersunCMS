@@ -3,15 +3,15 @@ class FetchMastodonCommentsJob < ApplicationJob
 
   def perform
     # Check if Mastodon crosspost is enabled and auto-fetch is enabled
-    mastodon_settings = Crosspost.find_by(platform: 'mastodon')
+    mastodon_settings = Crosspost.find_by(platform: "mastodon")
     return unless mastodon_settings&.enabled? && mastodon_settings&.auto_fetch_comments
 
     Rails.logger.info "Starting Mastodon comment fetch job"
-    
+
     # Find all published articles with Mastodon posts
     articles_with_mastodon = Article.published
                                     .joins(:social_media_posts)
-                                    .where(social_media_posts: { platform: 'mastodon' })
+                                    .where(social_media_posts: { platform: "mastodon" })
                                     .where.not(social_media_posts: { url: nil })
                                     .distinct
 
@@ -22,17 +22,17 @@ class FetchMastodonCommentsJob < ApplicationJob
 
     articles_with_mastodon.each do |article|
       begin
-        mastodon_post = article.social_media_posts.find_by(platform: 'mastodon')
+        mastodon_post = article.social_media_posts.find_by(platform: "mastodon")
         next unless mastodon_post&.url
 
         # Fetch comments from Mastodon
         service = Integrations::MastodonService.new
         result = service.fetch_comments(mastodon_post.url)
-        
+
         # Handle rate limit info
         if result[:rate_limit]
           rate_limit = result[:rate_limit]
-          
+
           # Stop processing if rate limit is critically low
           if rate_limit[:remaining] && rate_limit[:remaining] < 5
             Rails.logger.warn "⚠️  Stopping comment fetch: Rate limit too low (#{rate_limit[:remaining]} remaining)"
@@ -45,7 +45,7 @@ class FetchMastodonCommentsJob < ApplicationJob
             stopped_due_to_rate_limit = true
             break
           end
-          
+
           # Add delay if rate limit is getting low
           if rate_limit[:remaining] && rate_limit[:remaining] < 20
             sleep_time = 2 # 2 seconds delay
@@ -59,7 +59,7 @@ class FetchMastodonCommentsJob < ApplicationJob
         # Create or update comments with deduplication
         comments_data.each do |comment_data|
           comment = article.comments.find_or_initialize_by(
-            platform: 'mastodon',
+            platform: "mastodon",
             external_id: comment_data[:external_id]
           )
 
@@ -87,7 +87,7 @@ class FetchMastodonCommentsJob < ApplicationJob
         error_count += 1
         Rails.logger.error "Failed to fetch comments for article #{article.slug}: #{e.message}"
         Rails.logger.error e.backtrace.join("\n")
-        
+
         ActivityLog.create!(
           action: "failed",
           target: "fetch_comments",
@@ -100,7 +100,7 @@ class FetchMastodonCommentsJob < ApplicationJob
     # Log summary
     summary_message = "Fetched Mastodon comments: #{success_count} articles processed, #{total_comments} new comments, #{error_count} errors"
     summary_message += " (stopped early due to rate limit)" if stopped_due_to_rate_limit
-    
+
     ActivityLog.create!(
       action: "completed",
       target: "fetch_comments",

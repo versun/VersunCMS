@@ -120,7 +120,7 @@ module Integrations
         log_rate_limit_status(rate_limit_info)
 
         # Handle rate limit exceeded
-        if response.code == '429'
+        if response.code == "429"
           handle_rate_limit_exceeded(rate_limit_info)
           return { comments: [], rate_limit: rate_limit_info }
         end
@@ -223,9 +223,9 @@ module Integrations
     # Parse rate limit headers from Mastodon API response
     def parse_rate_limit_headers(response)
       {
-        limit: response['X-RateLimit-Limit']&.to_i,
-        remaining: response['X-RateLimit-Remaining']&.to_i,
-        reset_at: response['X-RateLimit-Reset'] ? Time.at(response['X-RateLimit-Reset'].to_i) : nil
+        limit: response["X-RateLimit-Limit"]&.to_i,
+        remaining: response["X-RateLimit-Remaining"]&.to_i,
+        reset_at: response["X-RateLimit-Reset"] ? Time.at(response["X-RateLimit-Reset"].to_i) : nil
       }
     end
 
@@ -235,7 +235,7 @@ module Integrations
 
       if rate_limit_info[:remaining] < 10
         Rails.logger.warn "⚠️  Mastodon API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining (resets at #{rate_limit_info[:reset_at]})"
-        
+
         ActivityLog.create!(
           action: "warning",
           target: "mastodon_api",
@@ -250,10 +250,10 @@ module Integrations
     # Handle rate limit exceeded (429 response)
     def handle_rate_limit_exceeded(rate_limit_info)
       reset_time = rate_limit_info[:reset_at] || Time.current + 5.minutes
-      wait_seconds = [(reset_time - Time.current).to_i, 0].max
+      wait_seconds = [ (reset_time - Time.current).to_i, 0 ].max
 
       Rails.logger.error "🚫 Mastodon API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
-      
+
       ActivityLog.create!(
         action: "rate_limited",
         target: "mastodon_api",
