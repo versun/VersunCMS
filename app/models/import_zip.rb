@@ -80,7 +80,7 @@ class ImportZip
   def find_csv_base_dir
     # First check if CSV files are in the root import directory
     return @import_dir if Dir.glob(File.join(@import_dir, "*.csv")).any?
-    
+
     # Otherwise, search for the first subdirectory containing CSV files
     Dir.glob(File.join(@import_dir, "*", "*.csv")).first&.then { |path| File.dirname(path) } || @import_dir
   end
