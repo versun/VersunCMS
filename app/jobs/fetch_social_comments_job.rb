@@ -9,37 +9,37 @@ class FetchSocialCommentsJob < ApplicationJob
   private
 
   def mastodon_enabled?
-    mastodon_settings = Crosspost.find_by(platform: 'mastodon')
+    mastodon_settings = Crosspost.find_by(platform: "mastodon")
     mastodon_settings&.enabled? && mastodon_settings&.auto_fetch_comments
   end
 
   def bluesky_enabled?
-    bluesky_settings = Crosspost.find_by(platform: 'bluesky')
+    bluesky_settings = Crosspost.find_by(platform: "bluesky")
     bluesky_settings&.enabled? && bluesky_settings&.auto_fetch_comments
   end
 
   def fetch_mastodon_comments
     Rails.logger.info "Starting Mastodon comment fetch"
-    
+
     articles = Article.published
                       .joins(:social_media_posts)
-                      .where(social_media_posts: { platform: 'mastodon' })
+                      .where(social_media_posts: { platform: "mastodon" })
                       .where.not(social_media_posts: { url: nil })
                       .distinct
 
-    process_platform_comments(articles, 'mastodon', Integrations::MastodonService.new, rate_limit_thresholds: { stop: 5, delay: 20 })
+    process_platform_comments(articles, "mastodon", Integrations::MastodonService.new, rate_limit_thresholds: { stop: 5, delay: 20 })
   end
 
   def fetch_bluesky_comments
     Rails.logger.info "Starting Bluesky comment fetch"
-    
+
     articles = Article.published
                       .joins(:social_media_posts)
-                      .where(social_media_posts: { platform: 'bluesky' })
+                      .where(social_media_posts: { platform: "bluesky" })
                       .where.not(social_media_posts: { url: nil })
                       .distinct
 
-    process_platform_comments(articles, 'bluesky', Integrations::BlueskyService.new, rate_limit_thresholds: { stop: 50, delay: 200 })
+    process_platform_comments(articles, "bluesky", Integrations::BlueskyService.new, rate_limit_thresholds: { stop: 50, delay: 200 })
   end
 
   def process_platform_comments(articles, platform, service, rate_limit_thresholds:)
@@ -55,11 +55,11 @@ class FetchSocialCommentsJob < ApplicationJob
 
         # Fetch comments from platform
         result = service.fetch_comments(post.url)
-        
+
         # Handle rate limit info
         if result[:rate_limit]
           rate_limit = result[:rate_limit]
-          
+
           # Stop processing if rate limit is critically low
           if rate_limit[:remaining] && rate_limit[:remaining] < rate_limit_thresholds[:stop]
             Rails.logger.warn "⚠️  Stopping #{platform} comment fetch: Rate limit too low (#{rate_limit[:remaining]} remaining)"
@@ -72,7 +72,7 @@ class FetchSocialCommentsJob < ApplicationJob
             stopped_due_to_rate_limit = true
             break
           end
-          
+
           # Add delay if rate limit is getting low
           if rate_limit[:remaining] && rate_limit[:remaining] < rate_limit_thresholds[:delay]
             sleep_time = 2
@@ -114,7 +114,7 @@ class FetchSocialCommentsJob < ApplicationJob
         error_count += 1
         Rails.logger.error "Failed to fetch #{platform} comments for article #{article.slug}: #{e.message}"
         Rails.logger.error e.backtrace.join("\n")
-        
+
         ActivityLog.create!(
           action: "failed",
           target: "fetch_comments",
@@ -127,7 +127,7 @@ class FetchSocialCommentsJob < ApplicationJob
     # Log summary
     summary_message = "Fetched #{platform.capitalize} comments: #{success_count} articles processed, #{total_comments} new comments, #{error_count} errors"
     summary_message += " (stopped early due to rate limit)" if stopped_due_to_rate_limit
-    
+
     ActivityLog.create!(
       action: "completed",
       target: "fetch_comments",

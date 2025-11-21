@@ -8,6 +8,6 @@ class Comment < ApplicationRecord
 
   default_scope { order(published_at: :asc) }
 
-  scope :mastodon, -> { where(platform: 'mastodon') }
-  scope :bluesky, -> { where(platform: 'bluesky') }
+  scope :mastodon, -> { where(platform: "mastodon") }
+  scope :bluesky, -> { where(platform: "bluesky") }
 end

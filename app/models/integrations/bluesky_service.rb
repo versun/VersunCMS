@@ -159,17 +159,17 @@ module Integrations
         log_rate_limit_status(rate_limit_info)
 
         # Handle rate limit exceeded
-        if response.code == '429'
+        if response.code == "429"
           handle_rate_limit_exceeded(rate_limit_info)
           return { comments: [], rate_limit: rate_limit_info }
         end
 
         if response.is_a?(Net::HTTPSuccess)
           thread_data = JSON.parse(response.body)
-          
+
           # Get replies from thread (nested structure)
           replies = thread_data.dig("thread", "replies") || []
-          
+
           # Flatten nested replies into comment list
           comments = flatten_thread_replies(replies)
 
@@ -381,7 +381,7 @@ module Integrations
       begin
         resolve_uri = URI("https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle")
         resolve_uri.query = URI.encode_www_form(handle: handle)
-        
+
         response = Net::HTTP.get_response(resolve_uri)
         if response.is_a?(Net::HTTPSuccess)
           result = JSON.parse(response.body)
@@ -404,10 +404,10 @@ module Integrations
           next unless reply_item["post"]  # Skip non-post items
 
           post = reply_item["post"]
-          
+
           # Add this reply as a comment
           comments << {
-            external_id: post["uri"].split('/').last,  # Extract rkey from AT-URI
+            external_id: post["uri"].split("/").last,  # Extract rkey from AT-URI
             author_name: post["author"]["displayName"].presence || post["author"]["handle"],
             author_username: post["author"]["handle"],
             author_avatar_url: post["author"]["avatar"],
@@ -428,9 +428,9 @@ module Integrations
     # Parse rate limit headers from Bluesky API response
     def parse_rate_limit_headers(response)
       {
-        limit: response['RateLimit-Limit']&.to_i,
-        remaining: response['RateLimit-Remaining']&.to_i,
-        reset_at: response['RateLimit-Reset'] ? Time.at(response['RateLimit-Reset'].to_i) : nil
+        limit: response["RateLimit-Limit"]&.to_i,
+        remaining: response["RateLimit-Remaining"]&.to_i,
+        reset_at: response["RateLimit-Reset"] ? Time.at(response["RateLimit-Reset"].to_i) : nil
       }
     end
 
@@ -442,7 +442,7 @@ module Integrations
       # So we use different thresholds
       if rate_limit_info[:remaining] < 100
         Rails.logger.warn "⚠️  Bluesky API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining (resets at #{rate_limit_info[:reset_at]})"
-        
+
         ActivityLog.create!(
           action: "warning",
           target: "bluesky_api",
@@ -457,10 +457,10 @@ module Integrations
     # Handle rate limit exceeded (429 response)
     def handle_rate_limit_exceeded(rate_limit_info)
       reset_time = rate_limit_info[:reset_at] || Time.current + 5.minutes
-      wait_seconds = [(reset_time - Time.current).to_i, 0].max
+      wait_seconds = [ (reset_time - Time.current).to_i, 0 ].max
 
       Rails.logger.error "🚫 Bluesky API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
-      
+
       ActivityLog.create!(
         action: "rate_limited",
         target: "bluesky_api",
