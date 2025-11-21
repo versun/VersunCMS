@@ -28,6 +28,7 @@ class ImportZip
     import_listmonks
     import_pages
     import_settings
+    import_social_media_posts
 
     ActivityLog.create!(
       action: "completed",
@@ -258,6 +259,41 @@ class ImportZip
   rescue StandardError => e
     Rails.logger.error "Error importing settings: #{e.message}"
     raise
+  end
+
+  def import_social_media_posts
+    csv_path = File.join(@import_dir, "social_media_posts.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing social_media_posts..."
+    imported_count = 0
+    skipped_count = 0
+    CSV.foreach(csv_path, headers: true) do |row|
+      # 检查关联的 article 是否存在
+      article_id = row["article_id"]
+      unless Article.exists?(id: article_id)
+        Rails.logger.info "Article with id '#{article_id}' does not exist, skipping social_media_post..."
+        skipped_count += 1
+        next
+      end
+
+      # 检查是否已存在相同的记录（根据 article_id 和 platform）
+      if SocialMediaPost.exists?(article_id: article_id, platform: row["platform"])
+        Rails.logger.info "SocialMediaPost for article_id '#{article_id}' and platform '#{row['platform']}' already exists, skipping..."
+        skipped_count += 1
+        next
+      end
+
+      SocialMediaPost.create!(
+        article_id: article_id,
+        platform: row["platform"],
+        url: row["url"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+      imported_count += 1
+    end
+    Rails.logger.info "Social_media_posts import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
 
   # ----- 内容和附件处理通用工具方法 -----
