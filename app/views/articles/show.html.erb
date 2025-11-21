@@ -6,9 +6,10 @@
   <h2><%= @article.title %></h2>
   <%= @article.content %>
 </article>
-
+<hr>
+<div style="margin-top: 2rem;">
 <% if @article.social_media_posts.present? %>
-  <br>
+  <hr>
   <b>Discussion on </b>
   <% if mastodon_url = @article.social_media_posts.find_by(platform: 'mastodon')&.url %>
     <%= link_to "Mastodon", mastodon_url, target: "_blank" %>,
@@ -20,28 +21,28 @@
     <%= link_to "Bluesky", bluesky_url, target: "_blank" %>.
   <% end %>
 <% end %>
-<hr>
-<div class="giscus"></div>
-<%= raw site_settings[:giscus] %>
-
+</div>
 <% if @article.comments.mastodon.any? %>
-  <hr>
-  <h3>Comments from Mastodon</h3>
   <div class="mastodon-comments">
     <% @article.comments.mastodon.each do |comment| %>
       <div class="comment" style="margin-bottom: 1.5rem; padding: 1rem; border-left: 3px solid #6364FF;">
         <div style="display: flex; align-items: start; gap: 0.75rem;">
-          <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 40px; height: 40px; border-radius: 50%;">
+          <% if comment.author_avatar_url.present? %>
+            <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 40px; height: 40px; border-radius: 50%;">
+          <% else %>
+            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #6364FF; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+              <%= comment.author_name.to_s.first.upcase %>
+            </div>
+          <% end %>
           <div style="flex: 1;">
             <div style="margin-bottom: 0.5rem;">
               <strong><%= comment.author_name %></strong> 
               <span style="color: #666;">@<%= comment.author_username %></span>
-              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago</small>
+              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago on <%= link_to "Mastodon", comment.url, target: "_blank", style: "font-size: 0.9rem; color: #6364FF;" %></small>
             </div>
             <div style="margin-bottom: 0.5rem;">
               <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
             </div>
-            <%= link_to "View on Mastodon →", comment.url, target: "_blank", style: "font-size: 0.9rem; color: #6364FF;" %>
           </div>
         </div>
       </div>
@@ -50,26 +51,32 @@
 <% end %>
 
 <% if @article.comments.bluesky.any? %>
-  <hr>
-  <h3>Comments from Bluesky</h3>
   <div class="bluesky-comments">
     <% @article.comments.bluesky.each do |comment| %>
       <div class="comment" style="margin-bottom: 1.5rem; padding: 1rem; border-left: 3px solid #0085FF;">
         <div style="display: flex; align-items: start; gap: 0.75rem;">
-          <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 40px; height: 40px; border-radius: 50%;">
+          <% if comment.author_avatar_url.present? %>
+            <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 40px; height: 40px; border-radius: 50%;">
+          <% else %>
+            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #0085FF; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+              <%= comment.author_name.to_s.first.upcase %>
+            </div>
+          <% end %>
           <div style="flex: 1;">
             <div style="margin-bottom: 0.5rem;">
               <strong><%= comment.author_name %></strong> 
               <span style="color: #666;">@<%= comment.author_username %></span>
-              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago</small>
+              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago on <%= link_to "Bluesky", comment.url, target: "_blank", style: "font-size: 0.9rem; color: #0085FF;" %></small>
             </div>
             <div style="margin-bottom: 0.5rem;">
               <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
             </div>
-            <%= link_to "View on Bluesky →", comment.url, target: "_blank", style: "font-size: 0.9rem; color: #0085FF;" %>
           </div>
         </div>
       </div>
     <% end %>
   </div>
+
+<div class="giscus"></div>
+<%= raw site_settings[:giscus] %>
 <% end %>
