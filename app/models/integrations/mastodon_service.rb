@@ -4,7 +4,7 @@ require "uri"
 module Integrations
   class MastodonService
     include ContentBuilder
-    
+
     def initialize
       @settings = Crosspost.mastodon
     end
@@ -168,12 +168,12 @@ module Integrations
     def upload_image(attachable)
       Rails.logger.info "Mastodon: upload_image called with attachable: #{attachable.class}"
       return nil unless attachable
-      
+
       begin
         image_data = nil
         filename = "image.jpg"
         content_type = "image/jpeg"
-        
+
         # Handle ActiveStorage::Blob
         if attachable.is_a?(ActiveStorage::Blob) && attachable.content_type&.start_with?("image/")
           Rails.logger.info "Mastodon: Processing ActiveStorage::Blob"
@@ -185,7 +185,7 @@ module Integrations
           Rails.logger.info "Mastodon: Processing RemoteImage"
           image_url = attachable.try(:url)
           Rails.logger.info "Mastodon: RemoteImage URL = #{image_url}"
-          
+
           if image_url.present?
             # Download remote image
             image_data, content_type = download_remote_image(image_url)
@@ -206,9 +206,9 @@ module Integrations
           Rails.logger.warn "Mastodon: Unknown attachable type: #{attachable.class}"
           return nil
         end
-        
+
         return nil unless image_data
-        
+
         # Upload to Mastodon
         uri = URI.join(@settings[:server_url], "/api/v2/media")
         http = Net::HTTP.new(uri.host, uri.port)
@@ -305,24 +305,24 @@ module Integrations
 
       begin
         # 将相对 URL 转换为绝对 URL
-        if image_url.start_with?('/')
+        if image_url.start_with?("/")
           site_url = Setting.first&.url.presence || "http://localhost:3000"
           image_url = "#{site_url}#{image_url}"
         end
-        
+
         # 下载远程图片，支持重定向（ActiveStorage redirect URLs)
         uri = URI.parse(image_url)
         image_response = fetch_with_redirect(uri)
-        
+
         unless image_response.is_a?(Net::HTTPSuccess)
           Rails.logger.error "Failed to download remote image: #{image_response.code}"
           return nil
         end
-        
+
         image_data = image_response.body
         content_type = image_response["content-type"] || "image/jpeg"
-        
-        [image_data, content_type]
+
+        [ image_data, content_type ]
       rescue => e
         Rails.logger.error "Error downloading remote image: #{e.message}"
         Rails.logger.error e.backtrace.join("\n")
@@ -335,10 +335,10 @@ module Integrations
       raise "Too many HTTP redirects" if limit == 0
 
       http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == 'https')
+      http.use_ssl = (uri.scheme == "https")
       http.open_timeout = 10
       http.read_timeout = 10
-      
+
       request = Net::HTTP::Get.new(uri.path + (uri.query ? "?#{uri.query}" : ""))
       response = http.request(request)
 
@@ -346,10 +346,10 @@ module Integrations
       when Net::HTTPSuccess
         response
       when Net::HTTPRedirection
-        redirect_uri = URI.parse(response['location'])
+        redirect_uri = URI.parse(response["location"])
         # 如果是相对URL，补全域名
         if redirect_uri.relative?
-          redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response['location'])
+          redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response["location"])
         end
         Rails.logger.info "Mastodon: Following redirect to #{redirect_uri}"
         fetch_with_redirect(redirect_uri, limit - 1)

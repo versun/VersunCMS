@@ -2,7 +2,7 @@ class Admin::NewsletterController < Admin::BaseController
   def show
     @listmonk = Listmonk.first_or_initialize
     @activity_logs = ActivityLog.track_activity("newsletter")
-    
+
     # Fetch lists and templates if configuration exists and is saved in database
     if @listmonk.persisted? && @listmonk.configured?
       @lists = @listmonk.fetch_lists
@@ -16,11 +16,11 @@ class Admin::NewsletterController < Admin::BaseController
   def verify
     # Create a temporary Listmonk instance with form data (not persisted)
     @listmonk = Listmonk.new(verify_params)
-    
+
     if @listmonk.configured?
       lists = @listmonk.fetch_lists
       templates = @listmonk.fetch_templates
-      
+
       # Check if fetch was successful by verifying we got data back
       if lists.present? && templates.present?
         render json: {
@@ -34,7 +34,7 @@ class Admin::NewsletterController < Admin::BaseController
         # Fetch failed - check activity logs for error details
         last_error = ActivityLog.where(target: "newsletter", level: :error).order(created_at: :desc).first
         error_message = last_error&.description || "Failed to fetch lists or templates. Please check your configuration."
-        
+
         render json: {
           success: false,
           error: error_message
@@ -68,6 +68,4 @@ class Admin::NewsletterController < Admin::BaseController
   def verify_params
     params.permit(:username, :api_key, :url, :list_id, :template_id)
   end
-
-
 end

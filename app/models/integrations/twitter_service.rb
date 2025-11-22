@@ -6,7 +6,7 @@ require "json"
 module Integrations
   class TwitterService
     include ContentBuilder
-    
+
     def initialize
       @settings = Crosspost.twitter
     end
@@ -50,7 +50,7 @@ module Integrations
         # 获取文章第一张图片
         first_image = article.first_image_attachment
         Rails.logger.info "Twitter: first_image_attachment = #{first_image.class}"
-        
+
         media_ids = []
         if first_image
           Rails.logger.info "Twitter: Attempting to upload image of type: #{first_image.class}"
@@ -68,8 +68,8 @@ module Integrations
         # 构建推文数据
         tweet_data = { text: tweet }
         if media_ids.any?
-          tweet_data[:media] = { 
-            media_ids: media_ids.map(&:to_s) 
+          tweet_data[:media] = {
+            media_ids: media_ids.map(&:to_s)
           }
         end
 
@@ -87,21 +87,21 @@ module Integrations
         else
           error_message = response&.dig("errors")&.first&.dig("message") || "Unknown error"
           Rails.logger.error "Twitter: Failed to create tweet - #{error_message}"
-          
+
           # 如果带媒体的推文失败，尝试发送纯文本推文
           if media_ids.any? && error_message.include?("media")
             Rails.logger.warn "Twitter: Media tweet failed, trying text-only tweet"
-            
+
             text_only_data = { text: tweet }
             Rails.logger.info "Twitter: Sending text-only tweet: #{text_only_data.inspect}"
-            
+
             begin
               fallback_response = client.post("tweets", text_only_data.to_json)
-              
+
               if fallback_response && fallback_response["data"] && fallback_response["data"]["id"]
                 id = fallback_response["data"]["id"]
                 Rails.logger.warn "Twitter: Text-only tweet succeeded, media was skipped"
-                
+
                 ActivityLog.create!(
                   action: "completed",
                   target: "crosspost",
@@ -113,7 +113,7 @@ module Integrations
               end
             rescue => fallback_error
               Rails.logger.error "Twitter: Fallback text tweet also failed - #{fallback_error.message}"
-              
+
               ActivityLog.create!(
                 action: "failed",
                 target: "crosspost",
@@ -196,26 +196,26 @@ module Integrations
       # 使用 Twitter API v1.1 上传媒体
       # 注意：需要使用 v1.1 端点进行媒体上传
       v1_client = create_v1_client
-      
+
       # 使用简单的媒体上传（非分块上传）
       begin
         # 读取文件数据
         file_data = File.binread(file_path)
-        
+
         # 创建 multipart/form-data 请求
         boundary = SecureRandom.hex
         upload_body = construct_upload_body(file_path, boundary)
-        
+
         headers = {
           "Content-Type" => "multipart/form-data; boundary=#{boundary}",
-          "Authorization" => build_oauth_header('POST', 'https://upload.twitter.com/1.1/media/upload.json')
+          "Authorization" => build_oauth_header("POST", "https://upload.twitter.com/1.1/media/upload.json")
         }
-        
+
         # 使用 v1.1 上传端点
         response = v1_client.post("media/upload.json", upload_body, headers: headers)
-        
+
         Rails.logger.info "Twitter: Media upload response - #{response.inspect}"
-        
+
         if response && (response["media_id"] || response["media_id_string"])
           media_id = response["media_id_string"] || response["media_id"].to_s
           Rails.logger.info "Twitter: Media uploaded successfully with ID: #{media_id}"
@@ -238,7 +238,7 @@ module Integrations
         image_data = case attachable
         when ActiveStorage::Blob
           attachable.download if attachable.content_type&.start_with?("image/")
-        when -> (obj) { obj.class.name == "ActionText::Attachables::RemoteImage" }
+        when ->(obj) { obj.class.name == "ActionText::Attachables::RemoteImage" }
           download_remote_image(attachable)
         else
           nil
@@ -247,7 +247,7 @@ module Integrations
         return nil unless image_data
 
         # 创建临时文件
-        temp_file = Tempfile.new(["twitter_image", ".jpg"], binmode: true)
+        temp_file = Tempfile.new([ "twitter_image", ".jpg" ], binmode: true)
         temp_file.write(image_data)
         temp_file.rewind
         temp_file
@@ -264,7 +264,7 @@ module Integrations
       return nil unless image_url.present?
 
       # 处理相对URL
-      if image_url.start_with?('/')
+      if image_url.start_with?("/")
         site_url = Setting.first&.url.presence || "http://localhost:3000"
         image_url = "#{site_url}#{image_url}"
       end
@@ -288,10 +288,10 @@ module Integrations
       raise "Too many HTTP redirects" if limit == 0
 
       http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == 'https')
+      http.use_ssl = (uri.scheme == "https")
       http.open_timeout = 10
       http.read_timeout = 10
-      
+
       request = Net::HTTP::Get.new(uri.path + (uri.query ? "?#{uri.query}" : ""))
       response = http.request(request)
 
@@ -299,10 +299,10 @@ module Integrations
       when Net::HTTPSuccess
         response
       when Net::HTTPRedirection
-        redirect_uri = URI.parse(response['location'])
+        redirect_uri = URI.parse(response["location"])
         # 处理相对URL重定向
         if redirect_uri.relative?
-          redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response['location'])
+          redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response["location"])
         end
         Rails.logger.info "Twitter: Following redirect to #{redirect_uri}"
         fetch_with_redirect(redirect_uri, limit - 1)
@@ -313,10 +313,10 @@ module Integrations
 
     # Build OAuth 1.0a authorization header for Twitter API
     def build_oauth_header(method, url, params = {})
-      require 'openssl'
-      require 'base64'
-      require 'cgi'
-      
+      require "openssl"
+      require "base64"
+      require "cgi"
+
       oauth_params = {
         "oauth_consumer_key" => @settings.api_key,
         "oauth_token" => @settings.access_token,
@@ -325,21 +325,21 @@ module Integrations
         "oauth_nonce" => SecureRandom.hex(16),
         "oauth_version" => "1.0"
       }
-      
+
       # Combine OAuth and request parameters
       all_params = oauth_params.merge(params)
-      
+
       # Create signature base string
       sorted_params = all_params.sort.map { |k, v| "#{CGI.escape(k.to_s)}=#{CGI.escape(v.to_s)}" }.join("&")
       base_string = "#{method.upcase}&#{CGI.escape(url)}&#{CGI.escape(sorted_params)}"
-      
+
       # Create signing key
       signing_key = "#{CGI.escape(@settings.api_key_secret)}&#{CGI.escape(@settings.access_token_secret)}"
-      
+
       # Generate signature
       signature = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA1", signing_key, base_string))
       oauth_params["oauth_signature"] = signature
-      
+
       # Build header
       header_params = oauth_params.sort.map { |k, v| "#{k}=\"#{CGI.escape(v.to_s)}\"" }.join(", ")
       "OAuth #{header_params}"
@@ -349,7 +349,7 @@ module Integrations
       file_data = File.binread(file_path)
       filename = File.basename(file_path)
       media_category = "tweet_image"
-      
+
       "--#{boundary}\r\n" \
         "Content-Disposition: form-data; name=\"media_category\"\r\n\r\n" \
         "#{media_category}\r\n" \
@@ -364,7 +364,7 @@ module Integrations
       # 简化媒体状态检查 - 由于API限制，我们假设上传的媒体是可用的
       # 实际的状态检查可能需要更高级的API访问权限
       return true unless media_id
-      
+
       Rails.logger.info "Twitter: Skipping detailed media status check due to API limitations"
       true
     end
