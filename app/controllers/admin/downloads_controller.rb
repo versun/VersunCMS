@@ -1,6 +1,6 @@
 class Admin::DownloadsController < Admin::BaseController
   def show
-    filename = params[:filename]
+    filename = File.basename(params[:filename].to_s)
 
     # 安全检查：只允许下载特定目录下的文件
     safe_path = Rails.root.join("tmp", "exports", filename)

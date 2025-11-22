@@ -27,7 +27,7 @@ module Admin
     end
 
     def destroy
-      file_path = Rails.public_path.join(params[:filename].to_s)
+      file_path = Rails.public_path.join(File.basename(params[:filename].to_s))
 
       if File.exist?(file_path)
         File.delete(file_path)

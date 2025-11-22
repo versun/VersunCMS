@@ -38,7 +38,7 @@ class Admin::ImportsController < Admin::BaseController
     end
 
     # 保存上传的文件到临时位置
-    temp_file = Rails.root.join("tmp", "uploads", "import_#{Time.current.to_i}_#{uploaded_file.original_filename}")
+    temp_file = Rails.root.join("tmp", "uploads", "import_#{Time.current.to_i}_#{File.basename(uploaded_file.original_filename)}")
     FileUtils.mkdir_p(File.dirname(temp_file))
 
     File.open(temp_file, "wb") do |f|
