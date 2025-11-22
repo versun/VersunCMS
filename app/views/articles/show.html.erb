@@ -37,7 +37,7 @@
             <div style="margin-bottom: 0.5rem;">
               <strong><%= comment.author_name %></strong> 
               <span style="color: #666;">@<%= comment.author_username %></span>
-              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago on <%= link_to "Mastodon", sanitize_url(comment.url), target: "_blank", style: "font-size: 0.9rem; color: #6364FF;" %></small>
+              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago on <%= link_to "Mastodon", comment.url, target: "_blank", style: "font-size: 0.9rem; color: #6364FF;" %></small>
             </div>
             <div style="margin-bottom: 0.5rem;">
               <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
@@ -65,7 +65,7 @@
             <div style="margin-bottom: 0.5rem;">
               <strong><%= comment.author_name %></strong> 
               <span style="color: #666;">@<%= comment.author_username %></span>
-              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago on <%= link_to "Bluesky", sanitize_url(comment.url), target: "_blank", style: "font-size: 0.9rem; color: #0085FF;" %></small>
+              <small style="color: #999; margin-left: 0.5rem;"><%= time_ago_in_words(comment.published_at) %> ago on <%= link_to "Bluesky", comment.url, target: "_blank", style: "font-size: 0.9rem; color: #0085FF;" %></small>
             </div>
             <div style="margin-bottom: 0.5rem;">
               <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
