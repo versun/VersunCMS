@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_03_03_121724) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -60,17 +60,29 @@ ActiveRecord::Schema[8.1].define(version: 2025_03_03_121724) do
 
   create_table "articles", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.boolean "crosspost_bluesky", default: false, null: false
-    t.boolean "crosspost_mastodon", default: false, null: false
-    t.boolean "crosspost_twitter", default: false, null: false
     t.string "description"
     t.datetime "scheduled_at"
-    t.boolean "send_newsletter", default: false, null: false
     t.string "slug"
     t.integer "status", null: false
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_articles_on_slug", unique: true
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.integer "article_id", null: false
+    t.string "author_avatar_url"
+    t.string "author_name"
+    t.string "author_username"
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.string "external_id", null: false
+    t.string "platform", null: false
+    t.datetime "published_at"
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.index ["article_id", "platform", "external_id"], name: "index_comments_on_article_id_and_platform_and_external_id", unique: true
+    t.index ["article_id"], name: "index_comments_on_article_id"
   end
 
   create_table "crossposts", force: :cascade do |t|
@@ -79,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_03_03_121724) do
     t.string "api_key"
     t.string "api_key_secret"
     t.string "app_password"
+    t.boolean "auto_fetch_comments", default: false, null: false
     t.string "client_id"
     t.string "client_key"
     t.string "client_secret"
@@ -179,6 +192,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_03_03_121724) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "comments", "articles"
   add_foreign_key "sessions", "users"
   add_foreign_key "social_media_posts", "articles"
 end
