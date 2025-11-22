@@ -21,16 +21,97 @@
     <%= form.text_field :api_key %>
   </div>
 
-  <% if @lists.present? %>
+  <div style="margin: 15px 0;">
+    <button type="button" id="verify-btn" class="btn btn-secondary">Verify Configuration</button>
+    <span id="verify-status" style="margin-left: 10px;"></span>
+  </div>
+
+  <div id="list-template-container">
     <div>
       <%= form.label :list_id, "List" %>
-      <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @listmonk.list_id), include_blank: "Select a List" %>
-      <%= form.label :template_id, "Template" %>
-      <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @listmonk.template_id), include_blank: "Select a Template" %>
+      <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @listmonk.list_id), { include_blank: "Select a List" }, { id: "list-select" } %>
     </div>
-  <% end %>
+    <div>
+      <%= form.label :template_id, "Template" %>
+      <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @listmonk.template_id), { include_blank: "Select a Template" }, { id: "template-select" } %>
+    </div>
+  </div>
 
   <div><%= form.submit "Save" %></div>
 <% end %>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const verifyBtn = document.getElementById('verify-btn');
+  const verifyStatus = document.getElementById('verify-status');
+  const listTemplateContainer = document.getElementById('list-template-container');
+  const listSelect = document.getElementById('list-select');
+  const templateSelect = document.getElementById('template-select');
+
+  verifyBtn.addEventListener('click', function() {
+    verifyStatus.textContent = 'Verifying...';
+    verifyStatus.style.color = 'gray';
+    verifyBtn.disabled = true;
+
+    // Collect form data
+    const formData = {
+      url: document.getElementById('listmonk_url').value,
+      username: document.getElementById('listmonk_username').value,
+      api_key: document.getElementById('listmonk_api_key').value
+    };
+
+    fetch('<%= verify_admin_newsletter_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        verifyStatus.textContent = '✓ Verification successful!';
+        verifyStatus.style.color = 'green';
+        
+        // Populate lists
+        listSelect.innerHTML = '<option value="">Select a List</option>';
+        data.lists.forEach(list => {
+          const option = document.createElement('option');
+          option.value = list.id;
+          option.textContent = list.name;
+          if (list.id === data.current_list_id) {
+            option.selected = true;
+          }
+          listSelect.appendChild(option);
+        });
+
+        // Populate templates
+        templateSelect.innerHTML = '<option value="">Select a Template</option>';
+        data.templates.forEach(template => {
+          const option = document.createElement('option');
+          option.value = template.id;
+          option.textContent = template.name;
+          if (template.id === data.current_template_id) {
+            option.selected = true;
+          }
+          templateSelect.appendChild(option);
+        });
+      } else {
+        verifyStatus.textContent = '✗ ' + (data.error || 'Verification failed');
+        verifyStatus.style.color = 'red';
+      }
+    })
+    .catch(error => {
+      verifyStatus.textContent = '✗ Error: ' + error.message;
+      verifyStatus.style.color = 'red';
+    })
+    .finally(() => {
+      verifyBtn.disabled = false;
+    });
+  });
+});
+</script>
+
 <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
+

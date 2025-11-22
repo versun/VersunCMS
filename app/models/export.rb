@@ -85,7 +85,7 @@ class Export
   def export_articles
     Rails.logger.info "Exporting articles and attachments..."
 
-    CSV.open(File.join(@export_dir, "articles.csv"), "w", write_headers: true, headers: %w[id title slug description content status scheduled_at crosspost_mastodon crosspost_twitter crosspost_bluesky send_newsletter created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "articles.csv"), "w", write_headers: true, headers: %w[id title slug description content status scheduled_at created_at updated_at]) do |csv|
       Article.order(:id).find_each do |article|
         # 处理文章内容和附件
         processed_content = process_article_content(article)
@@ -98,10 +98,6 @@ class Export
           processed_content,
           article.status,
           article.scheduled_at,
-          article.crosspost_mastodon,
-          article.crosspost_twitter,
-          article.crosspost_bluesky,
-          article.send_newsletter,
           article.created_at,
           article.updated_at
         ]

@@ -1,6 +1,8 @@
 module Integrations
   # COPY from: https://t27duck.com/posts/17-a-bluesky-at-proto-api-example-in-ruby
   class BlueskyService
+    include ContentBuilder
+    
     TOKEN_CACHE_KEY = :bluesky_token_data
 
     def initialize
@@ -56,10 +58,16 @@ module Integrations
 
       # 获取文章第一张图片
       first_image = article.first_image_attachment
+      Rails.logger.info "Bluesky: first_image_attachment = #{first_image.class}"
+      
       embed = nil
 
       if first_image
+        Rails.logger.info "Bluesky: Attempting to upload image of type: #{first_image.class}"
         embed = upload_image_embed(first_image)
+        Rails.logger.info "Bluesky: upload_image_embed result = #{embed.present? ? 'success' : 'failed'}"
+      else
+        Rails.logger.info "Bluesky: No image found in article"
       end
 
       begin
@@ -94,15 +102,21 @@ module Integrations
       facets = link_facets(message)
       # facets += tag_facets(message)
 
+      # Build the record - only include embed if it's present
+      record = {
+        text: message,
+        createdAt: Time.now.iso8601,
+        langs: [ "en" ],
+        facets: facets
+      }
+      
+      # Only add embed if it's not nil (Bluesky requires $type if embed is present)
+      record[:embed] = embed if embed.present?
+
       body = {
-        repo: @user_did, collection: "app.bsky.feed.post",
-        record: {
-          text: message,
-          createdAt: Time.now.iso8601,
-          langs: [ "en" ],
-          facets: facets,
-          embed: embed
-        }
+        repo: @user_did, 
+        collection: "app.bsky.feed.post",
+        record: record
       }
       response_body = post_request("#{@server_url}/com.atproto.repo.createRecord", body: body)
 
@@ -187,20 +201,7 @@ module Integrations
 
     private
 
-    def build_content(slug, title, content_text, description_text = nil)
-      post_url = build_post_url(slug)
-      content_text = description_text.presence || content_text
-      max_content_length = 300 - post_url.length - 30 - title.length
 
-      "#{title}\n#{content_text[0...max_content_length]}...\nRead more: #{post_url}"
-    end
-
-    def build_post_url(slug)
-      Rails.application.routes.url_helpers.article_url(
-        slug,
-        host: Setting.first.url.sub(%r{https?://}, "")
-      )
-    end
 
     def retrieve_server_token
       token_data = Rails.cache.read(TOKEN_CACHE_KEY)
@@ -218,10 +219,22 @@ module Integrations
         matches = []
         message.scan(URI::RFC2396_PARSER.make_regexp([ "http", "https" ])) { matches << Regexp.last_match }
         matches.each do |match|
+          url = match[0]
+          
+          # 验证 URL 格式是否正确
+          begin
+            uri = URI.parse(url)
+            # 确保 URL 有 scheme 和 host
+            next unless uri.scheme && uri.host
+          rescue URI::InvalidURIError
+            Rails.logger.warn "Bluesky: Skipping invalid URL in facets: #{url}"
+            next
+          end
+          
           start, stop = match.byteoffset(0)
           facets << {
             "index" => { "byteStart" => start, "byteEnd" => stop },
-            "features" => [ { "uri" => match[0], "$type" => "app.bsky.richtext.facet#link" } ]
+            "features" => [ { "uri" => url, "$type" => "app.bsky.richtext.facet#link" } ]
           }
         end
       end
@@ -312,26 +325,64 @@ module Integrations
       Rails.cache.write(TOKEN_CACHE_KEY, data)
     end
 
-    def upload_image_embed(blob)
-      return nil unless blob&.content_type&.start_with?("image/")
-
+    def upload_image_embed(attachable)
+      Rails.logger.info "Bluesky: upload_image_embed called with attachable: #{attachable.class}"
+      return nil unless attachable
+      
       begin
-        # 上传图片获取blob
-        blob_data = upload_blob(blob)
+        blob_data = nil
+        filename = "image.jpg"
+        content_type = "image/jpeg"
+        
+        # Handle ActiveStorage::Blob
+        if attachable.is_a?(ActiveStorage::Blob) && attachable.content_type&.start_with?("image/")
+          Rails.logger.info "Bluesky: Processing ActiveStorage::Blob"
+          blob_data = upload_blob(attachable)
+          filename = attachable.filename.to_s if attachable.respond_to?(:filename)
+        # Handle RemoteImage
+        elsif attachable.class.name == "ActionText::Attachables::RemoteImage"
+          Rails.logger.info "Bluesky: Processing RemoteImage"
+          image_url = attachable.try(:url)
+          Rails.logger.info "Bluesky: RemoteImage URL = #{image_url}"
+          
+          if image_url.present?
+            blob_data = upload_remote_image(image_url)
+            # Safely extract filename from URL
+            begin
+              filename = File.basename(URI.parse(image_url).path)
+              # Ensure we have a valid filename
+              filename = "image.jpg" if filename.blank? || filename == "/"
+            rescue URI::InvalidURIError => e
+              Rails.logger.warn "Bluesky: Invalid URL for filename extraction: #{image_url}, using default"
+              filename = "image.jpg"
+            end
+          else
+            Rails.logger.warn "Bluesky: RemoteImage has no URL, skipping"
+            return nil
+          end
+        else
+          Rails.logger.warn "Bluesky: Unknown attachable type: #{attachable.class}"
+          return nil
+        end
+        
+        Rails.logger.info "Bluesky: upload blob_data result: #{blob_data.present? ? 'success' : 'failed'}"
         return nil unless blob_data
 
         # 创建图片embed
-        {
+        embed_result = {
           "$type" => "app.bsky.embed.images",
           "images" => [
             {
-              "alt" => blob.filename.to_s,
+              "alt" => filename,
               "image" => blob_data
             }
           ]
         }
+        Rails.logger.info "Bluesky: Created embed structure successfully"
+        embed_result
       rescue => e
         Rails.logger.error "Error creating image embed for Bluesky: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
         nil
       end
     end
@@ -366,6 +417,85 @@ module Integrations
       rescue => e
         Rails.logger.error "Error uploading blob to Bluesky: #{e.message}"
         nil
+      end
+    end
+
+    def upload_remote_image(image_url)
+      return nil unless image_url.present?
+
+      begin
+        # 确保token有效
+        verify_tokens
+
+        # 将相对 URL 转换为绝对 URL
+        if image_url.start_with?('/')
+          site_url = Setting.first&.url.presence || "http://localhost:3000"
+          image_url = "#{site_url}#{image_url}"
+        end
+        
+        # 下载远程图片，支持重定向（ActiveStorage redirect URLs)
+        uri = URI.parse(image_url)
+        image_response = fetch_with_redirect(uri)
+        
+        unless image_response.is_a?(Net::HTTPSuccess)
+          Rails.logger.error "Failed to download remote image: #{image_response.code}"
+          return nil
+        end
+        
+        image_data = image_response.body
+        content_type = image_response["content-type"] || "image/jpeg"
+        
+        # 上传到 Bluesky
+        upload_uri = URI("#{@server_url}/com.atproto.repo.uploadBlob")
+        request = Net::HTTP::Post.new(upload_uri)
+        request["Content-Type"] = content_type
+        request["Authorization"] = "Bearer #{@token}"
+        request.body = image_data
+
+        response = Net::HTTP.start(upload_uri.hostname, upload_uri.port, use_ssl: upload_uri.scheme == "https") do |http|
+          http.request(request)
+        end
+
+        if response.is_a?(Net::HTTPSuccess)
+          result = JSON.parse(response.body)
+          Rails.logger.info "Bluesky: Successfully uploaded remote image to Bluesky"
+          result["blob"]
+        else
+          Rails.logger.error "Failed to upload remote image to Bluesky: #{response.code} - #{response.body}"
+          nil
+        end
+      rescue => e
+        Rails.logger.error "Error uploading remote image to Bluesky: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        nil
+      end
+    end
+
+    # 跟随HTTP重定向获取图片
+    def fetch_with_redirect(uri, limit = 5)
+      raise "Too many HTTP redirects" if limit == 0
+
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == 'https')
+      http.open_timeout = 10
+      http.read_timeout = 10
+      
+      request = Net::HTTP::Get.new(uri.path + (uri.query ? "?#{uri.query}" : ""))
+      response = http.request(request)
+
+      case response
+      when Net::HTTPSuccess
+        response
+      when Net::HTTPRedirection
+        redirect_uri = URI.parse(response['location'])
+        # 如果是相对URL，补全域名
+        if redirect_uri.relative?
+          redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response['location'])
+        end
+        Rails.logger.info "Bluesky: Following redirect to #{redirect_uri}"
+        fetch_with_redirect(redirect_uri, limit - 1)
+      else
+        response
       end
     end
 

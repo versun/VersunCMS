@@ -42,44 +42,59 @@
     <fieldset class="bordered-container bordered-fieldset">
       <legend>CrossPost</legend>
 
-      <% if Crosspost.find_by(platform: 'mastodon')&.enabled? %>
-        <div>
-          <%= form.check_box :crosspost_mastodon %>
-          <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
+      <%# Mastodon %>
+      <% mastodon_enabled = Crosspost.find_by(platform: 'mastodon')&.enabled? %>
+      <div>
+        <%= form.check_box :crosspost_mastodon, disabled: !mastodon_enabled %>
+        <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
+        <% unless mastodon_enabled %>
+          <span style="color: #999; font-size: 0.9em;">(not enabled)</span>
+        <% end %>
+        <% if mastodon_enabled %>
           <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
             <% if post_form.object.platform == 'mastodon' %>
               <%= post_form.text_field :url, placeholder: "Post URL" %>
               <%= post_form.hidden_field :platform, value: "mastodon" %>
             <% end %>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
 
-      <% if Crosspost.find_by(platform: 'twitter')&.enabled? %>
-        <div>
-          <%= form.check_box :crosspost_twitter %>
-          <%= form.label :crosspost_twitter, "Post to Twitter" %>
+      <%# Twitter %>
+      <% twitter_enabled = Crosspost.find_by(platform: 'twitter')&.enabled? %>
+      <div>
+        <%= form.check_box :crosspost_twitter, disabled: !twitter_enabled %>
+        <%= form.label :crosspost_twitter, "Post to Twitter" %>
+        <% unless twitter_enabled %>
+          <span style="color: #999; font-size: 0.9em;">(not enabled)</span>
+        <% end %>
+        <% if twitter_enabled %>
           <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
             <% if post_form.object.platform == 'twitter' %>
               <%= post_form.text_field :url, placeholder: "Post URL" %>
               <%= post_form.hidden_field :platform, value: "twitter" %>
             <% end %>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
 
-      <% if Crosspost.find_by(platform: 'bluesky')&.enabled? %>
-        <div>
-          <%= form.check_box :crosspost_bluesky %>
-          <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
+      <%# Bluesky %>
+      <% bluesky_enabled = Crosspost.find_by(platform: 'bluesky')&.enabled? %>
+      <div>
+        <%= form.check_box :crosspost_bluesky, disabled: !bluesky_enabled %>
+        <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
+        <% unless bluesky_enabled %>
+          <span style="color: #999; font-size: 0.9em;">(not enabled)</span>
+        <% end %>
+        <% if bluesky_enabled %>
           <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
             <% if post_form.object.platform == 'bluesky' %>
               <%= post_form.text_field :url, placeholder: "Post URL" %>
               <%= post_form.hidden_field :platform, value: "bluesky" %>
             <% end %>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
 
       <%= link_to "Go to Cross Post Settings", admin_crossposts_path %>
     </fieldset>
@@ -87,12 +102,15 @@
     <fieldset class="bordered-container bordered-fieldset">
       <legend>Newsletter</legend>
 
-      <% if Listmonk.first&.enabled? %>
-        <div>
-          <%= form.check_box :send_newsletter %>
-          <%= form.label :send_newsletter, "Send Newsletter" %>
-        </div>
-      <% end %>
+      <%# Newsletter %>
+      <% newsletter_enabled = Listmonk.first&.enabled? %>
+      <div>
+        <%= form.check_box :send_newsletter, disabled: !newsletter_enabled %>
+        <%= form.label :send_newsletter, "Send Newsletter" %>
+        <% unless newsletter_enabled %>
+          <span style="color: #999; font-size: 0.9em;">(not enabled)</span>
+        <% end %>
+      </div>
 
       <%= link_to "Go to Newsletter Settings", admin_newsletter_path %>
     </fieldset>

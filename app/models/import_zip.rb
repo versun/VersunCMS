@@ -110,10 +110,6 @@ class ImportZip
         content: processed_content,
         status: row["status"],
         scheduled_at: row["scheduled_at"],
-        crosspost_mastodon: row["crosspost_mastodon"],
-        crosspost_twitter: row["crosspost_twitter"],
-        crosspost_bluesky: row["crosspost_bluesky"],
-        send_newsletter: row["send_newsletter"],
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       )

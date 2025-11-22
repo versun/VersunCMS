@@ -39,7 +39,11 @@ Rails.application.routes.draw do
       end
     end
 
-    resource :newsletter, only: [ :show, :update ], controller: "newsletter"
+    resource :newsletter, only: [ :show, :update ], controller: "newsletter" do
+      collection do
+        post :verify
+      end
+    end
     resources :exports, only: [ :index, :create ]
     resources :imports, only: [ :index, :create ]
 

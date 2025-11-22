@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_21_021307) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -60,12 +60,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_21_021307) do
 
   create_table "articles", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.boolean "crosspost_bluesky", default: false, null: false
-    t.boolean "crosspost_mastodon", default: false, null: false
-    t.boolean "crosspost_twitter", default: false, null: false
     t.string "description"
     t.datetime "scheduled_at"
-    t.boolean "send_newsletter", default: false, null: false
     t.string "slug"
     t.integer "status", default: 0, null: false
     t.string "title"

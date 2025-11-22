@@ -1,4 +1,9 @@
 class Article < ApplicationRecord
+  # Virtual attributes for crosspost functionality
+  attr_accessor :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky
+  # Virtual attributes for newsletter functionality
+  attr_accessor :send_newsletter, :resend_newsletter
+  
   has_rich_text :content
   has_many :social_media_posts, dependent: :destroy
   has_many :comments, dependent: :destroy
@@ -53,15 +58,22 @@ class Article < ApplicationRecord
   # 提取文章内容中的第一张图片，用于crosspost
   def first_image_attachment
     return nil unless content.present?
-
-    # 从Action Text内容中获取所有附件
-    attachments = content.body.attachments
-
-    # 找到第一个图片附件
-    attachments.find do |attachment|
-      blob = attachment.blob
-      blob&.content_type&.start_with?("image/")
-    end&.blob
+    return nil unless content.body.respond_to?(:attachables)
+    
+    # 查找第一个图片附件（支持 ActiveStorage::Blob 和 RemoteImage）
+    content.body.attachables.find do |attachable|
+      # 检查是否是 ActiveStorage::Blob 且是图片类型
+      if attachable.is_a?(ActiveStorage::Blob)
+        attachable.content_type&.start_with?("image/")
+      # 或者是 RemoteImage 且有有效的URL
+      elsif attachable.class.name == "ActionText::Attachables::RemoteImage"
+        # 验证RemoteImage有valid URL
+        url = attachable.try(:url)
+        url.present? && url.is_a?(String)
+      else
+        false
+      end
+    end
   end
 
   private
@@ -92,43 +104,35 @@ class Article < ApplicationRecord
     PublishScheduledArticlesJob.schedule_at(self)
   end
 
-  # def should_crosspost?
-  #
-  #   has_crosspost_enabled = crosspost_mastodon? || crosspost_twitter? || crosspost_bluesky?
-  #   return false unless publish? && has_crosspost_enabled
-  #
-  #   any_crosspost_enabled_changed_to_true = saved_change_to_crosspost_mastodon? || saved_change_to_crosspost_twitter? || saved_change_to_crosspost_bluesky?
-  #   became_published = saved_change_to_status? && status_previously_was != "publish" # 防止每次内容更新都触发
-  #
-  #   any_crosspost_enabled_changed_to_true || became_published
-  # end
-
   def handle_crosspost
     return false unless publish?
-    return false unless crosspost_mastodon? || crosspost_twitter? || crosspost_bluesky?
-
-    became_published = saved_change_to_status? && status_previously_was != "publish" # 防止每次内容更新都触发
-    first_post_to_mastodon = crosspost_mastodon? && became_published
-    first_post_to_twitter = crosspost_twitter? && became_published
-    first_post_to_bluesky = crosspost_bluesky? && became_published
-    re_post_to_mastodon = crosspost_mastodon? && saved_change_to_crosspost_mastodon? # 已经确定是publish状态，所以不需要再次检查
-    re_post_to_twitter = crosspost_twitter? && saved_change_to_crosspost_twitter? # 已经确定是publish状态，所以不需要再次检查
-    re_post_to_bluesky = crosspost_bluesky? && saved_change_to_crosspost_bluesky? # 已经确定是publish状态，所以不需要再次检查
-
-    CrosspostArticleJob.perform_later(id, "mastodon") if first_post_to_mastodon || re_post_to_mastodon
-    CrosspostArticleJob.perform_later(id, "twitter") if first_post_to_twitter || re_post_to_twitter
-    CrosspostArticleJob.perform_later(id, "bluesky") if first_post_to_bluesky || re_post_to_bluesky
+    
+    %w[mastodon twitter bluesky].each do |platform|
+      should_post = should_crosspost_to?(platform)
+      Rails.logger.info "Crosspost check for #{platform}: should_post=#{should_post}"
+      CrosspostArticleJob.perform_later(id, platform) if should_post
+    end
   end
 
   def should_send_newsletter?
     return false unless publish?
-    return false unless Listmonk.first&.enabled?
-
-    became_published = saved_change_to_status? && status_previously_was != "publish"
-    first_send = send_newsletter? && became_published
-    re_send = send_newsletter? && saved_change_to_send_newsletter?
-
-    first_send || re_send
+    
+    # 首先检查 Listmonk 是否启用（后端安全检查）
+    newsletter_enabled = Listmonk.first&.enabled?
+    return false unless newsletter_enabled
+    
+    # 检查 send_newsletter 虚拟属性（用于新文章）
+    send_checked = send_newsletter == "1"
+    
+    # 检查 resend_newsletter 虚拟属性（用于已存在文章）
+    resend_checked = resend_newsletter == "1"
+    
+    # 只要勾选了任一复选框即发送
+    result = send_checked || resend_checked
+    
+    Rails.logger.info "Newsletter check: should_send=#{result}, send_checked=#{send_checked}, resend_checked=#{resend_checked}"
+    
+    result
   end
 
   def handle_newsletter
@@ -139,6 +143,18 @@ class Article < ApplicationRecord
     # Make sure scheduled_at is interpreted correctly
     # This ensures Rails knows this time is already in the application time zone
     self.scheduled_at = scheduled_at.in_time_zone(CacheableSettings.site_info[:time_zone]).utc if scheduled_at.present?
+  end
+
+  def should_crosspost_to?(platform)
+    # 首先检查平台是否启用（后端安全检查）
+    platform_enabled = Crosspost.find_by(platform: platform)&.enabled?
+    return false unless platform_enabled
+    
+    # 检查 crosspost
+    crosspost_checked = send("crosspost_#{platform}") == "1"
+    
+    # 只要勾选了任一复选框即发布
+    crosspost_checked
   end
 
   def cleanup_empty_social_media_posts

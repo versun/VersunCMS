@@ -9,7 +9,6 @@
 <hr>
 <div style="margin-top: 2rem;">
 <% if @article.social_media_posts.present? %>
-  <hr>
   <b>Discussion on </b>
   <% if mastodon_url = @article.social_media_posts.find_by(platform: 'mastodon')&.url %>
     <%= link_to "Mastodon", mastodon_url, target: "_blank" %>,
