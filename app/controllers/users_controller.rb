@@ -1,4 +1,6 @@
 class UsersController < ApplicationController
+  layout "admin"
+
   allow_unauthenticated_access only: %i[ new create ]
   def new
     if User.exists?

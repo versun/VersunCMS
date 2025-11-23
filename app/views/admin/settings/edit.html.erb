@@ -1,5 +1,3 @@
-<%= render 'admin/shared/header' %>
-
 <%= form_with(model: @setting, url: admin_setting_path) do |form| %>
   <% if @setting.errors.any? %>
     <div style="color: red">

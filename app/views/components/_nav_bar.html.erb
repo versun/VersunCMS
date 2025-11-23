@@ -1,10 +1,13 @@
 <nav> 
   <div class="navbar-items">
     <% if navbar_items.present? %>
-      <% navbar_items.each do |page| %>
+      <% navbar_items.each_with_index do |page, index| %>
         <span class="navbar-page">
           <%= link_to page.title, page_link_path(page), page_link_attributes(page) %>
-        </span> | 
+        </span>
+        <% if index < navbar_items.length - 1 %>
+          <span class="nav-separator"> | </span>
+        <% end %>
       <% end %>     
     <% end %>
   </div>

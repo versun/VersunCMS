@@ -1,8 +1,5 @@
 <% content_for :title, "Admin" %>
 
-<% content_for :nav do %>
-  <hr>
-  <%= render 'admin/shared/header' %>
-<% end %>
-
-<%= render template: "layouts/application" %>
+<%= render 'admin/shared/header' %>
+<hr>
+<%= yield %>

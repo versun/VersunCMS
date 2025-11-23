@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
   <head>
-
     <title><%= content_for?(:title) ? yield(:title) : site_settings[:title] %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,67 +21,55 @@
     <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed">
 
     <%# Includes all stylesheet files in app/views/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "lexxy" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
     <%= raw site_settings[:head_code] %>
 
     <style>
-        body {
-            max-width: 880px;
-            margin: 0 auto;
-            padding: 10px;
-            background: #f8f4ee;
-        }
-        a:hover {
-            text-decoration: underline wavy;
-            background-color: #f0f0f0;
-        }
       <%= site_settings[:custom_css] %>
     </style>
   </head>
 
   <body>
-    <header>
-      <table width="100%">
-        <tr>
-          <td>
-            <h1><%= link_to site_settings[:title], root_path %></h1>
-          </td>
-          <td align="right" width="50%">
-              <p class="description"><%= site_settings[:description] %></p>
-          </td>
-        </tr>
-      </table>
-
-      <table width="100%">
-        <tr>
-          <td>
-            <%= render 'components/nav_bar', navbar_items: navbar_items, site_settings: site_settings %>
-          </td>
-          <td align="right" width="30%">
-            <%= form_tag root_path, method: :get, class: 'search-form' do %>
-              <%= search_field_tag :q, params[:q], placeholder: 'Search...' %>
-              <%= submit_tag 'Search' %>
+    <div class="site-container">
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <h1><a href="/" class="front-page-title"><%= site_settings[:title] %></a></h1>
+          <p class="site-description"><%= site_settings[:description] %></p>
+        </header>
+        <div class="social-links">
+            <a href="/rss" target="_blank" class="social-icon" rel="rss">
+              <%= image_tag "/rss.svg", size: "20", alt: "RSS", class: "social-icon" %></a>
+            <% if site_settings[:social_links].present? %>
+              <% site_settings[:social_links].each do |platform, data| %>
+                <% if data['url'].present? %>
+                  <a rel="me" href="<%= data['url'] %>" target="_blank" class="social">
+                    <%= image_tag "/#{data['icon_path']}",
+                                  size: "20",
+                                  alt: platform.to_s.titleize,
+                                  class: "social-icon",
+                                  title: platform.to_s.titleize %></a>
+                <% end %>
+              <% end %>
             <% end %>
-          </td>
-        </tr>
-      </table>
-      <%= yield :nav %>
-    </header>
+        </div>        
+        <nav class="sidebar-nav">
+          <%= render 'components/nav_bar', navbar_items: navbar_items, site_settings: site_settings %>
+        </nav>
+        <div class="sidebar-footer">
+          <%= render 'components/footer', site_settings: site_settings %>
+        </div>
+      </aside>
 
-    <hr>
+      <main class="main-content">
+        <div class="limiter">
+          <%= yield %>
+        </div>
+      </main>
+    </div>
 
     <%= raw site_settings[:tool_code] %>
-
-    <main>
-      <%= yield %>
-    </main>
-
-    <hr>
-
-    <%= render 'components/footer', site_settings: site_settings %>
     <%= yield :javascript %>
   </body>
 </html>
