@@ -1,6 +1,6 @@
 class AdminController < ApplicationController
   layout "admin"
-  
+
   def posts
     @scope = Article.all
     @posts = fetch_articles(@scope)
