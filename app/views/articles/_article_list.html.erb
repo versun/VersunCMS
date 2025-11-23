@@ -2,8 +2,11 @@
   <% articles.each do |article| %>
     <article class="blog-post-item">
       <h2 class="post-title">
-        <%= link_to article.title, article_path(article.slug) %>
+        <%= link_to article.title, article_path(article.slug) %> 
       </h2>
+      <small>
+          <%= render 'articles/article_meta', article: article %>
+      </small>
       <div class="post-description">
         <% if article.description.present? %>
           <%= article.description %>
@@ -11,7 +14,6 @@
           <%= truncate(strip_tags(article.content.to_s), length: 200) %>
         <% end %>
       </div>
-      <%= render 'articles/article_meta', article: article %>
     </article>
   <% end %>
 </div>
