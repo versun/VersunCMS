@@ -1,10 +1,7 @@
-<table width="100%">
-  <tr>
-    <td><h2><%= link_to article.title, article_path(article.slug) %></h2></td>
-    <td align="right" width="10%">
-      <small class="meta">
-        <%= article.created_at.to_date %>
-      </small>
-    </td>
-  </tr>
-</table>
+<div class="post-meta">
+  <div class="post-date" style="color:grey">
+    <time datetime="<%= article.created_at.to_date %>">
+      Published on <%= article.created_at.to_date %>
+    </time>
+  </div>
+</div>

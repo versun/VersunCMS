@@ -1,25 +1,48 @@
 <% content_for :title do %>
   <%= @article.title %> | <%= site_settings[:title] %>
 <% end %>
+
+<style>
+  .article-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1rem 0;
+  }
+  
+  .social-icon-link {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.25rem;
+  }
+  
+  .social-icon {
+    display: inline-block;
+    vertical-align: middle;
+  }
+</style>
 <article>
-  <small style="color:grey">created: <%= @article.created_at.to_date %>, updated: <%= @article.updated_at.to_date %></small>
   <h2><%= @article.title %></h2>
-  <%= @article.content %>
+  <small style="color:grey">
+  <span>Published on <%= @article.created_at.to_date %></span>
+  <% if @article.social_media_posts.any? %>
+      <span class="social-label">, Also posted to:</span>
+      <% @article.social_media_posts.each do |post| %>
+        <% if post.url.present? %>
+          <a href="<%= post.url %>" target="_blank" rel="noopener noreferrer" class="social-icon-link">
+            <%= image_tag "/#{post.icon_path}", size: "16", alt: post.platform.titleize, class: "social-icon", title: post.platform.titleize %>
+          </a>
+        <% end %>
+      <% end %>
+  <% end %>
+  </small>
+  <div class="article-content">
+    <%= @article.content %>
+  </div>
 </article>
 <hr>
 <div style="margin-top: 2rem;">
-<% if @article.social_media_posts.present? %>
-  <b>Discussion on </b>
-  <% if mastodon_url = @article.social_media_posts.find_by(platform: 'mastodon')&.url %>
-    <%= link_to "Mastodon", mastodon_url, target: "_blank" %>,
-  <% end %>
-  <% if twitter_url = @article.social_media_posts.find_by(platform: 'twitter')&.url %>
-    <%= link_to "X", twitter_url, target: "_blank" %>,
-  <% end %>
-  <% if bluesky_url = @article.social_media_posts.find_by(platform: 'bluesky')&.url %>
-    <%= link_to "Bluesky", bluesky_url, target: "_blank" %>.
-  <% end %>
-<% end %>
+
 </div>
 <% if @article.comments.mastodon.any? %>
   <div class="mastodon-comments">

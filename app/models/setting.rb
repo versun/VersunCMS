@@ -7,7 +7,7 @@ class Setting < ApplicationRecord
       icon_path: "github.svg"
     },
     twitter: {
-      icon_path: "x-twitter.svg"
+      icon_path: "twitter.svg"
     },
     mastodon: {
       icon_path: "mastodon.svg"
@@ -38,6 +38,9 @@ class Setting < ApplicationRecord
     },
     web_analytics: {
       icon_path: "chart.svg"
+    },
+    rss: {
+      icon_path: "rss.svg"
     }
   }.freeze
 

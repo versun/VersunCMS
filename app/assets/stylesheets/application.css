@@ -50,7 +50,12 @@ br {
   line-height: 1em;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-bottom: .5rem;
   line-height: 1.25;
   font-weight: 600;
@@ -196,13 +201,13 @@ div.front-page-images {
   grid-gap: 5px;
 }
 
-div.front-page-images > div {
+div.front-page-images>div {
   display: flex;
   align-items: center;
   line-height: 0;
 }
 
-div.front-page-images > div img {
+div.front-page-images>div img {
   width: 100%;
   aspect-ratio: 1/1;
   object-fit: cover;
@@ -217,7 +222,8 @@ div.front-page-images > div img {
 }
 
 /* 网格布局 - 书籍和文章列表 */
-.books, .writing {
+.books,
+.writing {
   display: grid;
   grid-column-gap: 5px;
   grid-row-gap: 5px;
@@ -231,18 +237,21 @@ div.front-page-images > div img {
   grid-template-columns: 1fr .75fr min-content 70px;
 }
 
-.books a, .writing a {
+.books a,
+.writing a {
   font-weight: 500;
   letter-spacing: -.015em;
 }
 
-.books > div, .writing > div {
+.books>div,
+.writing>div {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.books time, .writing time {
+.books time,
+.writing time {
   padding-right: .25em;
   color: #333;
   font-variant-numeric: tabular-nums;
@@ -251,39 +260,40 @@ div.front-page-images > div img {
 }
 
 /* 微内容样式 */
-.micro > div {
+.micro>div {
   margin-bottom: 20px;
   border: 1px solid #000;
   border-radius: 2px;
 }
 
-.body li, .micro li {
+.body li,
+.micro li {
   list-style-type: "-  ";
 }
 
-.micro > div > .body {
+.micro>div>.body {
   background-color: #f9f9f9;
   padding: 20px;
 }
 
-.micro > div > div:first-child {
+.micro>div>div:first-child {
   padding: 10px 20px;
   border-bottom: 1px solid #000;
   display: flex;
   justify-content: space-between;
 }
 
-.micro > div > div:first-child > a {
+.micro>div>div:first-child>a {
   font-weight: 700;
 }
 
-.micro > div > div:first-child > h2 {
+.micro>div>div:first-child>h2 {
   font-size: inherit;
   margin: 0;
   line-height: inherit;
 }
 
-.micro > div > div:first-child > time {
+.micro>div>div:first-child>time {
   white-space: pre;
 }
 
@@ -292,7 +302,9 @@ div.front-page-images > div img {
 }
 
 /* 表单元素样式 */
-input, textarea, select {
+input,
+textarea,
+select {
   font-family: var(--sans-font);
   font-size: 1rem;
   border: 1px solid #000;
@@ -300,7 +312,8 @@ input, textarea, select {
   border-radius: 2px;
 }
 
-button, .button {
+button,
+.button {
   font-family: var(--sans-font);
   font-size: 1rem;
   background: #000;
@@ -313,7 +326,8 @@ button, .button {
   display: inline-block;
 }
 
-button:hover, .button:hover {
+button:hover,
+.button:hover {
   background: #333;
   text-decoration: none;
 }
@@ -338,33 +352,36 @@ button:hover, .button:hover {
     border-bottom: 1px solid #e0e0e0;
     padding: 20px;
   }
-  
+
   .main-content {
     margin-left: 0;
   }
-  
+
   .site-container {
     flex-direction: column;
   }
-  
-  div.front-page-images > div:nth-child(4) {
+
+  div.front-page-images>div:nth-child(4) {
     display: none;
   }
-  
+
   .limiter {
     width: auto;
   }
-  
-  .books, .writing {
+
+  .books,
+  .writing {
     grid-template-columns: 1fr;
     grid-row-gap: 0;
   }
-  
-  .books div, .writing div {
+
+  .books div,
+  .writing div {
     white-space: normal;
   }
-  
-  .books div:nth-child(4n), .writing time {
+
+  .books div:nth-child(4n),
+  .writing time {
     padding-bottom: 20px;
   }
 }
@@ -373,7 +390,7 @@ button:hover, .button:hover {
   .nu a {
     text-decoration: none;
   }
-  
+
   .nu a:hover {
     text-decoration: underline;
   }
@@ -391,25 +408,25 @@ button:hover, .button:hover {
   .no-print {
     display: none;
   }
-  
+
   .only-print {
     display: block;
   }
-  
+
   body {
     margin: 0;
   }
-  
+
   .limiter {
     max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
   }
-  
+
   .sidebar {
     display: none;
   }
-  
+
   .main-content {
     margin-left: 0;
   }

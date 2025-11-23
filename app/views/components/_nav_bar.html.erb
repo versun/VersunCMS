@@ -1,6 +1,9 @@
 <nav> 
   <div class="navbar-items">
     <% if navbar_items.present? %>
+      <span class="navbar-page">
+        <%=link_to "Blog", root_path %>
+      </span>
       <% navbar_items.each_with_index do |page, index| %>
         <span class="navbar-page">
           <%= link_to page.title, page_link_path(page), page_link_attributes(page) %>

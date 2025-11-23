@@ -40,7 +40,7 @@
         </header>
         <div class="social-links">
             <a href="/rss" target="_blank" class="social-icon" rel="rss">
-              <%= image_tag "/rss.svg", size: "20", alt: "RSS", class: "social-icon" %></a>
+              <%= image_tag "/#{Setting::SOCIAL_PLATFORMS[:rss][:icon_path]}", size: "20", alt: "RSS", class: "social-icon" %></a>
             <% if site_settings[:social_links].present? %>
               <% site_settings[:social_links].each do |platform, data| %>
                 <% if data['url'].present? %>
