@@ -8,7 +8,7 @@ class ArticlesController < ApplicationController
     respond_to do |format|
       format.html {
         @page = params[:page].present? ? params[:page].to_i : 1
-        @per_page = 10
+        @per_page = 100
 
         if params[:q].present?
           # 使用SQLite搜索

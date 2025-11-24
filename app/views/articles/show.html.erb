@@ -2,25 +2,6 @@
   <%= @article.title %> | <%= site_settings[:title] %>
 <% end %>
 
-<style>
-  .article-content img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 1rem 0;
-  }
-  
-  .social-icon-link {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 0.25rem;
-  }
-  
-  .social-icon {
-    display: inline-block;
-    vertical-align: middle;
-  }
-</style>
 <article>
   <h2><%= @article.title %></h2>
   <small style="color:grey">
