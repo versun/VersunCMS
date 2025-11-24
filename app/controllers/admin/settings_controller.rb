@@ -50,6 +50,7 @@ class Admin::SettingsController < Admin::BaseController
                             :giscus,
                             :file,
                             :tool_code,
+                            :social_links_json,
                             social_links: {},
                             static_files: {} ])
   end

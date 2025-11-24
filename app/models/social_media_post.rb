@@ -5,7 +5,4 @@ class SocialMediaPost < ApplicationRecord
   # validates :url, presence: true
   validates :platform, uniqueness: { scope: :article_id }
 
-  def icon_path
-    Setting::SOCIAL_PLATFORMS[platform.to_sym]&.dig(:icon_path)
-  end
 end

@@ -1,13 +1,32 @@
 <b>Social Links</b>
+<p style="margin-top: 8px; margin-bottom: 8px; color: #666; font-size: 14px;">
+  以 JSON 格式配置社交平台链接。每个平台需包含 name、url 和 FontAwesome icon 类名。
+</p>
 
-<% Setting::SOCIAL_PLATFORMS.each do |platform, config| %>
-  <div class="social-platform">
-    <span><%= platform.to_s.titleize %></span>
-    <%= form.fields_for :social_links do |social| %>
-      <%= social.url_field platform.to_s,
-      name: "setting[social_links][#{platform}][url]",
-      value: @setting.social_links&.dig(platform.to_s, 'url'),
-      placeholder: "Enter #{platform} URL" %>
-    <% end %>
-  </div>
-<% end %>
+<%= form.text_area :social_links_json,
+    value: @setting.social_links.present? ? JSON.pretty_generate(@setting.social_links) : nil,
+    placeholder: '{
+  {
+  "github": {
+    "url": "https://github.com/versun",
+    "icon": "fa-brands fa-github"
+  },
+  "twitter": {
+    "url": "https://x.com/VersunPan",
+    "icon": "fa-brands fa-square-x-twitter"
+  },
+  "mastodon": {
+    "url": "https://mastodon.social/@versun",
+    "icon": "fa-brands fa-mastodon"
+  },
+  "bluesky": {
+    "url": "https://bsky.app/profile/versun.me",
+    "icon": "fa-brands fa-square-bluesky"
+  },
+  "rss": {
+    "url": "/feed.rss",
+    "icon": "fa-solid fa-square-rss"
+  }
+}',
+    rows: 15,
+    style: 'font-family: monospace; width: 100%;' %>

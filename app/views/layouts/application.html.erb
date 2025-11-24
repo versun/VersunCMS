@@ -20,6 +20,9 @@
     <link rel="apple-touch-icon" href="/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed">
 
+    <%# FontAwesome icons for social links %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <%# Includes all stylesheet files in app/views/stylesheets %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
@@ -39,17 +42,18 @@
           <p class="site-description"><%= site_settings[:description] %></p>
         </header>
         <div class="social-links">
-            <a href="/rss" target="_blank" class="social-icon" rel="rss">
-              <%= image_tag "/#{Setting::SOCIAL_PLATFORMS[:rss][:icon_path]}", size: "20", alt: "RSS", class: "social-icon" %></a>
             <% if site_settings[:social_links].present? %>
               <% site_settings[:social_links].each do |platform, data| %>
                 <% if data['url'].present? %>
-                  <a rel="me" href="<%= data['url'] %>" target="_blank" class="social">
-                    <%= image_tag "/#{data['icon_path']}",
-                                  size: "20",
-                                  alt: platform.to_s.titleize,
-                                  class: "social-icon",
-                                  title: platform.to_s.titleize %></a>
+                  <% 
+                    icon_class = data['icon']
+                    display_name = data['name'] || platform.to_s.titleize
+                  %>
+                  <a rel="me" href="<%= data['url'] %>" target="_blank" class="social" title="<%= display_name %>">
+                    <% if icon_class.present? %>
+                      <i class="<%= icon_class %>" style="font-size: 20px;"></i>
+                    <% end %>
+                  </a>
                 <% end %>
               <% end %>
             <% end %>

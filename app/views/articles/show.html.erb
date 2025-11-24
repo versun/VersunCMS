@@ -10,8 +10,18 @@
       <span class="social-label">, Also posted to:</span>
       <% @article.social_media_posts.each do |post| %>
         <% if post.url.present? %>
-          <a href="<%= post.url %>" target="_blank" rel="noopener noreferrer" class="social-icon-link">
-            <%= image_tag "/#{post.icon_path}", size: "16", alt: post.platform.titleize, class: "social-icon", title: post.platform.titleize %>
+          <% 
+            # 从 settings 中获取对应平台的图标信息
+            platform_config = site_settings[:social_links]&.dig(post.platform)
+            icon_class = platform_config&.dig('icon')
+            display_name = platform_config&.dig('name') || post.platform.titleize
+          %>
+          <a href="<%= post.url %>" target="_blank" rel="noopener noreferrer" class="social-icon-link" title="<%= display_name %>">
+            <% if icon_class.present? %>
+              <i class="<%= icon_class %>" style="font-size: 16px;"></i>
+            <% else %>
+              <span style="font-size: 14px;">🔗</span>
+            <% end %>
           </a>
         <% end %>
       <% end %>
