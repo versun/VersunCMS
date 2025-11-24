@@ -14,7 +14,9 @@
       <td>
         <%= link_to "Jobs", admin_jobs_path, class: "tool-link" %> |
         <%= link_to "Settings", edit_admin_setting_path, class: "admin-nav-link" %> |
-        <%= link_to "Account", edit_user_path(Current.user), class: "admin-nav-link" %> |
+        <% if Current.user.present? %>
+          <%= link_to "Account", edit_user_path(Current.user), class: "admin-nav-link" %> |
+        <% end %>
       </td>
       <td align="right">
         <%= button_to "Logout", session_path, method: :delete, data: { turbo_method: :delete }, class: "admin-button" %>

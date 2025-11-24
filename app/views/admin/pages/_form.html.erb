@@ -1,4 +1,4 @@
-<%= form_with(model: page) do |form| %>
+<%= form_with(model: [:admin, page]) do |form| %>
   <% if page.errors.any? %>
     <div style="color: red">
       <h3><%= pluralize(page.errors.count, "error") %> prohibited this page from being saved:</h3>
@@ -42,7 +42,7 @@
           <div>
           <%= form.submit "save" %>
           <% if page.persisted? %>
-            <%= link_to "delete", page_path(page.slug), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
+            <%= link_to "delete", admin_page_path(page), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
           <% end %>
           </div>
       </fieldset>

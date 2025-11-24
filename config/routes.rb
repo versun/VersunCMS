@@ -24,7 +24,7 @@ Rails.application.routes.draw do
         patch :unpublish
       end
     end
-
+    
     resources :pages do
       member do
         patch :reorder
@@ -71,13 +71,10 @@ Rails.application.routes.draw do
   scope path: Rails.application.config.x.article_route_prefix do
     get "/" => "articles#index", as: :articles
     get "/:slug" => "articles#show", as: :article
-    get "/:slug/edit" => "articles#edit", as: :edit_article
-    post "/" => "articles#create", as: :create_article
-    patch "/:slug" => "articles#update", as: :update_article
-    delete "/:slug" => "articles#destroy", as: :destroy_article
   end
 
-  resources :pages, param: :slug
+  # Public pages routes - for viewing published pages
+  resources :pages, only: [:show], param: :slug
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest

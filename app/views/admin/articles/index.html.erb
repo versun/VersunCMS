@@ -10,7 +10,7 @@
 
         <div class="row-actions">
             <%= link_to "view", article_path(post) %> |
-            <%= link_to "edit", edit_article_path(post) %> |
+            <%= link_to "edit", edit_admin_article_path(post) %> |
             <% if post.status != "trash" %>
               <%= link_to "trash", article_path(post),
                     data: { turbo_method: :delete } %> |
@@ -19,7 +19,7 @@
                     data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } %> |
             <% end %>
 
-            <%= link_to post.title, edit_article_path(post), class:"title" %>
+            <%= link_to post.title, edit_admin_article_path(post), class:"title" %>
         </div>
       <% end %>
       <hr>

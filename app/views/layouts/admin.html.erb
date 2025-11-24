@@ -1,5 +1,20 @@
-<% content_for :title, "Admin" %>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for?(:title) ? yield(:title) : "Admin" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= stylesheet_link_tag "lexxy" %>
 
-<%= render 'admin/shared/header' %>
-<hr>
-<%= yield %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <%= render 'admin/shared/header' %>
+    <hr>
+    <%= yield %>
+  </body>
+</html>
