@@ -1,11 +1,11 @@
 <ul>
   <% if navbar_items.present? %>
     <li>
-      <%=link_to "Blog", root_path %>
+      <%= link_to "Blog", root_path, class: current_page?(root_path) ? "current" : "" %>
     </li>
     <% navbar_items.each do |page| %>
       <li>
-        <%= link_to page.title, page_link_path(page), page_link_attributes(page) %>
+        <%= link_to page.title, page_link_path(page), page_link_attributes(page).merge(class: current_page?(page_link_path(page)) ? "current" : "") %>
       </li>
     <% end %>     
   <% end %>

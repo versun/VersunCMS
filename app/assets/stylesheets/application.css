@@ -34,13 +34,14 @@ ul {
 
 /* Sidebar */
 .sidebar-header h1 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 1rem;
 }
 
 .sidebar-nav li {
-    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    /* margin-bottom: 0.5rem; */
 }
 
 .sidebar-nav a {
@@ -52,10 +53,15 @@ ul {
     text-decoration: underline;
 }
 
+.sidebar-nav a.current {
+    color: #c04000;
+    font-weight: 700;
+}
+
 .social-links,
 .sidebar-footer {
     margin-top: 2rem;
-    display: none;
+    /* display: none; */
     /* Hide for now to match image strictly, or keep if user wants */
 }
 
@@ -70,6 +76,7 @@ ul {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    flex-wrap: wrap;
 }
 
 .blog-post-item small {
@@ -80,8 +87,10 @@ ul {
 }
 
 .post-title {
-    font-size: 1rem;
-    font-weight: 400;
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #c04000;
     min-width: 0;
     /* Allow truncation if needed */
     margin-right: auto;
@@ -93,8 +102,12 @@ ul {
 }
 
 .post-description {
-    display: none;
-    /* Hidden as per design */
+    width: 100%;
+    margin-top: 0.5rem;
+    color: #333;
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-size: 1.1rem;
+    line-height: 1.5;
 }
 
 .post-meta {
@@ -102,4 +115,63 @@ ul {
     color: #666;
     font-variant-numeric: tabular-nums;
     /* Align numbers nicely */
+}
+
+.article h1,
+h2 {
+    color: #c04000;
+}
+
+.article-content {
+    display: block;
+    unicode-bidi: isolate;
+    max-width: 800px;
+    /* margin-left: auto;
+    margin-right: auto; */
+    /* padding-left: 20px;
+    padding-right: 20px; */
+}
+
+.article-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    gap: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.pagination a,
+.pagination em,
+.pagination span {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #555;
+    text-decoration: none;
+}
+
+.pagination a:hover {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+    color: #333;
+}
+
+.pagination .current {
+    background-color: #c04000;
+    color: #fff;
+    border-color: #c04000;
+    font-style: normal;
+}
+
+.pagination .disabled {
+    color: #aaa;
+    border-color: #eee;
+    pointer-events: none;
 }
