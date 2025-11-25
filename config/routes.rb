@@ -34,6 +34,7 @@ Rails.application.routes.draw do
     # System management
     resource :setting, only: [ :edit, :update ]
     resources :static_files, only: [ :index, :create, :destroy ]
+    resources :redirects
 
     resource :newsletter, only: [ :show, :update ], controller: "newsletter" do
       collection do

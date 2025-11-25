@@ -1,0 +1,65 @@
+<%= form_with(model: [:admin, redirect], class: "admin-form") do |form| %>
+  <% if redirect.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(redirect.errors.count, "error") %> prohibited this redirect from being saved:</h3>
+      <ul>
+        <% redirect.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= form.label :regex, class: "form-label" do %>
+      <i class="fas fa-code"></i> Regex Pattern
+    <% end %>
+    <%= form.text_field :regex, class: "form-control", placeholder: "^/old-path$" %>
+    <small class="form-help">
+      Regular expression to match the URL path. Examples:
+      <code>^/old-page$</code> (exact match),
+      <code>^/posts/(.+)$</code> (with capture groups)
+    </small>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :replacement, class: "form-label" do %>
+      <i class="fas fa-link"></i> Replacement URL
+    <% end %>
+    <%= form.text_field :replacement, class: "form-control", placeholder: "/new-path" %>
+    <small class="form-help">
+      Target URL or replacement pattern. Use <code>\1</code>, <code>\2</code> etc. to reference capture groups.
+      Examples: <code>/new-page</code>, <code>/articles/\1</code>
+    </small>
+  </div>
+
+  <div class="form-group">
+    <div class="form-check">
+      <%= form.check_box :permanent, class: "form-check-input" %>
+      <%= form.label :permanent, class: "form-check-label" do %>
+        Permanent Redirect (301)
+      <% end %>
+      <small class="form-help-block">
+        Permanent redirects (301) tell search engines to update their index. 
+        Temporary redirects (302) are used for short-term changes.
+      </small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="form-check">
+      <%= form.check_box :enabled, class: "form-check-input", checked: redirect.new_record? ? true : redirect.enabled %>
+      <%= form.label :enabled, class: "form-check-label" do %>
+        Enabled
+      <% end %>
+      <small class="form-help-block">
+        Only enabled redirects will be active.
+      </small>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", admin_redirects_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>

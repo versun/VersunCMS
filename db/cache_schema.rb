@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_24_000001) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -124,6 +124,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_000001) do
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_pages_on_slug", unique: true
+  end
+
+  create_table "redirects", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: true
+    t.boolean "permanent", default: false
+    t.string "regex", null: false
+    t.string "replacement", null: false
+    t.datetime "updated_at", null: false
+    t.index ["enabled"], name: "index_redirects_on_enabled"
   end
 
   create_table "sessions", force: :cascade do |t|
