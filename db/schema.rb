@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_000001) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -159,6 +159,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
     t.string "url", null: false
     t.index ["article_id", "platform"], name: "index_social_media_posts_on_article_id_and_platform", unique: true
     t.index ["article_id"], name: "index_social_media_posts_on_article_id"
+  end
+
+  create_table "static_files", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "filename"
+    t.datetime "updated_at", null: false
+    t.index ["filename"], name: "index_static_files_on_filename", unique: true
   end
 
   create_table "users", force: :cascade do |t|

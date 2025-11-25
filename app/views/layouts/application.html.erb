@@ -13,14 +13,13 @@
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="icon" href="/favicon.ico" sizes="32x32">
-    <link rel="icon" href="/favicon.png" sizes="32x32">
-    <link rel="apple-touch-icon" href="/favicon.png">
+    <link rel="icon" href="/static/icon.png" type="image/png">
+    <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/static/favicon.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/static/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed">
 
-    <%# FontAwesome icons for social links %>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <%# Includes all stylesheet files in app/views/stylesheets %>

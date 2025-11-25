@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_000001) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -63,7 +63,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
     t.string "description"
     t.datetime "scheduled_at"
     t.string "slug"
-    t.integer "status", null: false
+    t.integer "status", default: 0, null: false
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_articles_on_slug", unique: true
@@ -92,7 +92,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
     t.string "api_key_secret"
     t.string "app_password"
     t.boolean "auto_fetch_comments", default: false, null: false
-    t.string "client_id"
     t.string "client_key"
     t.string "client_secret"
     t.datetime "created_at", null: false
@@ -121,19 +120,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
     t.integer "page_order", default: 0, null: false
     t.string "redirect_url"
     t.string "slug"
-    t.integer "status", null: false
+    t.integer "status", default: 0, null: false
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_pages_on_slug", unique: true
-  end
-
-  create_table "pg_search_documents", force: :cascade do |t|
-    t.text "content"
-    t.datetime "created_at", null: false
-    t.integer "searchable_id"
-    t.string "searchable_type"
-    t.datetime "updated_at", null: false
-    t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -182,12 +172,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_000002) do
     t.index ["key_hash"], name: "index_solid_cache_entries_on_key_hash", unique: true
   end
 
-  create_table "users", force: :cascade do |t|
+  create_table "static_files", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "password_digest", null: false
+    t.text "description"
+    t.text "filename"
     t.datetime "updated_at", null: false
-    t.string "user_name", null: false
-    t.index ["user_name"], name: "index_users_on_user_name", unique: true
+    t.index ["filename"], name: "index_static_files_on_filename", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

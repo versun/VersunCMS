@@ -2,7 +2,11 @@
   <table width="70%">
     <tr>
       <td>
-        | <%= link_to "Posts", admin_articles_path, class: "admin-nav-link" %> |
+        <%= link_to "View Site", root_path, class: "admin-nav-link" %> |
+
+      </td>
+      <td>
+        <%= link_to "Posts", admin_articles_path, class: "admin-nav-link" %> |
         <%= link_to "Pages", admin_pages_path, class: "admin-nav-link" %> |
       </td>
       <td>
@@ -12,14 +16,15 @@
         <%= link_to "Newsletter", admin_newsletter_path, class: "tool-link" %> |
       </td>
       <td>
+        <%= link_to "Static Files", admin_static_files_path, class: "admin-nav-link" %> |
+        <%= link_to "Site Settings", edit_admin_setting_path, class: "admin-nav-link" %> |
         <%= link_to "Jobs", admin_jobs_path, class: "tool-link" %> |
-        <%= link_to "Settings", edit_admin_setting_path, class: "admin-nav-link" %> |
-        <% if Current.user.present? %>
-          <%= link_to "Account", edit_user_path(Current.user), class: "admin-nav-link" %> |
-        <% end %>
       </td>
       <td align="right">
-        <%= button_to "Logout", session_path, method: :delete, data: { turbo_method: :delete }, class: "admin-button" %>
+      <% if Current.user.present? %>
+        <%= link_to "Account", edit_user_path(Current.user), class: "admin-nav-link" %> |
+        <%= link_to "Logout", session_path, method: :delete, data: { turbo_method: :delete }, class: "admin-button" %>
+        <% end %>
       </td>
     </tr>
   </table>

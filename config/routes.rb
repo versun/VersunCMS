@@ -32,12 +32,8 @@ Rails.application.routes.draw do
     end
 
     # System management
-    resource :setting, only: [ :edit, :update, :destroy ] do
-      collection do
-        post :upload
-        delete :destroy
-      end
-    end
+    resource :setting, only: [ :edit, :update ]
+    resources :static_files, only: [ :index, :create, :destroy ]
 
     resource :newsletter, only: [ :show, :update ], controller: "newsletter" do
       collection do
@@ -58,6 +54,9 @@ Rails.application.routes.draw do
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end
+
+  # Static files public access
+  get "/static/*filename", to: "static_files#show", as: :static_file, format: false
 
   # Health check and feeds
   get "up" => "rails/health#show", as: :rails_health_check
