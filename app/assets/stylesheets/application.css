@@ -14,6 +14,12 @@ body {
     color: #111;
     line-height: 1.5;
     font-size: 16px;
+    overflow-wrap: break-word;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
 }
 
 a {
@@ -149,6 +155,7 @@ h2 {
     gap: 8px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 0.9rem;
+    flex-wrap: wrap;
 }
 
 .pagination a,
@@ -178,4 +185,31 @@ h2 {
     color: #aaa;
     border-color: #eee;
     pointer-events: none;
+}
+
+/* Mobile Layout */
+@media (max-width: 768px) {
+    .site-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin: 10px auto;
+        width: 100%;
+        padding: 0 15px;
+    }
+
+    .sidebar {
+        text-align: center;
+    }
+
+    .sidebar-nav ul {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        padding: 0;
+    }
+
+    .sidebar-nav li {
+        margin-top: 0;
+    }
 }
