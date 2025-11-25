@@ -9,14 +9,16 @@
     <%= csp_meta_tag %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "admin", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
+  <body class="admin-body">
     <%= render 'admin/shared/header' %>
-    <%= tag.div(flash[:alert], style: "color:red") if flash[:alert] %>
-    <%= tag.div(flash[:notice], style: "color:green") if flash[:notice] %>
-    <hr>
-    <%= yield %>
+    <main class="admin-main">
+      <%= tag.div(flash[:alert], class: "flash-message flash-alert") if flash[:alert] %>
+      <%= tag.div(flash[:notice], class: "flash-message flash-notice") if flash[:notice] %>
+      <%= yield %>
+    </main>
   </body>
 </html>

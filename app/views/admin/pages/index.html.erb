@@ -1,7 +1,8 @@
 <% content_for :title, "Pages|Admin" %>
 
-<%= render 'admin/shared/post_status', scope: @pages %>
-<%= link_to "New", new_admin_page_path %>
+<div class="admin-pages">
+  <%= render 'admin/shared/post_status', scope: @pages %>
+  <%= link_to "New", new_admin_page_path %>
 <% if @pages %>
   <div class="articles-admin">
     <% @pages.each do |post| %>
@@ -23,6 +24,9 @@
     <hr>
     <%= will_paginate @pages %>
   </div>
-<% else %>
-<p>No Pages Found</p>
-<% end %>
+  <% else %>
+    <div class="no-content">
+      <p>No pages found.</p>
+    </div>
+  <% end %>
+</div>
