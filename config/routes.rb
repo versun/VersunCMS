@@ -24,7 +24,7 @@ Rails.application.routes.draw do
         patch :unpublish
       end
     end
-    
+
     resources :pages do
       member do
         patch :reorder
@@ -73,7 +73,7 @@ Rails.application.routes.draw do
   end
 
   # Public pages routes - for viewing published pages
-  resources :pages, only: [:show], param: :slug
+  resources :pages, only: [ :show ], param: :slug
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest

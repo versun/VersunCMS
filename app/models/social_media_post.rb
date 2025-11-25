@@ -4,5 +4,4 @@ class SocialMediaPost < ApplicationRecord
   validates :platform, presence: true
   # validates :url, presence: true
   validates :platform, uniqueness: { scope: :article_id }
-
 end

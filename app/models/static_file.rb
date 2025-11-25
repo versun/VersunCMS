@@ -17,7 +17,7 @@ class StaticFile < ApplicationRecord
   # 获取文件大小（人类可读）
   def file_size_human
     return nil unless file.attached?
-    
+
     size = file.blob.byte_size
     if size < 1024
       "#{size} B"

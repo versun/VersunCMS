@@ -5,21 +5,21 @@ class Admin::StaticFilesController < Admin::BaseController
 
   def create
     uploaded_file = params.dig(:static_file, :file)
-    
+
     unless uploaded_file
       @static_files = StaticFile.order(created_at: :desc)
       flash.now[:alert] = "请选择要上传的文件"
       render :index
       return
     end
-    
+
     # 首先获取新附件的文件名
     new_filename = uploaded_file.original_filename
-    
+
     # 搜索是否已有记录
     existing_file = StaticFile.find_by(filename: new_filename)
-    
-    if existing_file      
+
+    if existing_file
       # 更新记录
       if existing_file.update(static_file_params)
         redirect_to admin_static_files_path, notice: "文件上传成功（已覆盖同名文件）"
@@ -31,7 +31,7 @@ class Admin::StaticFilesController < Admin::BaseController
     else
       # 如果没有记录，则创建新记录
       @static_file = StaticFile.new(static_file_params.merge(filename: new_filename))
-      
+
       if @static_file.save
         redirect_to admin_static_files_path, notice: "文件上传成功"
       else
@@ -45,7 +45,7 @@ class Admin::StaticFilesController < Admin::BaseController
   def destroy
     @static_file = StaticFile.find(params[:id])
     filename = @static_file.filename
-    
+
     if @static_file.destroy
       redirect_to admin_static_files_path, notice: "文件 #{filename} 已删除"
     else
