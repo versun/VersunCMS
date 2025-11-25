@@ -1,32 +1,97 @@
 <% content_for :title, "Pages|Admin" %>
 
 <div class="admin-pages">
-  <%= render 'admin/shared/post_status', scope: @pages %>
-  <%= link_to "New", new_admin_page_path %>
-<% if @pages %>
-  <div class="articles-admin">
-    <% @pages.each do |post| %>
-
-      <div class="row-actions">
-          <%= link_to "view", admin_page_path(post) %> |
-          <%= link_to "edit", edit_admin_page_path(post) %> |
-          <% if post.status != "trash" %>
-            <%= link_to "trash", admin_page_path(post),
-                  data: { turbo_method: :delete } %> |
-          <% else %>
-            <%= link_to "delete", admin_page_path(post),
-                  data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } %> |
-          <% end %>
-
-          <%= link_to post.title, edit_admin_page_path(post), class:"title" %>
-      </div>
+  <div class="admin-toolbar">
+    <%= link_to new_admin_page_path, class: "btn btn-primary" do %>
+      <i class="fas fa-plus"></i> New Page
     <% end %>
-    <hr>
-    <%= will_paginate @pages %>
   </div>
-  <% else %>
-    <div class="no-content">
-      <p>No pages found.</p>
+
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th class="col-title"><i class="fas fa-heading"></i> Title</th>
+          <th class="col-status">
+            <div class="status-filter-header">
+              <i class="fas fa-info-circle"></i>
+              <%= form_with url: admin_pages_path, method: :get, local: true, class: "status-filter-form" do |f| %>
+                <%= f.select :status, 
+                    options_for_select([
+                      ['All Statuses', ''],
+                      ['Published', 'publish'],
+                      ['Draft', 'draft'],
+                      ['Scheduled', 'schedule'],
+                      ['Shared', 'shared'],
+                      ['Trash', 'trash']
+                    ], params[:status]),
+                    {},
+                    { 
+                      class: "status-filter-select",
+                      onchange: "this.form.submit()"
+                    } %>
+              <% end %>
+            </div>
+          </th>
+          <th class="col-slug"><i class="fas fa-link"></i> Slug</th>
+          <th class="col-date"><i class="fas fa-calendar"></i> Created</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @pages && @pages.any? %>
+          <% @pages.each do |post| %>
+            <tr>
+              <td class="col-title">
+                <%= link_to post.title, edit_admin_page_path(post), class: "title-link" %>
+              </td>
+              <td class="col-status">
+                <span class="status-badge status-<%= post.status %>"><%= post.status %></span>
+              </td>
+              <td class="col-slug">
+                <code class="slug-code"><%= post.slug %></code>
+              </td>
+              <td class="col-date">
+                <%= post.created_at.strftime("%Y-%m-%d %H:%M") %>
+              </td>
+              <td class="col-actions">
+                <div class="action-buttons">
+                  <%= link_to admin_page_path(post), class: "action-btn view-btn", title: "View" do %>
+                    <i class="fas fa-eye"></i>
+                  <% end %>
+                  <%= link_to edit_admin_page_path(post), class: "action-btn edit-btn", title: "Edit" do %>
+                    <i class="fas fa-edit"></i>
+                  <% end %>
+                  <% if post.status != "trash" %>
+                    <%= link_to admin_page_path(post), class: "action-btn trash-btn", title: "Trash",
+                          data: { turbo_method: :delete } do %>
+                      <i class="fas fa-trash-alt"></i>
+                    <% end %>
+                  <% else %>
+                    <%= link_to admin_page_path(post), class: "action-btn delete-btn", title: "Delete Permanently",
+                          data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="5" class="no-content-row">
+              <i class="fas fa-inbox"></i>
+              <p>No pages found.</p>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  
+  <% if @pages && @pages.any? %>
+    <div class="pagination-wrapper">
+      <%= will_paginate @pages %>
     </div>
   <% end %>
 </div>

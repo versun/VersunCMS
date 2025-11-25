@@ -1,33 +1,97 @@
 <% content_for :title, "Posts|Admin" %>
 
 <div class="admin-articles">
-  <%= render 'admin/shared/post_status', scope: @articles %>
-  <%= link_to "New", new_admin_article_path %>
+  <div class="admin-toolbar">
+    <%= link_to new_admin_article_path, class: "btn btn-primary" do %>
+      <i class="fas fa-plus"></i> New Post
+    <% end %>
+  </div>
 
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th class="col-title"><i class="fas fa-heading"></i> Title</th>
+          <th class="col-status">
+            <div class="status-filter-header">
+              <i class="fas fa-info-circle"></i>
+              <%= form_with url: admin_articles_path, method: :get, local: true, class: "status-filter-form" do |f| %>
+                <%= f.select :status, 
+                    options_for_select([
+                      ['All Statuses', ''],
+                      ['Published', 'publish'],
+                      ['Draft', 'draft'],
+                      ['Scheduled', 'schedule'],
+                      ['Shared', 'shared'],
+                      ['Trash', 'trash']
+                    ], params[:status]),
+                    {},
+                    { 
+                      class: "status-filter-select",
+                      onchange: "this.form.submit()"
+                    } %>
+              <% end %>
+            </div>
+          </th>
+          <th class="col-slug"><i class="fas fa-link"></i> Slug</th>
+          <th class="col-date"><i class="fas fa-calendar"></i> Created</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @articles.any? %>
+          <% @articles.each do |post| %>
+            <tr>
+              <td class="col-title">
+                <%= link_to post.title, edit_admin_article_path(post), class: "title-link" %>
+              </td>
+              <td class="col-status">
+                <span class="status-badge status-<%= post.status %>"><%= post.status %></span>
+              </td>
+              <td class="col-slug">
+                <code class="slug-code"><%= post.slug %></code>
+              </td>
+              <td class="col-date">
+                <%= post.created_at.strftime("%Y-%m-%d %H:%M") %>
+              </td>
+              <td class="col-actions">
+                <div class="action-buttons">
+                  <%= link_to article_path(post), class: "action-btn view-btn", title: "View" do %>
+                    <i class="fas fa-eye"></i>
+                  <% end %>
+                  <%= link_to edit_admin_article_path(post), class: "action-btn edit-btn", title: "Edit" do %>
+                    <i class="fas fa-edit"></i>
+                  <% end %>
+                  <% if post.status != "trash" %>
+                    <%= link_to article_path(post), class: "action-btn trash-btn", title: "Trash",
+                          data: { turbo_method: :delete } do %>
+                      <i class="fas fa-trash-alt"></i>
+                    <% end %>
+                  <% else %>
+                    <%= link_to article_path(post), class: "action-btn delete-btn", title: "Delete Permanently",
+                          data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
+                      <i class="fas fa-trash"></i>
+                    <% end %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="5" class="no-content-row">
+              <i class="fas fa-inbox"></i>
+              <p>No posts found.</p>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  
   <% if @articles.any? %>
-    <div class="articles-admin">
-      <% @articles.each do |post| %>
-
-        <div class="row-actions">
-            <%= link_to "view", article_path(post) %> |
-            <%= link_to "edit", edit_admin_article_path(post) %> |
-            <% if post.status != "trash" %>
-              <%= link_to "trash", article_path(post),
-                    data: { turbo_method: :delete } %> |
-            <% else %>
-              <%= link_to "delete", article_path(post),
-                    data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } %> |
-            <% end %>
-
-            <%= link_to post.title, edit_admin_article_path(post), class:"title" %>
-        </div>
-      <% end %>
-      <hr>
+    <div class="pagination-wrapper">
       <%= will_paginate @articles %>
-    </div>
-  <% else %>
-    <div class="no-content">
-      <p>No posts found.</p>
     </div>
   <% end %>
 </div>
