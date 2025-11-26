@@ -30,7 +30,7 @@ class ScheduledGithubBackupJob < ApplicationJob
         # Parse cron expression and schedule the job
         # Using solid_queue's recurring task functionality
         Rails.logger.info "Scheduling GitHub backup with cron: #{setting.github_backup_cron}"
-        
+
         # Note: For solid_queue, you would typically define recurring jobs in config/recurring.yml
         # This method is a placeholder for future integration
         # For now, users need to manually add to config/recurring.yml:
@@ -38,7 +38,7 @@ class ScheduledGithubBackupJob < ApplicationJob
         # scheduled_github_backup:
         #   class: ScheduledGithubBackupJob
         #   schedule: "0 2 * * *"  # User's cron expression
-        
+
       rescue => e
         Rails.logger.error "Failed to schedule GitHub backup: #{e.message}"
       end

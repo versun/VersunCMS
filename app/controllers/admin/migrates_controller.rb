@@ -8,8 +8,8 @@ class Admin::MigratesController < Admin::BaseController
   include ActiveStorage::SetCurrent
 
   def index
-    @activity_logs = ActivityLog.track_activity("export") + 
-                     ActivityLog.track_activity("wordpress_export") + 
+    @activity_logs = ActivityLog.track_activity("export") +
+                     ActivityLog.track_activity("wordpress_export") +
                      ActivityLog.track_activity("import") +
                      ActivityLog.track_activity("github_backup")
   end

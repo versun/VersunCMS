@@ -21,7 +21,7 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
     file = fixture_file_upload(zip_file, "application/zip")
 
     assert_enqueued_with(job: ImportFromZipJob) do
-      post admin_migrates_url, params: { operation_type: 'import', zip_file: file }
+      post admin_migrates_url, params: { operation_type: "import", zip_file: file }
     end
 
     assert_redirected_to admin_migrates_url
