@@ -11,6 +11,7 @@
     <table class="admin-table">
       <thead>
         <tr>
+          <th class="col-actions">Actions</th>
           <th class="col-title"><i class="fas fa-heading"></i> Title</th>
           <th class="col-status">
             <div class="status-filter-header">
@@ -33,47 +34,43 @@
               <% end %>
             </div>
           </th>
-          <th class="col-slug"><i class="fas fa-link"></i> Slug</th>
           <th class="col-date"><i class="fas fa-calendar"></i> Created</th>
-          <th class="col-actions">Actions</th>
+          
         </tr>
       </thead>
       <tbody>
         <% if @articles.any? %>
           <% @articles.each do |post| %>
             <tr>
+              <td class="col-actions">
+                  <div class="action-buttons">
+                    <%= link_to article_path(post), class: "action-btn view-btn", title: "View" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_admin_article_path(post), class: "action-btn edit-btn", title: "Edit" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <% if post.status != "trash" %>
+                      <%= link_to article_path(post), class: "action-btn trash-btn", title: "Trash",
+                            data: { turbo_method: :delete } do %>
+                        <i class="fas fa-trash-alt"></i>
+                      <% end %>
+                    <% else %>
+                      <%= link_to article_path(post), class: "action-btn delete-btn", title: "Delete Permanently",
+                            data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
+                        <i class="fas fa-trash"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </td>
               <td class="col-title">
                 <%= link_to post.title, edit_admin_article_path(post), class: "title-link" %>
               </td>
               <td class="col-status">
                 <span class="status-badge status-<%= post.status %>"><%= post.status %></span>
               </td>
-              <td class="col-slug">
-                <code class="slug-code"><%= post.slug %></code>
-              </td>
               <td class="col-date">
                 <%= post.created_at.strftime("%Y-%m-%d %H:%M") %>
-              </td>
-              <td class="col-actions">
-                <div class="action-buttons">
-                  <%= link_to article_path(post), class: "action-btn view-btn", title: "View" do %>
-                    <i class="fas fa-eye"></i>
-                  <% end %>
-                  <%= link_to edit_admin_article_path(post), class: "action-btn edit-btn", title: "Edit" do %>
-                    <i class="fas fa-edit"></i>
-                  <% end %>
-                  <% if post.status != "trash" %>
-                    <%= link_to article_path(post), class: "action-btn trash-btn", title: "Trash",
-                          data: { turbo_method: :delete } do %>
-                      <i class="fas fa-trash-alt"></i>
-                    <% end %>
-                  <% else %>
-                    <%= link_to article_path(post), class: "action-btn delete-btn", title: "Delete Permanently",
-                          data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
-                      <i class="fas fa-trash"></i>
-                    <% end %>
-                  <% end %>
-                </div>
               </td>
             </tr>
           <% end %>

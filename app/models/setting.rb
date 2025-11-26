@@ -5,6 +5,13 @@ class Setting < ApplicationRecord
   # Virtual attribute for JSON textarea input
   attr_accessor :social_links_json
 
+  # Check if GitHub backup is fully configured
+  def github_backup_configured?
+    github_backup_enabled &&
+      github_repo_url.present? &&
+      github_token.present?
+  end
+
 
   private
 

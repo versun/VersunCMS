@@ -10,7 +10,8 @@ class Admin::MigratesController < Admin::BaseController
   def index
     @activity_logs = ActivityLog.track_activity("export") + 
                      ActivityLog.track_activity("wordpress_export") + 
-                     ActivityLog.track_activity("import")
+                     ActivityLog.track_activity("import") +
+                     ActivityLog.track_activity("github_backup")
   end
 
   def create
@@ -21,6 +22,8 @@ class Admin::MigratesController < Admin::BaseController
       handle_export
     when "import"
       handle_import
+    when "github_backup"
+      handle_github_backup
     else
       redirect_to admin_migrates_path, alert: "Unsupported operation type"
     end
@@ -98,5 +101,30 @@ class Admin::MigratesController < Admin::BaseController
     redirect_to admin_migrates_path, alert: "ZIP import failed: #{e.message}"
   ensure
     # 清理临时文件将在job完成后进行
+  end
+
+  def handle_github_backup
+    setting = Setting.first
+
+    unless setting&.github_backup_enabled
+      redirect_to admin_migrates_path, alert: "GitHub backup is not enabled. Please configure it in Settings first."
+      return
+    end
+
+    unless setting.github_repo_url.present? && setting.github_token.present?
+      redirect_to admin_migrates_path, alert: "GitHub backup is not configured properly. Please check your settings."
+      return
+    end
+
+    GithubBackupJob.perform_later
+
+    ActivityLog.create!(
+      action: "initiated",
+      target: "github_backup",
+      level: "info",
+      description: "GitHub Backup initiated"
+    )
+
+    redirect_to admin_migrates_path, notice: "GitHub backup initiated. Please check the logs for details."
   end
 end

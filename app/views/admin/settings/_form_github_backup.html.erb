@@ -1,0 +1,94 @@
+<!-- GitHub Backup 设置局部视图：用于嵌入到 Settings 页面的表单组件（已废弃，功能已迁移到独立的 Backups 页面） -->
+<div>
+  <h4>GitHub Backup Settings</h4>
+  
+  <!-- 表单字段容器 -->
+  <div>
+    
+    <!-- 启用开关：控制 GitHub Backup 功能的开关 -->
+    <div>
+      <%= form.check_box :github_backup_enabled %>
+      <%= form.label :github_backup_enabled, "Enable GitHub Backup" %>
+    </div>
+
+    <!-- GitHub 仓库 URL 字段：输入备份目标仓库地址 -->
+    <div>
+      <%= form.label :github_repo_url, "GitHub Repository URL" %>
+      <%= form.text_field :github_repo_url, 
+          placeholder: "https://github.com/username/backup-repo.git" %>
+      <small>The GitHub repository URL where backups will be stored</small>
+    </div>
+
+    <!-- GitHub Token 字段：输入访问令牌用于认证 -->
+    <div>
+      <%= form.label :github_token, "GitHub Personal Access Token" %>
+      <%= form.password_field :github_token, 
+          placeholder: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" %>
+      <small>
+        Create a token at 
+        <a href="https://github.com/settings/tokens/new" target="_blank">GitHub Settings</a>
+        with <code>repo</code> scope
+      </small>
+    </div>
+
+    <!-- 分支名称字段：指定备份推送的目标分支 -->
+    <div>
+      <%= form.label :github_backup_branch, "Branch Name" %>
+      <%= form.text_field :github_backup_branch, 
+          placeholder: "main" %>
+      <small>Default: main</small>
+    </div>
+
+    <!-- Git 用户名字段：用于 git commit 的用户名 -->
+    <div>
+      <%= form.label :git_user_name, "Git User Name" %>
+      <%= form.text_field :git_user_name, 
+          placeholder: "VersunCMS" %>
+      <small>Name for git commits (default: VersunCMS)</small>
+    </div>
+
+    <!-- Git 邮箱字段：用于 git commit 的邮箱 -->
+    <div>
+      <%= form.label :git_user_email, "Git User Email" %>
+      <%= form.email_field :git_user_email, 
+          placeholder: "backup@versuncms.local" %>
+      <small>Email for git commits (default: backup@versuncms.local)</small>
+    </div>
+
+    <!-- 定时备份计划字段：使用 cron 格式配置自动备份时间 -->
+    <div>
+      <%= form.label :github_backup_cron, "Backup Schedule (Cron Format)" %>
+      <%= form.text_field :github_backup_cron, 
+          placeholder: "0 2 * * * (Daily at 2:00 AM)" %>
+      <small>
+        Optional. Use cron format: 
+        <code>0 2 * * *</code> for daily at 2AM, 
+        <code>0 0 * * 0</code> for weekly on Sunday.
+        Leave empty to disable automatic backups.
+      </small>
+    </div>
+
+    <!-- 最后备份时间展示：信息性提示框，显示上次备份的时间戳 -->
+    <% if @setting.last_backup_at.present? %>
+      <div>
+        <p>
+          <strong>Last Backup:</strong> 
+          <%= @setting.last_backup_at.in_time_zone(@setting.time_zone || 'UTC').strftime('%Y-%m-%d %H:%M:%S %Z') %>
+        </p>
+      </div>
+    <% end %>
+
+    <!-- 设置说明：警告性提示框，提供设置步骤指引 -->
+    <div>
+      <h5>Setup Instructions:</h5>
+      <ol>
+        <li>Create a new GitHub repository for backups (or use an existing one)</li>
+        <li>Generate a Personal Access Token with <code>repo</code> scope</li>
+        <li>Fill in the repository URL and token above</li>
+        <li>Configure git user settings for commits</li>
+        <li>Optionally set up a cron schedule for automatic backups</li>
+        <li>Save settings and trigger a manual backup from the Migrate page</li>
+      </ol>
+    </div>
+  </div>
+</div>

@@ -17,9 +17,19 @@ production:
     class: FetchSocialCommentsJob
     schedule: every day at 12:00
     queue: default
+  # GitHub Backup - Uncomment and configure the schedule below
+  # github_backup:
+  #   class: ScheduledGithubBackupJob
+  #   queue: default
+  #   schedule: every day at 2:00  # Change this to match your preferred schedule
 
 development:
   fetch_social_comments:
     class: FetchSocialCommentsJob
     schedule: every day at 12:00
     queue: default
+  # GitHub Backup - Uncomment and configure the schedule below
+  # github_backup:
+  #   class: ScheduledGithubBackupJob
+  #   queue: default
+  #   schedule: every day at 2:00  # Change this to match your preferred schedule

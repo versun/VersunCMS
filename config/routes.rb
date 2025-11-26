@@ -42,6 +42,7 @@ Rails.application.routes.draw do
       end
     end
     resources :migrates, only: [ :index, :create ]
+    resources :backups, only: [ :index, :update ]
 
     # 导出文件下载
     get "downloads/:filename", to: "downloads#show", as: :download, constraints: { filename: /[^\/]+/ }

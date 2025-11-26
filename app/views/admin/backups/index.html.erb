@@ -1,0 +1,179 @@
+<!-- 主容器：包含整个 Backup 配置页面 -->
+<div class="admin-container">
+  <!-- 页面标题 -->
+  <h1>Backup Configuration</h1>
+  
+  <!-- 页面副标题：说明此页面功能 -->
+  <p class="subtitle">Configure automatic backups to GitHub repository</p>
+
+  <!-- GitHub Backup 配置表单 -->
+  <%= form_with(model: @setting, url: admin_backups_path, method: :patch, local: true, data: { turbo: false }) do |form| %>
+    
+    <!-- 错误消息容器：显示表单验证错误 -->
+    <% if @setting.errors.any? %>
+      <div class="flash-alert">
+        <%= pluralize(@setting.errors.count, "error") %> prohibited this from being saved:
+        <ul>
+          <% @setting.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <!-- GitHub Backup 设置面板：包含所有配置选项的卡片容器 -->
+    <div>
+      <h3>GitHub Backup Settings</h3>
+      
+      <!-- 表单字段容器 -->
+      <div>
+        
+        <!-- 启用开关：控制 GitHub Backup 功能的开关 -->
+        <div>
+          <%= form.check_box :github_backup_enabled %>
+          <%= form.label :github_backup_enabled, "Enable GitHub Backup" %>
+        </div>
+
+        <!-- GitHub 仓库 URL 字段：输入备份目标仓库地址 -->
+        <div class="field">
+          <%= form.label :github_repo_url, "GitHub Repository URL" %>
+          <%= form.text_field :github_repo_url, 
+              placeholder: "https://github.com/username/backup-repo.git" %>
+          <small>The GitHub repository URL where backups will be stored</small>
+        </div>
+
+        <!-- GitHub Token 字段：输入访问令牌用于认证 -->
+        <div class="field">
+          <%= form.label :github_token, "GitHub Personal Access Token" %>
+          <%= form.password_field :github_token, 
+              placeholder: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" %>
+          <small>
+            Create a token at 
+            <a href="https://github.com/settings/tokens/new" target="_blank">GitHub Settings</a>
+            with <code>repo</code> scope
+          </small>
+        </div>
+
+        <!-- 分支名称字段：指定备份推送的目标分支 -->
+        <div class="field">
+          <%= form.label :github_backup_branch, "Branch Name" %>
+          <%= form.text_field :github_backup_branch, 
+              placeholder: "main" %>
+          <small>Default: main</small>
+        </div>
+
+        <!-- Git 用户名字段：用于 git commit 的用户名 -->
+        <div class="field">
+          <%= form.label :git_user_name, "Git User Name" %>
+          <%= form.text_field :git_user_name, 
+              placeholder: "VersunCMS" %>
+          <small>Name for git commits (default: VersunCMS)</small>
+        </div>
+
+        <!-- Git 邮箱字段：用于 git commit 的邮箱 -->
+        <div class="field">
+          <%= form.label :git_user_email, "Git User Email" %>
+          <%= form.email_field :git_user_email, 
+              placeholder: "backup@versuncms.local" %>
+          <small>Email for git commits (default: backup@versuncms.local)</small>
+        </div>
+
+        <!-- 定时备份计划字段：使用 cron 格式配置自动备份时间 -->
+        <div class="field">
+          <%= form.label :github_backup_cron, "Backup Schedule (Cron Format)" %>
+          <%= form.text_field :github_backup_cron, 
+              placeholder: "0 2 * * * (Daily at 2:00 AM)" %>
+          <small>
+            Optional. Use cron format: 
+            <code>0 2 * * *</code> for daily at 2AM, 
+            <code>0 0 * * 0</code> for weekly on Sunday.
+            Leave empty to disable automatic backups.
+          </small>
+        </div>
+
+        <!-- 最后备份时间展示：信息性提示框，显示上次备份的时间戳 -->
+        <% if @setting.last_backup_at.present? %>
+          <div>
+            <p>
+              <strong>Last Backup:</strong> 
+              <%= @setting.last_backup_at.in_time_zone(@setting.time_zone || 'UTC').strftime('%Y-%m-%d %H:%M:%S %Z') %>
+            </p>
+          </div>
+        <% end %>
+
+        <!-- 设置说明：警告性提示框，提供设置步骤指引 -->
+        <div>
+          <h5>Setup Instructions:</h5>
+          <ol>
+            <li>Create a new GitHub repository for backups (or use an existing one)</li>
+            <li>Generate a Personal Access Token with <code>repo</code> scope</li>
+            <li>Fill in the repository URL and token above</li>
+            <li>Configure git user settings for commits</li>
+            <li>Optionally set up a cron schedule for automatic backups</li>
+            <li>Save settings and trigger a manual backup from the Migrate page</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表单提交按钮容器 -->
+    <div class="actions">
+      <%= form.submit "Save Backup Settings", class: "btn-primary" %>
+    </div>
+  <% end %>
+
+  <!-- 手动备份触发区域：允许用户立即执行备份操作 -->
+  <div>
+    <h3>Manual Backup</h3>
+    
+    <!-- 根据配置状态显示不同内容 -->
+    <% if @setting.github_backup_enabled %>
+      
+      <!-- 已配置状态：成功性提示框，显示当前备份配置信息 -->
+      <div>
+        <div>
+          <div>
+            <h4>GitHub Backup Configured</h4>
+            <div>
+              <p><strong>Repository:</strong> <%= @setting.github_repo_url %></p>
+              <p><strong>Branch:</strong> <%= @setting.github_backup_branch.presence || 'main' %></p>
+              <% if @setting.last_backup_at.present? %>
+                <p><strong>Last Backup:</strong> <%= @setting.last_backup_at.in_time_zone(@setting.time_zone || 'UTC').strftime('%Y-%m-%d %H:%M:%S %Z') %></p>
+              <% else %>
+                <p><strong>Last Backup:</strong> Never</p>
+              <% end %>
+              <% if @setting.github_backup_cron.present? %>
+                <p><strong>Schedule:</strong> <%= @setting.github_backup_cron %></p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 立即备份表单：提交后触发手动备份任务 -->
+      <%= form_with url: admin_migrates_path, method: :post, local: true, data: { turbo: false } do |f| %>
+        <%= hidden_field_tag :operation_type, 'github_backup' %>
+        <%= f.submit "Backup to GitHub Now" %>
+      <% end %>
+    <% else %>
+      
+      <!-- 未配置状态：警告性提示框，提示用户需要先配置 -->
+      <div>
+        <div>
+          <div>
+            <h4>GitHub Backup Not Configured</h4>
+            <p>
+              Please enable and configure GitHub backup settings above to use manual backup.
+            </p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- 活动历史记录区域：显示备份操作的历史日志 -->
+  <div>
+    <h4>Backup Activity History</h4>
+    <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
+  </div>
+</div>
