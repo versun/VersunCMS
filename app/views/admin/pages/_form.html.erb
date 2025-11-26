@@ -1,8 +1,7 @@
 <%= form_with(model: [:admin, page]) do |form| %>
   <% if page.errors.any? %>
-    <div style="color: red">
-      <h3><%= pluralize(page.errors.count, "error") %> prohibited this page from being saved:</h3>
-
+    <div class="form-errors">
+      <strong><%= pluralize(page.errors.count, "error") %> prohibited this page from being saved:</strong>
       <ul>
         <% page.errors.each do |error| %>
           <li><%= error.full_message %></li>
@@ -10,68 +9,83 @@
       </ul>
     </div>
   <% end %>
-  <div>
-      <fieldset class="bordered-container bordered-fieldset">
-        <legend>Base</legend>
-        <%= form.label :title, "title:" %>
-        <%= form.text_field :title, required: true  %><br/>
-        <%= form.label :slug, "slug:"%>
-        <%= form.text_field :slug, required: true %><br/>
-        <%= form.label :page_order, "page order:" %>
-        <%= form.number_field :page_order, required: true  %><br/>
-        <%= form.label :redirect_url, "redirect to(optional):", class: "form-label" %>
-        <%= form.url_field :redirect_url, class: "form-control", placeholder: "https://example.com" %>
-        
-      </fieldset>
-      
-      <fieldset class="bordered-container bordered-fieldset">
-        <legend>Content</legend>
-        <%= form.rich_text_area :content, required: true %>
-      </fieldset>
-      
-      <fieldset class="bordered-container bordered-fieldset">
-        <legend>Actions</legend>
-          <div>
-            <%= form.select :status, Page.statuses.keys, { prompt: 'choose a status' }, { id: 'status_select', required: true } %>
-          </div>
-          <div class="scheduled-at" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
-            <%= form.datetime_field :scheduled_at %>
-            Current Date Time: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %>
-          </div>
 
-          <div>
-          <%= form.submit "save" %>
-          <% if page.persisted? %>
-            <%= link_to "delete", admin_page_path(page), method: :delete, data: { turbo_method: :delete,turbo_confirm: "Are you sure?" } %>
-          <% end %>
-          </div>
-      </fieldset>
+  <div class="form-section compact">
+    <h3>Basic Information</h3>
 
+    <div class="form-grid form-grid-2">
+      <div class="field">
+        <%= form.label :title %>
+        <%= form.text_field :title, required: true %>
+      </div>
+
+      <div class="field">
+        <%= form.label :slug %>
+        <%= form.text_field :slug, required: true %>
+      </div>
+    </div>
+
+    <div class="form-grid form-grid-2">
+      <div class="field">
+        <%= form.label :page_order, "Page Order" %>
+        <%= form.number_field :page_order, required: true %>
+      </div>
+
+      <div class="field">
+        <%= form.label :redirect_url, "Redirect To (Optional)" %>
+        <%= form.url_field :redirect_url, placeholder: "https://example.com" %>
+      </div>
+    </div>
+    
+    <small>Leave redirect URL empty to use page content</small>
   </div>
 
+  <div class="form-section compact">
+    <h3>Content</h3>
+    <div class="field">
+      <%= form.rich_text_area :content, required: true %>
+    </div>
+  </div>
+
+  <div class="form-section compact">
+    <h3>Publishing</h3>
+
+    <div class="field">
+      <%= form.label :status %>
+      <%= form.select :status, Page.statuses.keys, 
+          { prompt: 'Choose a status' }, 
+          { id: 'status_select', required: true } %>
+    </div>
+
+    <div class="field" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
+      <%= form.label :scheduled_at, "Schedule For" %>
+      <%= form.datetime_field :scheduled_at %>
+      <small>Current: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %></small>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Save" %>
+    <% if page.persisted? %>
+      <%= link_to "Delete", admin_page_path(page), 
+          class: "btn btn-danger",
+          data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+    <% end %>
+  </div>
 <% end %>
 
 <%= javascript_tag do %>
   function initializeScheduledAt() {
     const statusSelect = document.getElementById('status_select');
     const scheduledAtContainer = document.getElementById('scheduled_at');
-
-    // 初始检查状态
-    if (statusSelect.value === 'schedule') {
-      scheduledAtContainer.style.display = 'block';
+    
+    if (statusSelect && scheduledAtContainer) {
+      statusSelect.addEventListener('change', function() {
+        scheduledAtContainer.style.display = this.value === 'schedule' ? 'block' : 'none';
+      });
     }
-
-    // 添加change事件监听
-    statusSelect.addEventListener('change', function() {
-      if (this.value === 'schedule') {
-        scheduledAtContainer.style.display = 'block';
-      } else {
-        scheduledAtContainer.style.display = 'none';
-      }
-    });
   }
-
-  // 同时支持传统加载和Turbo Drive加载
+  
   document.addEventListener("DOMContentLoaded", initializeScheduledAt);
   document.addEventListener("turbo:load", initializeScheduledAt);
 <% end %>

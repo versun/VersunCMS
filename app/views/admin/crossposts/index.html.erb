@@ -1,125 +1,145 @@
-<h3>CrossPost Settings</h3>
-<fieldset>
-  <legend><h4>Mastodon</h4></legend>
-  <p class="text-muted">Get credentials: Open Mastodon -> Preferences -> Development -> New application | Scope: profile,write:statuses</p>
-  <%= form_with(model: @mastodon, url: admin_crosspost_path(@mastodon.platform), method: :patch) do |f| %>
-    <%= f.hidden_field :platform, value: 'mastodon' %>
+<div class="admin-container">
+  <h1>Crosspost Settings</h1>
 
-    <div class="form-group">
-      <%= f.label :enabled, "Enable Mastodon CrossPost" %>
-      <%= f.check_box :enabled %>
-    </div>
+  <div class="form-section compact">
+    <h3>Mastodon</h3>
+    <small>Get credentials: Open Mastodon → Preferences → Development → New application | Scope: profile,write:statuses</small>
+    
+    <%= form_with(model: @mastodon, url: admin_crosspost_path(@mastodon.platform), method: :patch) do |f| %>
+      <%= f.hidden_field :platform, value: 'mastodon' %>
 
-    <div class="form-group">
-      <%= f.label :server_url, "Mastodon Server URL" %>
-      <%= f.text_field :server_url, placeholder: "https://mastodon.social" %>
-    </div>
+      <div class="field checkbox">
+        <%= f.check_box :enabled %>
+        <%= f.label :enabled, "Enable Mastodon CrossPost" %>
+      </div>
 
-    <div class="form-group">
-      <%= f.label :client_key, "Client key" %>
-      <%= f.text_field :client_key %>
-    </div>
+      <div class="form-grid form-grid-2">
+        <div class="field">
+          <%= f.label :server_url, "Mastodon Server URL" %>
+          <%= f.text_field :server_url, placeholder: "https://mastodon.social" %>
+        </div>
 
-    <div class="form-group">
-      <%= f.label :client_secret, "Client Secret" %>
-      <%= f.text_field :client_secret %>
-    </div>
+        <div class="field">
+          <%= f.label :client_key, "Client Key" %>
+          <%= f.text_field :client_key %>
+        </div>
+      </div>
 
-    <div class="form-group">
-      <%= f.label :access_token, "Access Token" %>
-      <%= f.text_field :access_token %>
-    </div>
+      <div class="form-grid form-grid-2">
+        <div class="field">
+          <%= f.label :client_secret, "Client Secret" %>
+          <%= f.text_field :client_secret %>
+        </div>
 
-    <div class="form-group">
-      <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
-      <%= f.check_box :auto_fetch_comments %>
-      <small class="form-text text-muted">Automatically fetch and display comments from Mastodon every day</small>
-    </div>
+        <div class="field">
+          <%= f.label :access_token, "Access Token" %>
+          <%= f.text_field :access_token %>
+        </div>
+      </div>
 
-    <div class="form-actions">
-      <%= f.submit "Save", class: 'btn btn-primary' %>
-      <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'mastodon' } %>
-    </div>
-  <% end %>
-</fieldset>
+      <div class="field checkbox">
+        <%= f.check_box :auto_fetch_comments %>
+        <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
+      </div>
+      <small>Automatically fetch and display comments from Mastodon every day</small>
 
-<fieldset>
-  <legend><h4>X</h4></legend>
-  <p class="text-muted">First, obtain X credentials from <a href="https://developer.x.com">https://developer.x.com</a>.</p>
-  <%= form_with(model: @twitter, url: admin_crosspost_path(@twitter.platform), method: :patch) do |f| %>
-    <%= f.hidden_field :platform, value: 'twitter' %>
+      <div class="form-actions">
+        <%= f.submit "Save", class: 'btn btn-primary' %>
+        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'mastodon' } %>
+      </div>
+    <% end %>
+  </div>
 
-    <div class="form-group">
-      <%= f.label :enabled, "Enable X CrossPost" %>
-      <%= f.check_box :enabled %>
-    </div>
+  <div class="form-section compact">
+    <h3>X (Twitter)</h3>
+    <small>First, obtain X credentials from <%= link_to "https://developer.x.com", "https://developer.x.com", target: "_blank" %></small>
+    
+    <%= form_with(model: @twitter, url: admin_crosspost_path(@twitter.platform), method: :patch) do |f| %>
+      <%= f.hidden_field :platform, value: 'twitter' %>
 
-    <div class="form-group">
-      <%= f.label :access_token, "Access Token" %>
-      <%= f.text_field :access_token %>
-    </div>
+      <div class="field checkbox">
+        <%= f.check_box :enabled %>
+        <%= f.label :enabled, "Enable X CrossPost" %>
+      </div>
 
-    <div class="form-group">
-      <%= f.label :access_token_secret, "Access Token Secret" %>
-      <%= f.text_field :access_token_secret %>
-    </div>
+      <div class="form-grid form-grid-2">
+        <div class="field">
+          <%= f.label :access_token, "Access Token" %>
+          <%= f.text_field :access_token %>
+        </div>
 
-    <div class="form-group">
-      <%= f.label :api_key, "API Key" %>
-      <%= f.text_field :api_key %>
-    </div>
+        <div class="field">
+          <%= f.label :access_token_secret, "Access Token Secret" %>
+          <%= f.text_field :access_token_secret %>
+        </div>
+      </div>
 
-    <div class="form-group">
-      <%= f.label :api_key_secret, "API Key Secret" %>
-      <%= f.text_field :api_key_secret %>
-    </div>
+      <div class="form-grid form-grid-2">
+        <div class="field">
+          <%= f.label :api_key, "API Key" %>
+          <%= f.text_field :api_key %>
+        </div>
 
-    <div class="form-actions">
-      <%= f.submit "Save", class: 'btn btn-primary' %>
-      <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'twitter' } %>
-    </div>
-  <% end %>
-</fieldset>
+        <div class="field">
+          <%= f.label :api_key_secret, "API Key Secret" %>
+          <%= f.text_field :api_key_secret %>
+        </div>
+      </div>
 
-<fieldset>
-  <legend><h4>Bluesky</h4></legend>
-  <p class="text-muted">Get credentials: Log in to your Bluesky account and generate an App Password in settings.</p>
-  <%= form_with(model: @bluesky, url: admin_crosspost_path(@bluesky.platform), method: :patch) do |f| %>
-    <%= f.hidden_field :platform, value: 'bluesky' %>
+      <div class="form-actions">
+        <%= f.submit "Save", class: 'btn btn-primary' %>
+        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'twitter' } %>
+      </div>
+    <% end %>
+  </div>
 
-    <div class="form-group">
-      <%= f.label :enabled, "Enable Bluesky CrossPost" %>
-      <%= f.check_box :enabled %>
-    </div>
+  <div class="form-section compact">
+    <h3>Bluesky</h3>
+    <small>Get credentials: Log in to your Bluesky account and generate an App Password in settings.</small>
+    
+    <%= form_with(model: @bluesky, url: admin_crosspost_path(@bluesky.platform), method: :patch) do |f| %>
+      <%= f.hidden_field :platform, value: 'bluesky' %>
 
-    <div class="form-group">
-      <%= f.label :username, "Username" %>
-      <%= f.text_field :username, placeholder: "your.handle" %>
-    </div>
+      <div class="field checkbox">
+        <%= f.check_box :enabled %>
+        <%= f.label :enabled, "Enable Bluesky CrossPost" %>
+      </div>
 
-    <div class="form-group">
-      <%= f.label :app_password, "App Password" %>
-      <%= f.text_field :app_password %>
-    </div>
+      <div class="form-grid form-grid-2">
+        <div class="field">
+          <%= f.label :username, "Username" %>
+          <%= f.text_field :username, placeholder: "your.handle" %>
+        </div>
 
-    <div class="form-group">
-      <%= f.label :server_url, "Server URL" %>
-      <%= f.text_field :server_url, placeholder: "https://bsky.social/xrpc" %>
-    </div>
+        <div class="field">
+          <%= f.label :app_password, "App Password" %>
+          <%= f.text_field :app_password %>
+        </div>
+      </div>
 
-    <div class="form-group">
-      <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
-      <%= f.check_box :auto_fetch_comments %>
-      <small class="form-text text-muted">Automatically fetch and display comments from Bluesky every day</small>
-    </div>
+      <div class="field">
+        <%= f.label :server_url, "Server URL" %>
+        <%= f.text_field :server_url, placeholder: "https://bsky.social/xrpc" %>
+      </div>
 
-    <div class="form-actions">
-      <%= f.submit "Save", class: 'btn btn-primary' %>
-      <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'bluesky' } %>
-    </div>
-  <% end %>
-</fieldset>
-<%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
+      <div class="field checkbox">
+        <%= f.check_box :auto_fetch_comments %>
+        <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
+      </div>
+      <small>Automatically fetch and display comments from Bluesky every day</small>
+
+      <div class="form-actions">
+        <%= f.submit "Save", class: 'btn btn-primary' %>
+        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'bluesky' } %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="form-section">
+    <h3>Activity History</h3>
+    <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
+  </div>
+</div>
 
 <% content_for :javascript do %>
 <script>
@@ -133,7 +153,6 @@ document.addEventListener('turbo:load', function() {
       const formData = new FormData(form);
       const button = this;
 
-      // Convert FormData to JSON object
       const jsonData = {};
       formData.forEach((value, key) => {
         if (key.startsWith('crosspost')) {
@@ -142,7 +161,6 @@ document.addEventListener('turbo:load', function() {
         }
       });
 
-      // Disable button and show loading state
       button.disabled = true;
       const originalText = button.innerHTML;
       button.innerHTML = 'Verifying...';
@@ -163,18 +181,13 @@ document.addEventListener('turbo:load', function() {
         return response.json();
       })
       .then(data => {
-        if (data.status === 'success') {
-          alert(data.message);
-        } else {
-          alert(data.message);
-        }
+        alert(data.message);
       })
       .catch(error => {
         alert('An error occurred during verification.');
         console.error('Error:', error);
       })
       .finally(() => {
-        // Re-enable button and restore original text
         button.disabled = false;
         button.innerHTML = originalText;
       });

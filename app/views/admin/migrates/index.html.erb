@@ -1,83 +1,76 @@
-<div class="bg-white rounded-lg shadow-md p-6 mb-6">
-  <h3 class="text-2xl font-bold text-gray-800 mb-6">Export Data</h3>
+<div class="admin-container">
+  <h1>Migrate</h1>
   
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- CSV Export -->
-    <div class="border border-gray-200 rounded-lg p-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">CSV Format Export</h4>
-      <p class="text-gray-600 mb-4">Export data in CSV format, including all articles, pages, settings, etc.</p>
-      <%= form_with url: admin_migrates_path, method: :post, local: true, data: { turbo: false } do |f| %>
-        <%= hidden_field_tag :operation_type, 'export' %>
-        <%= hidden_field_tag :export_type, 'default' %>
-        <%= f.submit "Export Default Format", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200" %>
-      <% end %>
-    </div>
+  <div class="form-section compact">
+    <h3>Export Data</h3>
     
-    <!-- WordPress Export -->
-    <div class="border border-gray-200 rounded-lg p-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">WordPress Export</h4>
-      <p class="text-gray-600 mb-4">Export data in WordPress WXR format, including all articles, pages, settings, etc.</p>
-      <%= form_with url: admin_migrates_path, method: :post, local: true, data: { turbo: false } do |f| %>
-        <%= hidden_field_tag :operation_type, 'export' %>
-        <%= hidden_field_tag :export_type, 'wordpress' %>
-        <%= f.submit "Export WordPress Format", class: "bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200" %>
-      <% end %>
+    <div class="form-grid form-grid-2">
+      <div>
+        <h4>CSV Format Export</h4>
+        <p>Export data in CSV format, including all articles, pages, settings, etc.</p>
+        <%= form_with url: admin_migrates_path, method: :post, data: { turbo: false } do |f| %>
+          <%= hidden_field_tag :operation_type, 'export' %>
+          <%= hidden_field_tag :export_type, 'default' %>
+          <%= f.submit "Export Default Format", class: "btn btn-primary" %>
+        <% end %>
+      </div>
+      
+      <div>
+        <h4>WordPress Export</h4>
+        <p>Export data in WordPress WXR format, including all articles, pages, settings, etc.</p>
+        <%= form_with url: admin_migrates_path, method: :post, data: { turbo: false } do |f| %>
+          <%= hidden_field_tag :operation_type, 'export' %>
+          <%= hidden_field_tag :export_type, 'wordpress' %>
+          <%= f.submit "Export WordPress Format", class: "btn btn-primary" %>
+        <% end %>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="bg-white rounded-lg shadow-md p-6 mb-6">
-  <h3 class="text-2xl font-bold text-gray-800 mb-6">Import Data</h3>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- RSS Import -->
-    <div class="border border-gray-200 rounded-lg p-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">Import from RSS</h4>
-      <p class="text-gray-600 mb-4">Import articles from an RSS feed URL</p>
-      <%= form_with url: admin_migrates_path, method: :post, local: true, data: { turbo: false }, multipart: true do |f| %>
-        <%= hidden_field_tag :operation_type, 'import' %>
-        <div class="mb-3">
-          <%= label_tag :url, "RSS URL:", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= text_field_tag :url, nil, placeholder: "https://example.com/feed.xml", class: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" %>
-        </div>
-        <div class="mb-4">
-          <%= check_box_tag :import_images, '1', false, class: "mr-2" %>
-          <%= label_tag :import_images, "Import Images", class: "text-sm text-gray-700" %>
-        </div>
-        <%= f.submit "Import From RSS", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200" %>
-      <% end %>
-    </div>
+  <div class="form-section compact">
+    <h3>Import Data</h3>
     
-    <!-- ZIP Import -->
-    <div class="border border-gray-200 rounded-lg p-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">Import from ZIP File</h4>
-      <p class="text-gray-600 mb-4">Upload a ZIP file containing exported data</p>
-      <%= form_with url: admin_migrates_path, method: :post, local: true, data: { turbo: false }, multipart: true do |f| %>
-        <%= hidden_field_tag :operation_type, 'import' %>
-        <div class="mb-3">
-          <%= label_tag :zip_file, "ZIP File:", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= file_field_tag :zip_file, accept: ".zip", class: "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" %>
-          <small class="text-gray-500 mt-1 block">Upload a ZIP file containing exported data (CSV files and attachments)</small>
-        </div>
-        <%= f.submit "Import From ZIP", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200 mt-2" %>
-      <% end %>
+    <div class="form-grid form-grid-2">
+      <div>
+        <h4>Import from RSS</h4>
+        <p>Import articles from an RSS feed URL</p>
+        <%= form_with url: admin_migrates_path, method: :post, data: { turbo: false }, multipart: true do |f| %>
+          <%= hidden_field_tag :operation_type, 'import' %>
+          
+          <div class="field">
+            <%= label_tag :url, "RSS URL" %>
+            <%= text_field_tag :url, nil, placeholder: "https://example.com/feed.xml" %>
+          </div>
+          
+          <div class="field checkbox">
+            <%= check_box_tag :import_images, '1', false %>
+            <%= label_tag :import_images, "Import Images" %>
+          </div>
+          
+          <%= f.submit "Import From RSS", class: "btn btn-primary" %>
+        <% end %>
+      </div>
+      
+      <div>
+        <h4>Import from ZIP File</h4>
+        <p>Upload a ZIP file containing exported data</p>
+        <%= form_with url: admin_migrates_path, method: :post, data: { turbo: false }, multipart: true do |f| %>
+          <%= hidden_field_tag :operation_type, 'import' %>
+          
+          <div class="field">
+            <%= label_tag :zip_file, "ZIP File" %>
+            <%= file_field_tag :zip_file, accept: ".zip" %>
+            <small>Upload a ZIP file containing exported data (CSV files and attachments)</small>
+          </div>
+          
+          <%= f.submit "Import From ZIP", class: "btn btn-primary" %>
+        <% end %>
+      </div>
     </div>
   </div>
-</div>
 
-<% if flash[:alert] %>
-  <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-    <%= flash[:alert] %>
+  <div class="form-section">
+    <h3>Activity History</h3>
+    <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
   </div>
-<% end %>
-
-<% if flash[:notice] %>
-  <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-    <%= flash[:notice] %>
-  </div>
-<% end %>
-
-<div class="bg-white rounded-lg shadow-md p-6">
-  <h4 class="text-lg font-semibold text-gray-700 mb-4">Activity History</h4>
-  <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
 </div>

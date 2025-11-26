@@ -1,12 +1,10 @@
-<b>Social Links</b>
-<p style="margin-top: 8px; margin-bottom: 8px; color: #666; font-size: 14px;">
-  以 JSON 格式配置社交平台链接。每个平台需包含 name、url 和 FontAwesome icon 类名。
-</p>
+<h3>Social Links</h3>
 
-<%= form.text_area :social_links_json,
-    value: @setting.social_links.present? ? JSON.pretty_generate(@setting.social_links) : nil,
-    placeholder: '{
-  {
+<div class="field">
+  <%= form.label :social_links_json, "Social Links (JSON)" %>
+  <%= form.text_area :social_links_json,
+      value: @setting.social_links.present? ? JSON.pretty_generate(@setting.social_links) : nil,
+      placeholder: '{
   "github": {
     "url": "https://github.com/versun",
     "icon": "fa-brands fa-github"
@@ -28,5 +26,7 @@
     "icon": "fa-solid fa-square-rss"
   }
 }',
-    rows: 15,
-    style: 'font-family: monospace; width: 100%;' %>
+      rows: 15,
+      style: 'font-family: monospace;' %>
+  <small>Configure social platform links in JSON format. Each platform needs name, url, and FontAwesome icon class.</small>
+</div>
