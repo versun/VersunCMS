@@ -41,8 +41,7 @@ Rails.application.routes.draw do
         post :verify
       end
     end
-    resources :exports, only: [ :index, :create ]
-    resources :imports, only: [ :index, :create ]
+    resources :migrates, only: [ :index, :create ]
 
     # 导出文件下载
     get "downloads/:filename", to: "downloads#show", as: :download, constraints: { filename: /[^\/]+/ }
