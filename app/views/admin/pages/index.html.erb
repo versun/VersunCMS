@@ -2,85 +2,81 @@
 
 <div class="admin-pages">
   <div class="admin-toolbar">
-    <%= link_to new_admin_page_path, class: "btn btn-primary" do %>
-      <i class="fas fa-plus"></i> New Page
-    <% end %>
+    <%= link_to "New Page", new_admin_page_path, class: "btn btn-primary" %>
+    
+    <div class="status-tabs">
+      <%= link_to "All", admin_pages_path, class: "status-tab #{params[:status].blank? ? 'active' : ''}" %>
+      <%= link_to "Published", admin_pages_path(status: 'publish'), class: "status-tab #{params[:status] == 'publish' ? 'active' : ''}" %>
+      <%= link_to "Draft", admin_pages_path(status: 'draft'), class: "status-tab #{params[:status] == 'draft' ? 'active' : ''}" %>
+      <%= link_to "Scheduled", admin_pages_path(status: 'schedule'), class: "status-tab #{params[:status] == 'schedule' ? 'active' : ''}" %>
+      <%= link_to "Shared", admin_pages_path(status: 'shared'), class: "status-tab #{params[:status] == 'shared' ? 'active' : ''}" %>
+      <%= link_to "Trash", admin_pages_path(status: 'trash'), class: "status-tab #{params[:status] == 'trash' ? 'active' : ''}" %>
+    </div>
   </div>
 
   <div class="table-container">
-    <table class="admin-table">
+    <table class="admin-table compact-table">
       <thead>
         <tr>
-          <th class="col-title"><i class="fas fa-heading"></i> Title</th>
-          <th class="col-status">
-            <div class="status-filter-header">
-              <i class="fas fa-info-circle"></i>
-              <%= form_with url: admin_pages_path, method: :get, local: true, class: "status-filter-form" do |f| %>
-                <%= f.select :status, 
-                    options_for_select([
-                      ['All Statuses', ''],
-                      ['Published', 'publish'],
-                      ['Draft', 'draft'],
-                      ['Scheduled', 'schedule'],
-                      ['Shared', 'shared'],
-                      ['Trash', 'trash']
-                    ], params[:status]),
-                    {},
-                    { 
-                      class: "status-filter-select",
-                      onchange: "this.form.submit()"
-                    } %>
-              <% end %>
-            </div>
-          </th>
-          <th class="col-slug"><i class="fas fa-link"></i> Slug</th>
-          <th class="col-date"><i class="fas fa-calendar"></i> Created</th>
-          <th class="col-actions">Actions</th>
+          <th class="col-actions-compact">Actions</th>
+          <th class="col-order">Order</th>
+          <th class="col-title">Title</th>
+          <th class="col-redirect">Redirect</th>
+          <th class="col-date-compact">Created</th>
+          <th class="col-date-compact">Updated</th>
         </tr>
       </thead>
       <tbody>
         <% if @pages && @pages.any? %>
-          <% @pages.each do |post| %>
+          <% @pages.each do |page| %>
             <tr>
+              <td class="col-actions-compact">
+                  <div class="action-buttons">
+                    <%= link_to admin_page_path(page), class: "action-btn", title: "View" do %>
+                      <i class="fas fa-eye"></i>
+                    <% end %>
+                    <%= link_to edit_admin_page_path(page), class: "action-btn", title: "Edit" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                    <% if page.status != "trash" %>
+                      <%= link_to admin_page_path(page), class: "action-btn", title: "Trash",
+                            data: { turbo_method: :delete } do %>
+                        <i class="fas fa-trash-alt"></i>
+                      <% end %>
+                    <% else %>
+                      <%= link_to admin_page_path(page), class: "action-btn", title: "Delete",
+                            data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
+                        <i class="fas fa-trash"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </td>
+              <td class="col-order">
+                <small><%= page.page_order %></small>
+              </td>
               <td class="col-title">
-                <%= link_to post.title, edit_admin_page_path(post), class: "title-link" %>
+                <%= link_to page.title, edit_admin_page_path(page), class: "title-link" %>
               </td>
-              <td class="col-status">
-                <span class="status-badge status-<%= post.status %>"><%= post.status %></span>
+              <td class="col-redirect">
+                <% if page.redirect_url.present? %>
+                  <small class="text-muted" title="<%= page.redirect_url %>">
+                    <%= truncate(page.redirect_url, length: 30) %>
+                  </small>
+                <% else %>
+                  <small class="text-muted">—</small>
+                <% end %>
               </td>
-              <td class="col-slug">
-                <code class="slug-code"><%= post.slug %></code>
+              <td class="col-date-compact">
+                <small><%= page.created_at.strftime("%m/%d %H:%M") %></small>
               </td>
-              <td class="col-date">
-                <%= post.created_at.strftime("%Y-%m-%d %H:%M") %>
-              </td>
-              <td class="col-actions">
-                <div class="action-buttons">
-                  <%= link_to admin_page_path(post), class: "action-btn view-btn", title: "View" do %>
-                    <i class="fas fa-eye"></i>
-                  <% end %>
-                  <%= link_to edit_admin_page_path(post), class: "action-btn edit-btn", title: "Edit" do %>
-                    <i class="fas fa-edit"></i>
-                  <% end %>
-                  <% if post.status != "trash" %>
-                    <%= link_to admin_page_path(post), class: "action-btn trash-btn", title: "Trash",
-                          data: { turbo_method: :delete } do %>
-                      <i class="fas fa-trash-alt"></i>
-                    <% end %>
-                  <% else %>
-                    <%= link_to admin_page_path(post), class: "action-btn delete-btn", title: "Delete Permanently",
-                          data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
-                      <i class="fas fa-trash"></i>
-                    <% end %>
-                  <% end %>
-                </div>
+              <td class="col-date-compact">
+                <small><%= page.updated_at.strftime("%m/%d %H:%M") %></small>
               </td>
             </tr>
           <% end %>
         <% else %>
           <tr>
-            <td colspan="5" class="no-content-row">
-              <i class="fas fa-inbox"></i>
+            <td colspan="7" class="no-content-row">
               <p>No pages found.</p>
             </td>
           </tr>
