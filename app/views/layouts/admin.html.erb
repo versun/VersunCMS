@@ -15,11 +15,13 @@
   </head>
 
   <body class="admin-body">
-    <%= render 'admin/shared/header' %>
-    <main class="admin-main">
-      <%= tag.div(flash[:alert], class: "flash-message flash-alert") if flash[:alert] %>
-      <%= tag.div(flash[:notice], class: "flash-message flash-notice") if flash[:notice] %>
-      <%= yield %>
-    </main>
+    <div class="admin-layout">
+      <%= render 'admin/shared/sidebar' %>
+      <main class="admin-main">
+        <%= tag.div(flash[:alert], class: "flash-message flash-alert") if flash[:alert] %>
+        <%= tag.div(flash[:notice], class: "flash-message flash-notice") if flash[:notice] %>
+        <%= yield %>
+      </main>
+    </div>
   </body>
 </html>
