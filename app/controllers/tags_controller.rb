@@ -1,0 +1,19 @@
+class TagsController < ApplicationController
+  def index
+    @tags = Tag.alphabetical.all
+  end
+
+  def show
+    @tag = Tag.find_by!(slug: params[:slug])
+    @articles = @tag.articles.published.order(created_at: :desc).paginate(page: params[:page], per_page: 20)
+
+    respond_to do |format|
+      format.html
+      format.rss {
+        @articles = @tag.articles.published.order(created_at: :desc)
+        headers["Content-Type"] = "application/xml; charset=utf-8"
+        render layout: false 
+      }
+    end
+  end
+end

@@ -127,6 +127,27 @@ ul {
     /* Align numbers nicely */
 }
 
+.post-tags {
+    margin-right: 8px;
+}
+
+.tag {
+    display: inline-block;
+    background-color: #f0f0f0;
+    color: #666;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-right: 4px;
+    transition: background-color 0.2s;
+}
+
+.tag:hover {
+    background-color: #e0e0e0;
+    color: #333;
+    text-decoration: none;
+}
+
 .article h1,
 h2 {
     color: #c04000;

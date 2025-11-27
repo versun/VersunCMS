@@ -69,14 +69,17 @@ Rails.application.routes.draw do
   get "/feed" => "articles#index", format: "rss"
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
-  # Public article and page routes
+  # Public pages routes - for viewing published pages
+  resources :pages, only: [ :show ], param: :slug
+  
+  # Public tags routes - for browsing tags and filtering articles
+  resources :tags, only: [ :index, :show ], param: :slug
+
+  # Public article routes (must be last to avoid conflicts)
   scope path: Rails.application.config.x.article_route_prefix do
     get "/" => "articles#index", as: :articles
     get "/:slug" => "articles#show", as: :article
   end
-
-  # Public pages routes - for viewing published pages
-  resources :pages, only: [ :show ], param: :slug
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest

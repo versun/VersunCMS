@@ -7,6 +7,8 @@ class Article < ApplicationRecord
   has_rich_text :content
   has_many :social_media_posts, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :article_tags, dependent: :destroy
+  has_many :tags, through: :article_tags
   accepts_nested_attributes_for :social_media_posts, allow_destroy: true
 
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]
@@ -74,6 +76,15 @@ class Article < ApplicationRecord
         false
       end
     end
+  end
+
+  # Virtual attribute for tag list (comma-separated tags)
+  def tag_list
+    tags.map(&:name).join(", ")
+  end
+
+  def tag_list=(names)
+    self.tags = Tag.find_or_create_by_names(names)
   end
 
   private

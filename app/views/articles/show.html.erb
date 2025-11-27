@@ -30,6 +30,19 @@
   <div class="article-content">
     <%= @article.content %>
   </div>
+  
+  <% if @article.tags.any? %>
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+      <small style="color: #666;">Tagged with: </small>
+      <% @article.tags.each do |tag| %>
+        <%= link_to tag_path(tag.slug), style: "text-decoration: none;" do %>
+          <span style="display: inline-block; margin: 0.25rem 0.5rem 0.25rem 0; padding: 0.25rem 0.75rem; background-color: #f0f0f0; color: #333; border-radius: 4px; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;">
+            <%= tag.name %>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
 </article>
 <hr>
 <div style="margin-top: 2rem;">

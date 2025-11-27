@@ -20,6 +20,7 @@
         <tr>
           <th class="col-actions-compact">Actions</th>
           <th class="col-title">Title</th>
+          <th class="col-tags">Tags</th>
           <th class="col-date-compact">Created</th>
           <th class="col-date-compact">Updated</th>
         </tr>
@@ -52,6 +53,13 @@
               <td class="col-title">
                 <%= link_to post.title, edit_admin_article_path(post), class: "title-link" %>
               </td>
+              <td class="col-tags">
+                <% if post.tags.any? %>
+                  <small><%= post.tags.map(&:name).join(", ") %></small>
+                <% else %>
+                  <small class="text-muted">—</small>
+                <% end %>
+              </td>
               <td class="col-date-compact">
                 <small><%= post.created_at.strftime("%m/%d %H:%M") %></small>
               </td>
@@ -62,7 +70,7 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="6" class="no-content-row">
+            <td colspan="5" class="no-content-row">
               <p>No posts found.</p>
             </td>
           </tr>

@@ -70,7 +70,7 @@ class Admin::PagesController < Admin::BaseController
   end
 
   def page_params
-    params.require(:page).permit(:title, :content, :slug, :page_order, :meta_description)
+    params.require(:page).permit(:title, :content, :slug, :page_order, :meta_description, :redirect_url, :status)
   end
 
   def refresh_pages

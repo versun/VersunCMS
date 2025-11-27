@@ -3,7 +3,7 @@ class ArticlesController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ] # %i 是一种字面量符号数组的简写方式，表示[:index]
   before_action :set_article, only: %i[ show edit update destroy ]
 
-  # GET / or /articles.json
+  # GET /
   def index
     respond_to do |format|
       format.html {

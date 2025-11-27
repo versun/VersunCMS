@@ -1,0 +1,26 @@
+<% content_for :title do %>
+  <%= @tag.name %> | <%= site_settings[:title] %>
+<% end %>
+
+<% content_for :head do %>
+  <%= auto_discovery_link_tag(:rss, tag_url(@tag.slug, format: :rss), title: "RSS Feed for #{@tag.name}") %>
+<% end %>
+
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
+  <div style="margin-bottom: 2rem;">
+    <%= link_to "← All Tags", tags_path, style: "color: #666; text-decoration: none; font-size: 0.9rem;" %>
+  </div>
+
+  <h2>Articles tagged with "<%= @tag.name %>"</h2>
+  <p style="color: #666; margin-bottom: 2rem;">
+    <%= pluralize(@articles.total_entries, 'article') %> found
+    <span style="margin: 0 0.5rem;">·</span>
+    <%= link_to "RSS", tag_path(@tag.slug, format: :rss), style: "color: #666; text-decoration: underline;" %>
+  </p>
+
+  <% if @articles.any? %>
+    <%= render 'articles/article_list', articles: @articles %>
+  <% else %>
+    <p style="color: #999;">No published articles with this tag.</p>
+  <% end %>
+</div>

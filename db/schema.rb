@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_26_062242) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_27_011359) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -56,6 +56,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_062242) do
     t.integer "level", default: 0
     t.string "target"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "article_tags", force: :cascade do |t|
+    t.integer "article_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["article_id", "tag_id"], name: "index_article_tags_on_article_id_and_tag_id", unique: true
+    t.index ["article_id"], name: "index_article_tags_on_article_id"
+    t.index ["tag_id"], name: "index_article_tags_on_tag_id"
   end
 
   create_table "articles", force: :cascade do |t|
@@ -187,6 +197,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_062242) do
     t.index ["filename"], name: "index_static_files_on_filename", unique: true
   end
 
+  create_table "tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_tags_on_name", unique: true
+    t.index ["slug"], name: "index_tags_on_slug", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "password_digest", null: false
@@ -197,6 +216,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_062242) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "article_tags", "articles"
+  add_foreign_key "article_tags", "tags"
   add_foreign_key "comments", "articles"
   add_foreign_key "sessions", "users"
   add_foreign_key "social_media_posts", "articles"
