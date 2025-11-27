@@ -71,7 +71,7 @@ Rails.application.routes.draw do
 
   # Public pages routes - for viewing published pages
   resources :pages, only: [ :show ], param: :slug
-  
+
   # Public tags routes - for browsing tags and filtering articles
   resources :tags, only: [ :index, :show ], param: :slug
 

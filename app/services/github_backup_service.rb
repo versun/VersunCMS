@@ -51,7 +51,7 @@ class GithubBackupService
 
   def setup_repository
     require "git"  # Only load git gem when actually needed
-    
+
     Rails.logger.info "Setting up repository: #{@setting.github_repo_url}"
 
     # Create temp directory

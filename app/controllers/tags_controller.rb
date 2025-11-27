@@ -12,7 +12,7 @@ class TagsController < ApplicationController
       format.rss {
         @articles = @tag.articles.published.order(created_at: :desc)
         headers["Content-Type"] = "application/xml; charset=utf-8"
-        render layout: false 
+        render layout: false
       }
     end
   end
