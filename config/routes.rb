@@ -31,6 +31,8 @@ Rails.application.routes.draw do
       end
     end
 
+    resources :tags
+
     # System management
     resource :setting, only: [ :edit, :update ]
     resources :static_files, only: [ :index, :create, :destroy ]
@@ -42,7 +44,7 @@ Rails.application.routes.draw do
       end
     end
     resources :migrates, only: [ :index, :create ]
-    resources :backups, only: [ :index, :update ]
+    resource :backups, only: [ :show, :update ]
 
     # 导出文件下载
     get "downloads/:filename", to: "downloads#show", as: :download, constraints: { filename: /[^\/]+/ }

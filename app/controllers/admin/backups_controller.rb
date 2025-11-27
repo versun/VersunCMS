@@ -1,5 +1,5 @@
 class Admin::BackupsController < Admin::BaseController
-  def index
+  def show
     @setting = Setting.first || Setting.create!
     @activity_logs = ActivityLog.track_activity("github_backup")
   end
@@ -10,7 +10,7 @@ class Admin::BackupsController < Admin::BaseController
     if @setting.update(backup_params)
       redirect_to admin_backups_path, notice: "Backup settings saved successfully"
     else
-      render :index, alert: "Failed to save backup settings"
+      render :show, alert: "Failed to save backup settings"
     end
   end
 
