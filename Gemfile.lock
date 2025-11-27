@@ -537,6 +537,7 @@ DEPENDENCIES
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.1)
+  reverse_markdown
   rubocop-rails-omakase
   ruby-vips
   selenium-webdriver

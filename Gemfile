@@ -14,6 +14,7 @@ gem "mission_control-jobs"
 
 gem "csv"
 gem "git"  # For GitHub backup functionality
+gem "reverse_markdown"  # For converting HTML to Markdown in backups
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.1"
