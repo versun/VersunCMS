@@ -13,6 +13,7 @@ gem "will_paginate"
 gem "mission_control-jobs"
 
 gem "csv"
+gem "git"  # For GitHub backup functionality
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.1"
@@ -66,7 +67,6 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-  gem "git"
   gem "solargraph"
 end
 

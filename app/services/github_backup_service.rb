@@ -1,6 +1,5 @@
 class GithubBackupService
   require "fileutils"
-  require "git"
 
   attr_reader :error_message
 
@@ -51,6 +50,8 @@ class GithubBackupService
   end
 
   def setup_repository
+    require "git"  # Only load git gem when actually needed
+    
     Rails.logger.info "Setting up repository: #{@setting.github_repo_url}"
 
     # Create temp directory
