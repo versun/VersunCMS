@@ -14,6 +14,31 @@ class Admin::BackupsController < Admin::BaseController
     end
   end
 
+  def create
+    setting = Setting.first
+
+    unless setting&.github_backup_enabled
+      redirect_to admin_backups_path, alert: "GitHub backup is not enabled. Please configure it in Settings first."
+      return
+    end
+
+    unless setting.github_repo_url.present? && setting.github_token.present?
+      redirect_to admin_backups_path, alert: "GitHub backup is not configured properly. Please check your settings."
+      return
+    end
+
+    GithubBackupJob.perform_later
+
+    ActivityLog.create!(
+      action: "initiated",
+      target: "github_backup",
+      level: "info",
+      description: "GitHub Backup initiated"
+    )
+
+    redirect_to admin_backups_path, notice: "GitHub backup initiated. Please check the activity history for details."
+  end
+
   private
 
   def backup_params

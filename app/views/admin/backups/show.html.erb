@@ -151,8 +151,7 @@
       </div>
 
       <!-- 立即备份表单：提交后触发手动备份任务 -->
-      <%= form_with url: admin_migrates_path, method: :post, local: true, data: { turbo: false } do |f| %>
-        <%= hidden_field_tag :operation_type, 'github_backup' %>
+      <%= form_with url: admin_backups_path, method: :post, local: true, data: { turbo: false } do |f| %>
         <%= f.submit "Backup to GitHub Now" %>
       <% end %>
     <% else %>
