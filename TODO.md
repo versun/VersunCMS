@@ -1,0 +1,14 @@
+- [x] 确定开源协议 - 采用AGPL
+- [ ] 首次安装设置指南
+- [ ] github backup图片没有备份到github上
+- [ ] 点Submit Comment后应该弹唱对话框，提示用户，感谢评论，Your comment will be reviewed before being published.
+- [ ] 评论功能可关闭
+- [ ] 添加twitter的评论获取功能，只能手动获取
+- [ ] Post list管理页面的action 添加评论获取功能
+- [ ] Site setting页面添加站点icon上传，自动重命名并上传到static file中
+- [ ] 添加照片集功能 
+- [ ] 添加保存到Internet Archive功能，并在article meta中提供链接
+- [ ] 添加更多cross post平台
+- [ ] 添加“自定义URL格式” / Custom routes
+    Post URL, Page URL, Tag URL
+- [ ] 添加打赏功能，Patreon，Github，AFdian
