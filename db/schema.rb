@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_27_011359) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_28_033018) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -80,18 +80,20 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_27_011359) do
   end
 
   create_table "comments", force: :cascade do |t|
+    t.boolean "approved", default: false, null: false
     t.integer "article_id", null: false
     t.string "author_avatar_url"
-    t.string "author_name"
+    t.string "author_name", null: false
+    t.string "author_url"
     t.string "author_username"
-    t.text "content"
+    t.text "content", null: false
     t.datetime "created_at", null: false
-    t.string "external_id", null: false
-    t.string "platform", null: false
+    t.string "external_id"
+    t.string "platform"
     t.datetime "published_at"
     t.datetime "updated_at", null: false
     t.string "url"
-    t.index ["article_id", "platform", "external_id"], name: "index_comments_on_article_id_and_platform_and_external_id", unique: true
+    t.index ["article_id", "platform", "external_id"], name: "index_comments_on_article_platform_external_id", unique: true, where: "platform IS NOT NULL AND external_id IS NOT NULL"
     t.index ["article_id"], name: "index_comments_on_article_id"
   end
 

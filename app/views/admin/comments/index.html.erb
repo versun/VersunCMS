@@ -1,0 +1,93 @@
+<% content_for :title, "Comments|Admin" %>
+
+<div class="admin-comments">
+  <div class="admin-toolbar">
+    <div class="status-tabs">
+      <%= link_to "All", admin_comments_path, class: "status-tab #{params[:status].blank? ? 'active' : ''}" %>
+      <%= link_to "Pending", admin_comments_path(status: 'pending'), class: "status-tab #{params[:status] == 'pending' ? 'active' : ''}" %>
+      <%= link_to "Approved", admin_comments_path(status: 'approved'), class: "status-tab #{params[:status] == 'approved' ? 'active' : ''}" %>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="admin-table compact-table">
+      <thead>
+        <tr>
+          <th class="col-actions-compact">Actions</th>
+          <th class="col-title">Article</th>
+          <th class="col-title">Author</th>
+          <th class="col-content">Content</th>
+          <th class="col-compact">Status</th>
+          <th class="col-date-compact">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @comments.any? %>
+          <% @comments.each do |comment| %>
+            <tr>
+              <td class="col-actions-compact">
+                <div class="action-buttons">
+                  <% if comment.platform.nil? %>
+                    <% unless comment.approved? %>
+                      <%= link_to approve_admin_comment_path(comment), data: { turbo_method: :patch }, class: "action-btn", title: "Approve" do %>
+                        <i class="fas fa-check"></i>
+                      <% end %>
+                    <% end %>
+                    <%= link_to edit_admin_comment_path(comment), class: "action-btn", title: "Edit" do %>
+                      <i class="fas fa-edit"></i>
+                    <% end %>
+                  <% end %>
+                  <%= link_to admin_comment_path(comment), class: "action-btn", title: "Delete",
+                        data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } do %>
+                    <i class="fas fa-trash-alt"></i>
+                  <% end %>
+                </div>
+              </td>
+              <td class="col-title">
+                <% if comment.article %>
+                  <%= link_to comment.article.title.truncate(50), article_path(comment.article), class: "title-link", target: "_blank" %>
+                <% else %>
+                  <small class="text-muted">—</small>
+                <% end %>
+              </td>
+              <td class="col-title">
+                <strong><%= comment.author_name %></strong>
+                <% if comment.author_url.present? %>
+                  <br><small><%= link_to comment.author_url, comment.author_url, target: "_blank", style: "color: #666;" %></small>
+                <% end %>
+                <% if comment.platform.present? %>
+                  <br><small style="color: #999;">via <%= comment.platform.titleize %></small>
+                <% end %>
+              </td>
+              <td class="col-content">
+                <small><%= comment.content.truncate(100) %></small>
+              </td>
+              <td class="col-compact">
+                <% if comment.approved? %>
+                  <span style="color: green;">✓</span>
+                <% else %>
+                  <span style="color: orange;">⏳</span>
+                <% end %>
+              </td>
+              <td class="col-date-compact">
+                <small><%= comment.published_at&.strftime("%m/%d %H:%M") || comment.created_at.strftime("%m/%d %H:%M") %></small>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="6" class="no-content-row">
+              <p>No comments found.</p>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  
+  <% if @comments.any? %>
+    <div class="pagination-wrapper">
+      <%= will_paginate @comments %>
+    </div>
+  <% end %>
+</div>
