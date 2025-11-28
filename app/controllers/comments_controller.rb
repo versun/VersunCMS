@@ -7,7 +7,7 @@ class CommentsController < ApplicationController
     @comment.approved = false # Require manual approval
 
     if @comment.save
-      redirect_to article_path(@article), notice: "Your comment has been submitted and is awaiting approval."
+      redirect_to article_path(@article), flash: { comment_submitted: true }
     else
       redirect_to article_path(@article), alert: "Error submitting comment: #{@comment.errors.full_messages.join(', ')}"
     end

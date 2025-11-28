@@ -1,15 +1,17 @@
 <div class="comment-form" style="margin-top: 2rem; padding: 1.5rem; border: 1px solid #ddd; border-radius: 4px;">
   <h3 style="margin-top: 0;">Leave a Comment</h3>
   
-  <%= form_with(model: comment, url: comments_path(article_id: @article.slug), local: true) do |f| %>
-    <div style="margin-bottom: 1rem;">
-      <%= f.label :author_name, "Name *", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
-      <%= f.text_field :author_name, required: true, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
-    </div>
+  <%= form_with(model: comment, url: comments_path(article_id: @article.slug), local: true, data: { turbo: false }) do |f| %>
+    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+      <div style="flex: 1;">
+        <%= f.label :author_name, "Name *", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
+        <%= f.text_field :author_name, required: true, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
+      </div>
 
-    <div style="margin-bottom: 1rem;">
-      <%= f.label :author_url, "Website (optional)", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
-      <%= f.url_field :author_url, placeholder: "https://your-website.com", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
+      <div style="flex: 1;">
+        <%= f.label :author_url, "Website (optional)", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
+        <%= f.url_field :author_url, placeholder: "https://your-website.com", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
+      </div>
     </div>
 
     <div style="margin-bottom: 1rem;">
