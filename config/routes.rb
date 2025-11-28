@@ -32,7 +32,7 @@ Rails.application.routes.draw do
     end
 
     resources :tags
-    
+
     # Comment management
     resources :comments do
       member do
@@ -65,9 +65,9 @@ Rails.application.routes.draw do
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end
-  
+
   # Public comment submission
-  resources :comments, only: [:create]
+  resources :comments, only: [ :create ]
 
   # Static files public access
   get "/static/*filename", to: "static_files#show", as: :static_file, format: false

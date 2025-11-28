@@ -1,18 +1,18 @@
 class Admin::CommentsController < AdminController
-  before_action :set_comment, only: [:show, :edit, :update, :destroy, :approve, :reject]
+  before_action :set_comment, only: [ :show, :edit, :update, :destroy, :approve, :reject ]
 
   def index
     @comments = Comment.includes(:article)
-    
+
     # Filter by status
     case params[:status]
-    when 'pending'
+    when "pending"
       @comments = @comments.pending
-    when 'approved'
+    when "approved"
       @comments = @comments.approved
-    # else show all
+      # else show all
     end
-    
+
     @comments = @comments.order(created_at: :desc).paginate(page: params[:page], per_page: 30)
   end
 

@@ -1,11 +1,11 @@
 class CommentsController < ApplicationController
-  before_action :set_article, only: [:create]
+  before_action :set_article, only: [ :create ]
 
   def create
     @comment = @article.comments.build(comment_params)
     @comment.published_at = Time.current
     @comment.approved = false # Require manual approval
-    
+
     if @comment.save
       redirect_to article_path(@article), notice: "Your comment has been submitted and is awaiting approval."
     else
