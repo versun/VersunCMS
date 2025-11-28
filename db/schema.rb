@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_28_033018) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_28_080713) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -172,6 +172,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_28_033018) do
     t.string "github_token"
     t.text "head_code"
     t.datetime "last_backup_at"
+    t.boolean "setup_completed", default: false
     t.json "social_links"
     t.json "static_files", default: {}
     t.string "time_zone", default: "UTC"

@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   resources :users
   resource :session
   resources :passwords
+  resource :setup, only: [ :show, :create ], controller: "setup"
 
   # Admin namespace - 统一所有后台管理功能
   namespace :admin do

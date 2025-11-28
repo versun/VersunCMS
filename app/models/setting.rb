@@ -12,6 +12,11 @@ class Setting < ApplicationRecord
       github_token.present?
   end
 
+  # Check if initial setup is incomplete
+  def self.setup_incomplete?
+    User.count.zero? || Setting.first_or_create.setup_completed == false
+  end
+
 
   private
 

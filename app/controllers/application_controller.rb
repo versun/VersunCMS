@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   include CacheableSettings
   before_action :set_time_zone
+  before_action :redirect_to_setup_if_needed
   before_action :process_redirects
 
   include Authentication
@@ -26,6 +27,16 @@ class ApplicationController < ActionController::Base
 
   def refresh_pages
     CacheableSettings.refresh_navbar_items
+  end
+
+  def redirect_to_setup_if_needed
+    # Skip if we're already on the setup page or dealing with assets
+    return if controller_name == "setup" || request.path.start_with?("/assets", "/rails/active_storage")
+
+    # Redirect to setup if setup is incomplete
+    if Setting.setup_incomplete?
+      redirect_to setup_path unless request.path == setup_path
+    end
   end
 
   def process_redirects
