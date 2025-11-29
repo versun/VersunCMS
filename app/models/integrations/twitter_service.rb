@@ -166,7 +166,7 @@ module Integrations
 
         if response && response["data"]
           conversation_id = response["data"]["conversation_id"]
-          
+
           # Search for replies in the conversation
           # Free tier allows basic search
           search_query = "conversation_id:#{conversation_id} is:reply"

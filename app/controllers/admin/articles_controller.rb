@@ -85,11 +85,11 @@ class Admin::ArticlesController < Admin::BaseController
   def fetch_comments
     # Get all social media posts for this article
     social_posts = @article.social_media_posts.where.not(url: nil)
-    
+
     if params[:platform].present?
       social_posts = social_posts.where(platform: params[:platform])
     end
-    
+
     if social_posts.empty?
       render json: { success: false, message: "No social media posts found for this article" }, status: :unprocessable_entity
       return
@@ -167,16 +167,16 @@ class Admin::ArticlesController < Admin::BaseController
     end
 
     if errors.any?
-      render json: { 
-        success: false, 
-        message: "Completed with errors. Fetched #{total_fetched} total comments.", 
+      render json: {
+        success: false,
+        message: "Completed with errors. Fetched #{total_fetched} total comments.",
         results: results,
-        errors: errors 
+        errors: errors
       }, status: :partial_content
     else
-      render json: { 
-        success: true, 
-        message: "Successfully fetched #{total_fetched} total comments from #{results.size} platform(s)", 
+      render json: {
+        success: true,
+        message: "Successfully fetched #{total_fetched} total comments from #{results.size} platform(s)",
         results: results
       }
     end
