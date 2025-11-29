@@ -3,6 +3,12 @@ class Crosspost < ApplicationRecord
   #          :client_key, :api_key, :api_key_secret, :app_password, :username
   PLATFORMS = %w[mastodon twitter bluesky].freeze
 
+  PLATFORM_ICONS = {
+    "mastodon" => "fa-brands fa-mastodon",
+    "twitter" => "fa-brands fa-square-x-twitter",
+    "bluesky" => "fa-brands fa-square-bluesky"
+  }.freeze
+
   validates :platform, presence: true,
                       uniqueness: true,
                       inclusion: { in: PLATFORMS }

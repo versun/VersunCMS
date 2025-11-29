@@ -13,14 +13,14 @@
           <% 
             # 从 settings 中获取对应平台的图标信息
             platform_config = site_settings[:social_links]&.dig(post.platform)
-            icon_class = platform_config&.dig('icon')
+            icon_class = platform_config&.dig('icon') || Crosspost::PLATFORM_ICONS[post.platform]
             display_name = platform_config&.dig('name') || post.platform.titleize
           %>
           <a href="<%= post.url %>" target="_blank" rel="noopener noreferrer" class="social-icon-link" title="<%= display_name %>">
             <% if icon_class.present? %>
               <i class="<%= icon_class %>" style="font-size: 16px;"></i>
             <% else %>
-              <span style="font-size: 14px;">🔗</span>
+              <span style="font-size: 14px;"><%= display_name %></span>
             <% end %>
           </a>
         <% end %>
@@ -54,6 +54,7 @@
 <% # External platform comments %>
 <% all_comments += @article.comments.mastodon.map { |c| { type: 'mastodon', data: c } } %>
 <% all_comments += @article.comments.bluesky.map { |c| { type: 'bluesky', data: c } } %>
+<% all_comments += @article.comments.twitter.map { |c| { type: 'twitter', data: c } } %>
 
 <% if all_comments.any? %>
   <div style="margin-top: 3rem; margin-bottom: 2.5rem;">
@@ -69,6 +70,7 @@
       border_color = case type
       when 'mastodon' then '#6364FF'
       when 'bluesky' then '#0085FF'
+      when 'twitter' then '#1DA1F2'
       else '#333'
       end
     %>
@@ -89,6 +91,10 @@
               <strong style="font-size: 1rem; color: #111;"><%= link_to comment.author_name, comment.author_url, target: "_blank", style: "text-decoration: none; color: inherit;" %></strong>
             <% else %>
               <strong style="font-size: 1rem; color: #111;"><%= comment.author_name %></strong>
+            <% end %>
+            
+            <% if type != 'local' && comment.author_username.present? %>
+              <span style="color: #666; font-size: 0.9rem; margin-left: 0.25rem;">@<%= comment.author_username %></span>
             <% end %>
             
             <small style="color: #999; margin-left: 0.5rem; font-size: 0.875rem;">

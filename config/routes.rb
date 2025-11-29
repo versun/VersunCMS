@@ -23,6 +23,7 @@ Rails.application.routes.draw do
       member do
         patch :publish
         patch :unpublish
+        post :fetch_comments
       end
     end
 

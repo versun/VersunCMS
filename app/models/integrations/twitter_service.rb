@@ -146,6 +146,76 @@ module Integrations
       end
     end
 
+    # Fetch comments (replies) for a Twitter/X post
+    # Returns a hash with :comments array and :rate_limit info
+    def fetch_comments(post_url)
+      default_response = { comments: [], rate_limit: nil }
+      return default_response unless @settings&.enabled?
+      return default_response if post_url.blank?
+
+      begin
+        # Extract tweet ID from URL
+        tweet_id = extract_tweet_id_from_url(post_url)
+        return default_response unless tweet_id
+
+        client = create_client
+
+        # Use Twitter API v2 to get conversation thread
+        # Note: Free tier has limited access, using conversation_id lookup
+        response = client.get("tweets/#{tweet_id}?expansions=author_id,referenced_tweets.id&tweet.fields=conversation_id,created_at,author_id&user.fields=username,name,profile_image_url")
+
+        if response && response["data"]
+          conversation_id = response["data"]["conversation_id"]
+          
+          # Search for replies in the conversation
+          # Free tier allows basic search
+          search_query = "conversation_id:#{conversation_id} is:reply"
+          search_response = client.get("tweets/search/recent?query=#{CGI.escape(search_query)}&expansions=author_id&tweet.fields=created_at&user.fields=username,name,profile_image_url&max_results=100")
+
+          comments = []
+          if search_response && search_response["data"]
+            users_map = {}
+            if search_response["includes"] && search_response["includes"]["users"]
+              search_response["includes"]["users"].each do |user|
+                users_map[user["id"]] = user
+              end
+            end
+
+            search_response["data"].each do |tweet|
+              author = users_map[tweet["author_id"]]
+              next unless author
+
+              comments << {
+                external_id: tweet["id"],
+                author_name: author["name"],
+                author_username: author["username"],
+                author_avatar_url: author["profile_image_url"],
+                content: tweet["text"],
+                published_at: Time.parse(tweet["created_at"]),
+                url: "https://x.com/#{author["username"]}/status/#{tweet["id"]}"
+              }
+            end
+          end
+
+          # Extract rate limit info from response headers if available
+          rate_limit_info = {
+            limit: nil,
+            remaining: nil,
+            reset_at: nil
+          }
+
+          { comments: comments, rate_limit: rate_limit_info }
+        else
+          Rails.logger.error "Failed to fetch Twitter post details: #{response.inspect}"
+          default_response
+        end
+      rescue => e
+        Rails.logger.error "Error fetching Twitter comments: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        default_response
+      end
+    end
+
     private
 
     def create_client
@@ -367,6 +437,15 @@ module Integrations
 
       Rails.logger.info "Twitter: Skipping detailed media status check due to API limitations"
       true
+    end
+
+    # Extract tweet ID from Twitter/X URL
+    # Supports formats:
+    # - https://twitter.com/username/status/1234567890
+    # - https://x.com/username/status/1234567890
+    def extract_tweet_id_from_url(url)
+      match = url.match(%r{(?:twitter\.com|x\.com)/\w+/status/(\d+)})
+      match ? match[1] : nil
     end
   end
 end

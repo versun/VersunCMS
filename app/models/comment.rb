@@ -20,6 +20,7 @@ class Comment < ApplicationRecord
   scope :local, -> { where(platform: nil) }
   scope :mastodon, -> { where(platform: "mastodon") }
   scope :bluesky, -> { where(platform: "bluesky") }
+  scope :twitter, -> { where(platform: "twitter") }
 
   default_scope { order(published_at: :asc) }
 
