@@ -75,70 +75,110 @@ ul {
     /* Hide for now to match image strictly, or keep if user wants */
 }
 
-/* Article List */
-.article-list {
+/* Article List - Timeline Style */
+.article-list.timeline {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
+    position: relative;
 }
 
-.blog-post-item {
+/* Timeline vertical line */
+.article-list.timeline::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 20px;
+    bottom: 0;
+    width: 2px;
+    background-color: #ddd;
+}
+
+.timeline-item {
+    display: flex;
+    position: relative;
+    padding-left: 40px;
+    padding-bottom: 32px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+/* Timeline marker/dot */
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #ff5722;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #ff5722;
+    z-index: 1;
+}
+
+.timeline-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Timeline header - datetime left, tags right */
+.timeline-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 16px;
 }
 
-.blog-post-item small {
-    flex-shrink: 0;
-    margin-left: 20px;
+.timeline-date {
     font-size: 1rem;
-    /* Reset small tag size if needed, or keep it small */
+    color: #ff5722;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.timeline-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
 }
 
 .post-title {
     font-family: Georgia, "Times New Roman", Times, serif;
     font-size: 1.4rem;
     font-weight: 700;
-    color: #c04000;
-    min-width: 0;
-    /* Allow truncation if needed */
-    margin-right: auto;
-    /* This also helps with spacing if we didn't use space-between, but space-between is fine */
+    color: #111;
+    margin-bottom: 8px;
+}
+
+.post-title a {
+    color: #111;
 }
 
 .post-title a:hover {
+    color: #c04000;
     text-decoration: underline;
 }
 
 .post-description {
-    width: 100%;
-    margin-top: 0.5rem;
-    color: #333;
+    color: #555;
     font-family: Georgia, "Times New Roman", Times, serif;
-    font-size: 1.1rem;
-    line-height: 1.5;
-}
-
-.post-meta {
-    font-size: 0.9rem;
-    color: #666;
-    font-variant-numeric: tabular-nums;
-    /* Align numbers nicely */
-}
-
-.post-tags {
-    margin-right: 8px;
+    font-size: 1.05rem;
+    line-height: 1.6;
 }
 
 .tag {
     display: inline-block;
     background-color: #f0f0f0;
     color: #666;
-    padding: 1px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
-    font-size: 0.8rem;
-    margin-right: 4px;
+    font-size: 0.85rem;
     transition: background-color 0.2s;
 }
 

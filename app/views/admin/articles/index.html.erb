@@ -52,7 +52,7 @@
                 </div>
               </td>
               <td class="col-title">
-                <%= link_to post.title, edit_admin_article_path(post), class: "title-link" %>
+                <%= link_to post.title.presence || post.slug, edit_admin_article_path(post), class: "title-link" %>
               </td>
               <td class="col-tags">
                 <% if post.tags.any? %>

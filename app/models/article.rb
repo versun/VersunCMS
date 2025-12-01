@@ -13,7 +13,6 @@ class Article < ApplicationRecord
 
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]
 
-  before_validation :generate_title
   before_validation :generate_slug
   validates :slug, presence: true, uniqueness: true
   validates :scheduled_at, presence: true, if: :schedule?
@@ -90,11 +89,12 @@ class Article < ApplicationRecord
   private
 
   def generate_title
-    self.title = DateTime.current.strftime("%Y-%m-%d %H:%M") if title.blank?
+    self.title = DateTime.current.strftime("%Y-%m-%d %H:%M")
   end
 
   def generate_slug
     if slug.blank?
+      title = title.presence || generate_title
       self.slug = title.parameterize
     end
 

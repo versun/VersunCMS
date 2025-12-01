@@ -1,14 +1,27 @@
 - [x] 确定开源协议 - 采用AGPL
-- [ ] 首次安装设置指南
+- [x] 首次安装设置指南
 - [ ] github backup图片没有备份到github上
-- [ ] 点Submit Comment后应该弹唱对话框，提示用户，感谢评论，Your comment will be reviewed before being published.
+- [x] 点Submit Comment后应该弹唱对话框，提示用户，感谢评论，Your comment will be reviewed before being published.
 - [ ] 评论功能可关闭
-- [ ] 添加twitter的评论获取功能，只能手动获取
-- [ ] Post list管理页面的action 添加评论获取功能
+- [x] 添加twitter的评论获取功能，只能手动获取
+- [x] Post list管理页面的action 添加评论获取功能
 - [ ] Site setting页面添加站点icon上传，自动重命名并上传到static file中
 - [ ] 添加照片集功能 
 - [ ] 添加保存到Internet Archive功能，并在article meta中提供链接
 - [ ] 添加更多cross post平台
-- [ ] 添加“自定义URL格式” / Custom routes
-    Post URL, Page URL, Tag URL
+- [ ] 添加“自定义URL格式” / Custom route: Post URL, Page URL, Tag URL
 - [ ] 添加打赏功能，Patreon，Github，AFdian
+- [ ] MetaWeblog/Micropub APIs
+- [ ] 自定义专属于RSS的Footer： 感谢您让 RSS 继续存活下去。你太棒了。
+- [ ] 添加“状态/微博/随笔/碎碎念？”实时更新？Live
+- [ ] 备份方式更新:增量备份和完整备份
+- [ ] Newsletter功能：只有简单的订阅和发送功能，每个tag除了rss也支持newsletterter订阅；如果要模版跟踪等高级功能，则使用listmonk
+- [ ] 多站点多用户
+- [ ] 文章多修订历史功能
+- [ ] 暗黑模式
+- [ ] AI功能
+    - [ ] slug自动生成
+    - [ ] description自动生成
+    - [ ] content润色
+    - [ ] 图片生成描述 alt text
+    - [ ] 智能搜索

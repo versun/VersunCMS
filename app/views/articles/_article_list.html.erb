@@ -1,18 +1,32 @@
-<div class="article-list">
+<div class="article-list timeline">
   <% articles.each do |article| %>
-    <article class="blog-post-item">
-      <h2 class="post-title">
-        <%= link_to article.title, article_path(article.slug) %> 
-      </h2>
-      <small>
-          <%= render 'articles/article_meta', article: article %>
-      </small>
-      <div class="post-description">
-        <% if article.description.present? %>
-          <%= article.description %>
-        <% else %>
-          <%= truncate(strip_tags(article.content.to_s), length: 200) %>
-        <% end %>
+    <article class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="timeline-content">
+        <div class="timeline-header">
+          <div class="timeline-date">
+            <time datetime="<%= article.created_at.iso8601 %>">
+              <%= article.created_at.strftime("%Y-%m-%d") %>
+            </time>
+          </div>
+          <% if article.tags.any? %>
+            <div class="timeline-tags">
+              <% article.tags.each do |tag| %>
+                <%= link_to "##{tag.name}", tag_path(tag.slug), class: "tag" %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <h2 class="post-title">
+          <%= link_to article.title, article_path(article.slug) %>
+        </h2>
+        <div class="post-description">
+          <% if article.description.present? %>
+            <%= article.description %>
+          <% else %>
+            <%= truncate(strip_tags(article.content.to_s), length: 200) %>
+          <% end %>
+        </div>
       </div>
     </article>
   <% end %>
