@@ -2,12 +2,12 @@
   <%= @article.title %> | <%= site_settings[:title] %>
 <% end %>
 
+<%= turbo_frame_tag "article_#{@article.id}", target: "_top" do %>
 <article>
   <h2><%= @article.title %></h2>
   <small style="color:grey">
-  <span>Published on <%= @article.created_at.to_date %></span>
   <% if @article.social_media_posts.any? %>
-      <span class="social-label">, Also posted to:</span>
+      <span class="social-label">Also posted to:</span>
       <% @article.social_media_posts.each do |post| %>
         <% if post.url.present? %>
           <% 
@@ -30,97 +30,82 @@
   <div class="article-content">
     <%= @article.content %>
   </div>
-  
-  <% if @article.tags.any? %>
-    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
-      <small style="color: #666;">Tagged with: </small>
-      <% @article.tags.each do |tag| %>
-        <%= link_to tag_path(tag.slug), style: "text-decoration: none;" do %>
-          <span style="display: inline-block; margin: 0.25rem 0.5rem 0.25rem 0; padding: 0.25rem 0.75rem; background-color: #f0f0f0; color: #333; border-radius: 4px; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s;">
-            <%= tag.name %>
-          </span>
-        <% end %>
-      <% end %>
-    </div>
-  <% end %>
 </article>
 
-<% # Prepare all comments from all sources %>
-<% all_comments = [] %>
-<% # Local approved comments %>
-<% all_comments += @article.comments.local.approved.map do |c| %>
-<%   { type: 'local', data: c } %>
-<% end %>
-<% # External platform comments %>
-<% all_comments += @article.comments.mastodon.map { |c| { type: 'mastodon', data: c } } %>
-<% all_comments += @article.comments.bluesky.map { |c| { type: 'bluesky', data: c } } %>
-<% all_comments += @article.comments.twitter.map { |c| { type: 'twitter', data: c } } %>
 
-<% if all_comments.any? %>
-  <div style="margin-top: 3rem; margin-bottom: 2.5rem;">
-    <div style="height: 1px; background: linear-gradient(to right, transparent, #ddd 20%, #ddd 80%, transparent); margin-bottom: 2rem;"></div>
-    <h3 style="margin-bottom: 1.5rem; color: #333;">Comments (<%= all_comments.size %>)</h3>
-  </div>
-  
-  <% all_comments.each do |comment_item| %>
-    <% comment = comment_item[:data] %>
-    <% type = comment_item[:type] %>
+<div id="comments-section">
+  <% # Prepare all comments from all sources %>
+  <% all_comments = [] %>
+  <% # Local approved comments %>
+  <% all_comments += @article.comments.local.approved.map do |c| %>
+  <%   { type: 'local', data: c } %>
+  <% end %>
+  <% # External platform comments %>
+  <% all_comments += @article.comments.mastodon.map { |c| { type: 'mastodon', data: c } } %>
+  <% all_comments += @article.comments.bluesky.map { |c| { type: 'bluesky', data: c } } %>
+  <% all_comments += @article.comments.twitter.map { |c| { type: 'twitter', data: c } } %>
+
+  <% if all_comments.any? %>
+    <div style="margin-top: 3rem; margin-bottom: 2.5rem;">
+      <div style="height: 1px; background: linear-gradient(to right, transparent, #ddd 20%, #ddd 80%, transparent); margin-bottom: 2rem;"></div>
+      <h3 style="margin-bottom: 1.5rem; color: #333;">Comments (<%= all_comments.size %>)</h3>
+    </div>
     
-    <% 
-      border_color = case type
-      when 'mastodon' then '#6364FF'
-      when 'bluesky' then '#0085FF'
-      when 'twitter' then '#1DA1F2'
-      else '#333'
-      end
-    %>
-    
-    <div class="comment" style="margin-bottom: 1.5rem;">
-      <div style="display: flex; align-items: start; gap: 0.75rem;">
-        <% if comment.author_avatar_url.present? %>
-          <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;">
-        <% else %>
-          <div style="width: 48px; height: 48px; border-radius: 50%; background-color: <%= border_color %>; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">
-            <%= comment.author_name.to_s.first.upcase %>
-          </div>
-        <% end %>
-        
-        <div style="flex: 1; min-width: 0;">
-          <div style="margin-bottom: 0.5rem;">
-            <% if comment.author_url.present? %>
-              <strong style="font-size: 1rem; color: #111;"><%= link_to comment.author_name, comment.author_url, target: "_blank", style: "text-decoration: none; color: inherit;" %></strong>
-            <% else %>
-              <strong style="font-size: 1rem; color: #111;"><%= comment.author_name %></strong>
-            <% end %>
-            
-            <% if type != 'local' && comment.author_username.present? %>
-              <span style="color: #666; font-size: 0.9rem; margin-left: 0.25rem;">@<%= comment.author_username %></span>
-            <% end %>
-            
-            <small style="color: #999; margin-left: 0.5rem; font-size: 0.875rem;">
-              <%= time_ago_in_words(comment.published_at) %> ago
-              <% if type != 'local' %>
-                · <%= link_to type.titleize, comment.url, target: "_blank", style: "color: #{border_color}; text-decoration: none;" %>
-              <% end %>
-            </small>
-          </div>
+    <% all_comments.each do |comment_item| %>
+      <% comment = comment_item[:data] %>
+      <% type = comment_item[:type] %>
+      
+      <% 
+        border_color = case type
+        when 'mastodon' then '#6364FF'
+        when 'bluesky' then '#0085FF'
+        when 'twitter' then '#1DA1F2'
+        else '#333'
+        end
+      %>
+      
+      <div class="comment" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: start; gap: 0.75rem;">
+          <% if comment.author_avatar_url.present? %>
+            <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;">
+          <% else %>
+            <div style="width: 48px; height: 48px; border-radius: 50%; background-color: <%= border_color %>; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">
+              <%= comment.author_name.to_s.first.upcase %>
+            </div>
+          <% end %>
           
-          <div style="background-color: #f5f3f0; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.5rem; color: #333; line-height: 1.6;">
-            <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
+          <div style="flex: 1; min-width: 0;">
+            <div style="margin-bottom: 0.5rem;">
+              <% if comment.author_url.present? %>
+                <strong style="font-size: 1rem; color: #111;"><%= link_to comment.author_name, comment.author_url, target: "_blank", style: "text-decoration: none; color: inherit;" %></strong>
+              <% else %>
+                <strong style="font-size: 1rem; color: #111;"><%= comment.author_name %></strong>
+              <% end %>
+              
+              <% if type != 'local' && comment.author_username.present? %>
+                <span style="color: #666; font-size: 0.9rem; margin-left: 0.25rem;">@<%= comment.author_username %></span>
+              <% end %>
+              
+              <small style="color: #999; margin-left: 0.5rem; font-size: 0.875rem;">
+                <%= time_ago_in_words(comment.published_at) %> ago
+                <% if type != 'local' %>
+                  · <%= link_to type.titleize, comment.url, target: "_blank", style: "color: #{border_color}; text-decoration: none;" %>
+                <% end %>
+              </small>
+            </div>
+            
+            <div style="background-color: #f5f3f0; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.5rem; color: #333; line-height: 1.6;">
+              <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    <% end %>
   <% end %>
-<% end %>
 
-<%= render 'comments/form', comment: Comment.new %>
+  <%= render 'comments/form', comment: Comment.new %>
 
-<div class="giscus"></div>
-<%= raw site_settings[:giscus] %>
-
-<% if flash[:comment_submitted] %>
-  <script>
-    alert('Your comment will be reviewed before being published.');
-  </script>
+  <div class="giscus"></div>
+  <%= raw site_settings[:giscus] %>
+</div>
 <% end %>

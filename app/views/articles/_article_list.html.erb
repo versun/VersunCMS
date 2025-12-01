@@ -1,6 +1,6 @@
 <div class="article-list timeline">
   <% articles.each do |article| %>
-    <article class="timeline-item">
+    <article class="timeline-item" data-article-id="<%= article.id %>">
       <div class="timeline-marker"></div>
       <div class="timeline-content">
         <div class="timeline-header">
@@ -12,25 +12,27 @@
           <% if article.tags.any? %>
             <div class="timeline-tags">
               <% article.tags.each do |tag| %>
-                <%= link_to "##{tag.name}", tag_path(tag.slug), class: "tag" %>
+                <%= link_to "##{tag.name}", tag_path(tag.slug), class: "tag", data: { turbo_frame: "_top" } %>
               <% end %>
             </div>
           <% end %>
         </div>
-        <h2 class="post-title">
-          <%= link_to article.title, article_path(article.slug) %>
-        </h2>
-        <div class="post-description">
-          <% if article.description.present? %>
-            <%= article.description %>
+        <%= turbo_frame_tag "article_#{article.id}" do %>
+          <% if article.title.present? %>
+            <h2 class="post-title">
+              <%= link_to article.title, article_path(article) %>
+            </h2>
           <% else %>
-            <%= truncate(strip_tags(article.content.to_s), length: 200) %>
+            <div class="post-content">
+              <%= raw article.content %>
+            </div>
           <% end %>
-        </div>
+        <% end %>
       </div>
     </article>
   <% end %>
 </div>
+
 <div class="pagination">
 <%= will_paginate articles %>
 </div>

@@ -172,6 +172,24 @@ ul {
     line-height: 1.6;
 }
 
+
+
+.post-content {
+    color: #333;
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-top: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0;
+}
+
 .tag {
     display: inline-block;
     background-color: #f0f0f0;
