@@ -88,14 +88,14 @@ class Article < ApplicationRecord
 
   private
 
-  def generate_title
-    self.title = DateTime.current.strftime("%Y-%m-%d %H:%M")
-  end
-
   def generate_slug
     if slug.blank?
-      title = title.presence || generate_title
-      self.slug = title.parameterize
+      if title.present?
+        self.slug = title.parameterize
+      else
+        # Generate slug from timestamp without setting title
+        self.slug = DateTime.current.strftime("%Y-%m-%d-%H-%M").parameterize
+      end
     end
 
     # Remove dots from slug if present
