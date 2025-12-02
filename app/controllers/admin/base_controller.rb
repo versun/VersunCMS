@@ -47,7 +47,7 @@ class Admin::BaseController < ApplicationController
   def process_batch_action(action:)
     ids = params[:ids] || []
     count = 0
-    
+
     ids.each do |id|
       record = find_record_for_batch(id)
       next unless record
@@ -65,7 +65,7 @@ class Admin::BaseController < ApplicationController
     end
 
     after_batch_action
-    
+
     action_past_tense = case action
     when :destroy then "deleted"
     when :publish then "published"

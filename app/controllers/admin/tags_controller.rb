@@ -35,7 +35,7 @@ class Admin::TagsController < Admin::BaseController
     @tag.articles.each do |article|
       article.tags.delete(@tag)
     end
-    
+
     @tag.destroy
     redirect_to admin_tags_path, status: :see_other, notice: "Tag was successfully deleted."
   end
@@ -51,7 +51,7 @@ class Admin::TagsController < Admin::BaseController
     tag.articles.each do |article|
       article.tags.delete(tag)
     end
-    
+
     tag.destroy
   end
 

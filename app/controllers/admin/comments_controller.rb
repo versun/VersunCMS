@@ -51,7 +51,7 @@ class Admin::CommentsController < AdminController
   def batch_destroy
     ids = params[:ids] || []
     count = 0
-    
+
     ids.each do |id|
       comment = Comment.find_by(id: id)
       if comment
@@ -68,7 +68,7 @@ class Admin::CommentsController < AdminController
   def batch_approve
     ids = params[:ids] || []
     count = 0
-    
+
     ids.each do |id|
       comment = Comment.find_by(id: id)
       if comment && comment.update(approved: true)
@@ -84,7 +84,7 @@ class Admin::CommentsController < AdminController
   def batch_reject
     ids = params[:ids] || []
     count = 0
-    
+
     ids.each do |id|
       comment = Comment.find_by(id: id)
       if comment
