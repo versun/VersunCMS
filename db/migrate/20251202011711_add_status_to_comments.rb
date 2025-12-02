@@ -14,7 +14,7 @@ class AddStatusToComments < ActiveRecord::Migration[8.1]
 
     # Migrate data back
     Comment.where(status: 1).update_all(approved: true)
-    Comment.where(status: [0, 2]).update_all(approved: false) # pending and rejected become unapproved
+    Comment.where(status: [ 0, 2 ]).update_all(approved: false) # pending and rejected become unapproved
 
     remove_column :comments, :status
   end

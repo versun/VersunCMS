@@ -6,7 +6,7 @@ class AddSetupCompletedToSettings < ActiveRecord::Migration[8.1]
     reversible do |dir|
       dir.up do
         begin
-          if ActiveRecord::Base.connection.table_exists?(:users) && 
+          if ActiveRecord::Base.connection.table_exists?(:users) &&
             ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM users") > 0
             Setting.update_all(setup_completed: true)
           end
@@ -15,6 +15,5 @@ class AddSetupCompletedToSettings < ActiveRecord::Migration[8.1]
         end
       end
     end
-
   end
 end
