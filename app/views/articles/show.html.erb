@@ -46,9 +46,8 @@
   <% all_comments += @article.comments.twitter.map { |c| { type: 'twitter', data: c } } %>
 
   <% if all_comments.any? %>
-    <div style="margin-top: 3rem; margin-bottom: 2.5rem;">
-      <div style="height: 1px; background: linear-gradient(to right, transparent, #ddd 20%, #ddd 80%, transparent); margin-bottom: 2rem;"></div>
-      <h3 style="margin-bottom: 1.5rem; color: #333;">Comments (<%= all_comments.size %>)</h3>
+    <div style="margin-top: 2rem; margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 1rem; color: #333; font-size: 1.125rem;">Comments (<%= all_comments.size %>)</h3>
     </div>
     
     <% all_comments.each do |comment_item| %>
@@ -64,29 +63,29 @@
         end
       %>
       
-      <div class="comment" style="margin-bottom: 1.5rem;">
-        <div style="display: flex; align-items: start; gap: 0.75rem;">
+      <div class="comment" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+        <div style="display: flex; align-items: start; gap: 0.5rem;">
           <% if comment.author_avatar_url.present? %>
-            <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;">
+            <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;">
           <% else %>
-            <div style="width: 48px; height: 48px; border-radius: 50%; background-color: <%= border_color %>; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background-color: <%= border_color %>; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.75rem; flex-shrink: 0;">
               <%= comment.author_name.to_s.first.upcase %>
             </div>
           <% end %>
           
           <div style="flex: 1; min-width: 0;">
-            <div style="margin-bottom: 0.5rem;">
+            <div style="margin-bottom: 0.25rem;">
               <% if comment.author_url.present? %>
-                <strong style="font-size: 1rem; color: #111;"><%= link_to comment.author_name, comment.author_url, target: "_blank", style: "text-decoration: none; color: inherit;" %></strong>
+                <strong style="font-size: 0.875rem; color: #111;"><%= link_to comment.author_name, comment.author_url, target: "_blank", style: "text-decoration: none; color: inherit;" %></strong>
               <% else %>
-                <strong style="font-size: 1rem; color: #111;"><%= comment.author_name %></strong>
+                <strong style="font-size: 0.875rem; color: #111;"><%= comment.author_name %></strong>
               <% end %>
               
               <% if type != 'local' && comment.author_username.present? %>
-                <span style="color: #666; font-size: 0.9rem; margin-left: 0.25rem;">@<%= comment.author_username %></span>
+                <span style="color: #666; font-size: 0.8rem; margin-left: 0.25rem;">@<%= comment.author_username %></span>
               <% end %>
               
-              <small style="color: #999; margin-left: 0.5rem; font-size: 0.875rem;">
+              <small style="color: #999; margin-left: 0.5rem; font-size: 0.75rem;">
                 <%= time_ago_in_words(comment.published_at) %> ago
                 <% if type != 'local' %>
                   · <%= link_to type.titleize, comment.url, target: "_blank", style: "color: #{border_color}; text-decoration: none;" %>
@@ -94,7 +93,7 @@
               </small>
             </div>
             
-            <div style="background-color: #f5f3f0; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.5rem; color: #333; line-height: 1.6;">
+            <div style="color: #333; line-height: 1.5; font-size: 0.875rem;">
               <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
             </div>
           </div>

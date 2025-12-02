@@ -1,32 +1,26 @@
-<div class="comment-form" id="comment-form-container" style="margin-top: 2rem; padding: 1.5rem; border: 1px solid #ddd; border-radius: 4px;">
-  <h3 style="margin-top: 0;">Leave a Comment</h3>
-  
+<div class="comment-form" id="comment-form-container" style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;">
   <% if flash[:comment_submitted] %>
-    <div id="comment-success-message" style="text-align: center; border: 2px solid #333; padding: 1.5rem; border-radius: 4px; margin-bottom: 1rem;">
-      <p style="margin: 0; font-size: 1rem; color: #333;">Your comment will be reviewed before being published.</p>
+    <div id="comment-success-message" style="text-align: center; border: 1px solid #333; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; background: #fff;">
+      <p style="margin: 0; font-size: 0.875rem; color: #333;">Your comment will be reviewed before being published.</p>
     </div>
   <% end %>
   
   <%= form_with(model: comment, url: comments_path(article_id: @article.slug)) do |f| %>
-    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
       <div style="flex: 1;">
-        <%= f.label :author_name, "Name *", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
-        <%= f.text_field :author_name, required: true, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
+        <%= f.text_field :author_name, required: true, placeholder: "Name *", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" %>
       </div>
-
       <div style="flex: 1;">
-        <%= f.label :author_url, "Website (optional)", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
-        <%= f.url_field :author_url, placeholder: "https://your-website.com", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
+        <%= f.url_field :author_url, placeholder: "Website (optional)", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" %>
       </div>
     </div>
 
-    <div style="margin-bottom: 1rem;">
-      <%= f.label :content, "Comment *", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
-      <%= f.text_area :content, required: true, rows: 5, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" %>
+    <div style="margin-bottom: 0.75rem;">
+      <%= f.text_area :content, required: true, placeholder: "Comment *", rows: 3, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;" %>
     </div>
 
     <div>
-      <%= f.submit "Submit Comment", style: "padding: 0.75rem 1.5rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;" %>
+      <%= f.submit "Submit", style: "padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;" %>
     </div>
   <% end %>
 </div>

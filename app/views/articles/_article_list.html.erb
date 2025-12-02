@@ -22,10 +22,17 @@
             <h2 class="post-title">
               <%= link_to article.title, article_path(article) %>
             </h2>
+            <% if article.description.present? %>
+              <div class="post-description">
+                <%= article.description %>
+              </div>
+            <% end %>
           <% else %>
-            <div class="post-content">
-              <%= raw article.content %>
-            </div>
+            <%= link_to article_path(article), class: "post-content-link" do %>
+              <div class="post-content">
+                <%= raw article.content %>
+              </div>
+            <% end %>
           <% end %>
         <% end %>
       </div>
