@@ -416,7 +416,7 @@ class GithubBackupService
 
         # Get original filename
         original_filename = blob.filename.to_s
-        
+
         # Check if this blob was already processed
         if processed_blobs[blob.id]
           # Use the filename we already assigned to this blob
@@ -426,7 +426,7 @@ class GithubBackupService
           # Determine unique filename
           filename = original_filename
           filepath = File.join(attachments_dir, filename)
-          
+
           # Check for filename conflicts
           # If file exists or another blob already uses this filename, use blob_id prefix
           if File.exist?(filepath) || processed_blobs.values.include?(filename)
@@ -437,7 +437,7 @@ class GithubBackupService
             filepath = File.join(attachments_dir, filename)
             Rails.logger.info "Filename conflict detected for #{original_filename}, using #{filename} for blob #{blob.id}"
           end
-          
+
           # Download and save the file
           unless File.exist?(filepath)
             begin
@@ -450,7 +450,7 @@ class GithubBackupService
               next
             end
           end
-          
+
           # Track this blob as processed
           processed_blobs[blob.id] = filename
         end
