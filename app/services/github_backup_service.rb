@@ -292,6 +292,10 @@ class GithubBackupService
 
         Rails.logger.info "Exported attachment: #{filename} for article #{article.id}"
       end
+
+      # Also extract images from HTML content (img tags)
+      html_content = article.content.to_s
+      extract_images_from_html(html_content, attachments_dir, url_map, "article_#{article.id}")
     rescue => e
       Rails.logger.error "Failed to export attachments for article #{article.id}: #{e.message}"
     end
@@ -333,6 +337,10 @@ class GithubBackupService
 
         Rails.logger.info "Exported attachment: #{filename} for page #{page.id}"
       end
+
+      # Also extract images from HTML content (img tags)
+      html_content = page.content.to_s
+      extract_images_from_html(html_content, attachments_dir, url_map, "page_#{page.id}")
     rescue => e
       Rails.logger.error "Failed to export attachments for page #{page.id}: #{e.message}"
     end
@@ -381,6 +389,106 @@ class GithubBackupService
     File.write(index_filepath, JSON.pretty_generate(static_files_metadata))
 
     Rails.logger.info "Exported #{static_files_metadata.count} static files"
+  end
+
+  # Extract images from HTML content and add them to the backup
+  def extract_images_from_html(html_content, attachments_dir, url_map, prefix)
+    return if html_content.blank?
+
+    require "nokogiri"
+    doc = Nokogiri::HTML::DocumentFragment.parse(html_content)
+
+    # Track which blob IDs have been processed to handle filename conflicts
+    processed_blobs = {} # blob_id => filename mapping
+
+    # Find all img tags
+    doc.css("img").each do |img|
+      src = img["src"]
+      next if src.blank?
+
+      # Check if it's an Active Storage blob URL
+      if is_active_storage_url?(src)
+        blob = extract_blob_from_url(src)
+        next unless blob&.persisted?
+
+        # Create directory if needed
+        FileUtils.mkdir_p(attachments_dir) unless Dir.exist?(attachments_dir)
+
+        # Get original filename
+        original_filename = blob.filename.to_s
+        
+        # Check if this blob was already processed
+        if processed_blobs[blob.id]
+          # Use the filename we already assigned to this blob
+          filename = processed_blobs[blob.id]
+          filepath = File.join(attachments_dir, filename)
+        else
+          # Determine unique filename
+          filename = original_filename
+          filepath = File.join(attachments_dir, filename)
+          
+          # Check for filename conflicts
+          # If file exists or another blob already uses this filename, use blob_id prefix
+          if File.exist?(filepath) || processed_blobs.values.include?(filename)
+            # Filename conflict detected, use blob_id prefix to ensure uniqueness
+            ext = File.extname(original_filename)
+            base_name = File.basename(original_filename, ext)
+            filename = "#{blob.id}-#{base_name}#{ext}"
+            filepath = File.join(attachments_dir, filename)
+            Rails.logger.info "Filename conflict detected for #{original_filename}, using #{filename} for blob #{blob.id}"
+          end
+          
+          # Download and save the file
+          unless File.exist?(filepath)
+            begin
+              File.open(filepath, "wb") do |file|
+                blob.download { |chunk| file.write(chunk) }
+              end
+              Rails.logger.info "Exported image from HTML: #{filename} for #{prefix} (blob #{blob.id})"
+            rescue => e
+              Rails.logger.error "Failed to export image #{filename} for #{prefix}: #{e.message}"
+              next
+            end
+          end
+          
+          # Track this blob as processed
+          processed_blobs[blob.id] = filename
+        end
+
+        # Store URL mapping
+        # Handle both full URLs and relative paths
+        blob_url = src.start_with?("http") ? src : Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: true)
+        relative_path = "../attachments/#{prefix}/#{filename}"
+        url_map[blob_url] = relative_path
+        # Also map the relative path version
+        url_map[src] = relative_path unless src == blob_url
+      end
+    end
+  rescue => e
+    Rails.logger.error "Failed to extract images from HTML for #{prefix}: #{e.message}"
+  end
+
+  # Check if URL is an Active Storage URL
+  def is_active_storage_url?(url)
+    url.include?("/rails/active_storage/blobs/") || url.include?("/rails/active_storage/representations/")
+  end
+
+  # Extract blob from Active Storage URL
+  def extract_blob_from_url(url)
+    # Format: /rails/active_storage/blobs/redirect/:signed_id/*filename
+    # or /rails/active_storage/representations/redirect/:signed_id/*filename
+    match = url.match(/\/rails\/active_storage\/(?:blobs|representations)\/redirect\/([^\/]+)/)
+    return nil unless match
+
+    signed_id = match[1]
+    begin
+      blob = ActiveStorage::Blob.find_signed(signed_id)
+      Rails.logger.info "Found blob for signed_id #{signed_id}: #{blob&.filename}"
+      blob
+    rescue => e
+      Rails.logger.error "Failed to find blob for signed_id #{signed_id}: #{e.message}"
+      nil
+    end
   end
 
   def cleanup
