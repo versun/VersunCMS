@@ -14,75 +14,105 @@
     </div>
   </div>
 
-  <div class="table-container">
-    <table class="admin-table compact-table">
-      <thead>
-        <tr>
-          <th class="col-actions-compact">Actions</th>
-          <th class="col-order">Order</th>
-          <th class="col-title">Title</th>
-          <th class="col-redirect">Redirect</th>
-          <th class="col-date-compact">Created</th>
-          <th class="col-date-compact">Updated</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if @pages && @pages.any? %>
-          <% @pages.each do |page| %>
-            <tr>
-              <td class="col-actions-compact">
-                  <div class="action-buttons">
-                    <%= link_to page_path(page), class: "action-btn", title: "View" do %>
-                      <i class="fas fa-eye"></i>
-                    <% end %>
-                    <%= link_to edit_admin_page_path(page), class: "action-btn", title: "Edit" do %>
-                      <i class="fas fa-edit"></i>
-                    <% end %>
-                    <% if page.status != "trash" %>
-                      <%= link_to admin_page_path(page), class: "action-btn", title: "Trash",
-                            data: { turbo_method: :delete } do %>
-                        <i class="fas fa-trash-alt"></i>
-                      <% end %>
-                    <% else %>
-                      <%= link_to admin_page_path(page), class: "action-btn", title: "Delete",
-                            data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
-                        <i class="fas fa-trash"></i>
-                      <% end %>
-                    <% end %>
-                  </div>
+  <div data-controller="batch-selection">
+    <!-- Batch Actions Bar -->
+    <div data-batch-selection-target="actions" style="display: none; padding: 10px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px; gap: 10px;">
+      <span style="margin-right: 10px;"><strong><span data-batch-selection-target="count">0</span></strong> selected</span>
+      
+      <%= form_with url: batch_publish_admin_pages_path, method: :post, style: "display: inline;" do |f| %>
+        <%= f.button "Publish", type: "submit", class: "btn btn-sm", style: "background: #28a745; color: white;", 
+            onclick: "return submitBatchForm(this, 'publish')" %>
+      <% end %>
+
+      <%= form_with url: batch_unpublish_admin_pages_path, method: :post, style: "display: inline;" do |f| %>
+        <%= f.button "Unpublish", type: "submit", class: "btn btn-sm", style: "background: #ffc107; color: black;",
+            onclick: "return submitBatchForm(this, 'unpublish')" %>
+      <% end %>
+
+      <%= form_with url: batch_destroy_admin_pages_path, method: :post, style: "display: inline;" do |f| %>
+        <%= f.button "Delete", type: "submit", class: "btn btn-sm", style: "background: #dc3545; color: white;",
+            onclick: "return submitBatchForm(this, 'delete')" %>
+      <% end %>
+    </div>
+
+    <div class="table-container">
+      <table class="admin-table compact-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" data-batch-selection-target="selectAll" data-action="change->batch-selection#toggleAll">
+            </th>
+            <th class="col-actions-compact">Actions</th>
+            <th class="col-order">Order</th>
+            <th class="col-title">Title</th>
+            <th class="col-redirect">Redirect</th>
+            <th class="col-date-compact">Created</th>
+            <th class="col-date-compact">Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if @pages && @pages.any? %>
+            <% @pages.each do |page| %>
+              <tr>
+                <td>
+                  <input type="checkbox" value="<%= page.slug %>" 
+                         data-batch-selection-target="checkbox" 
+                         data-action="change->batch-selection#toggle">
                 </td>
-              <td class="col-order">
-                <small><%= page.page_order %></small>
-              </td>
-              <td class="col-title">
-                <%= link_to page.title, edit_admin_page_path(page), class: "title-link" %>
-              </td>
-              <td class="col-redirect">
-                <% if page.redirect_url.present? %>
-                  <small class="text-muted" title="<%= page.redirect_url %>">
-                    <%= truncate(page.redirect_url, length: 30) %>
-                  </small>
-                <% else %>
-                  <small class="text-muted">—</small>
-                <% end %>
-              </td>
-              <td class="col-date-compact">
-                <small><%= page.created_at.strftime("%m/%d %H:%M") %></small>
-              </td>
-              <td class="col-date-compact">
-                <small><%= page.updated_at.strftime("%m/%d %H:%M") %></small>
+                <td class="col-actions-compact">
+                    <div class="action-buttons">
+                      <%= link_to page_path(page), class: "action-btn", title: "View" do %>
+                        <i class="fas fa-eye"></i>
+                      <% end %>
+                      <%= link_to edit_admin_page_path(page), class: "action-btn", title: "Edit" do %>
+                        <i class="fas fa-edit"></i>
+                      <% end %>
+                      <% if page.status != "trash" %>
+                        <%= link_to admin_page_path(page), class: "action-btn", title: "Trash",
+                              data: { turbo_method: :delete } do %>
+                          <i class="fas fa-trash-alt"></i>
+                        <% end %>
+                      <% else %>
+                        <%= link_to admin_page_path(page), class: "action-btn", title: "Delete",
+                              data: { turbo_method: :delete, turbo_confirm: "Delete permanently?" } do %>
+                          <i class="fas fa-trash"></i>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </td>
+                <td class="col-order">
+                  <small><%= page.page_order %></small>
+                </td>
+                <td class="col-title">
+                  <%= link_to page.title, edit_admin_page_path(page), class: "title-link" %>
+                </td>
+                <td class="col-redirect">
+                  <% if page.redirect_url.present? %>
+                    <small class="text-muted" title="<%= page.redirect_url %>">
+                      <%= truncate(page.redirect_url, length: 30) %>
+                    </small>
+                  <% else %>
+                    <small class="text-muted">—</small>
+                  <% end %>
+                </td>
+                <td class="col-date-compact">
+                  <small><%= page.created_at.strftime("%m/%d %H:%M") %></small>
+                </td>
+                <td class="col-date-compact">
+                  <small><%= page.updated_at.strftime("%m/%d %H:%M") %></small>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="8" class="no-content-row">
+                <p>No pages found.</p>
               </td>
             </tr>
           <% end %>
-        <% else %>
-          <tr>
-            <td colspan="7" class="no-content-row">
-              <p>No pages found.</p>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
   
   <% if @pages && @pages.any? %>
@@ -91,3 +121,7 @@
     </div>
   <% end %>
 </div>
+
+<% content_for :javascript do %>
+  <%= render 'admin/shared/batch_form_handler' %>
+<% end %>

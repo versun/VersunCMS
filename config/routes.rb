@@ -19,6 +19,9 @@ Rails.application.routes.draw do
       collection do
         get :drafts
         get :scheduled
+        post :batch_destroy
+        post :batch_publish
+        post :batch_unpublish
       end
       member do
         patch :publish
@@ -28,15 +31,29 @@ Rails.application.routes.draw do
     end
 
     resources :pages do
+      collection do
+        post :batch_destroy
+        post :batch_publish
+        post :batch_unpublish
+      end
       member do
         patch :reorder
       end
     end
 
-    resources :tags
+    resources :tags do
+      collection do
+        post :batch_destroy
+      end
+    end
 
     # Comment management
     resources :comments do
+      collection do
+        post :batch_destroy
+        post :batch_approve
+        post :batch_reject
+      end
       member do
         patch :approve
         delete :reject

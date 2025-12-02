@@ -191,24 +191,4 @@ class Admin::ArticlesController < Admin::BaseController
   def article_params
     params.require(:article).permit(:title, :content, :excerpt, :slug, :status, :published_at, :meta_description, :tags, :description, :created_at, :scheduled_at, :send_newsletter, :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, :tag_list, social_media_posts_attributes: [ :id, :platform, :url, :_destroy ])
   end
-
-  def fetch_articles(scope)
-    # Apply status filter
-    scope = case params[:status]
-    when "publish"
-      scope.published
-    when "draft"
-      scope.draft
-    when "schedule"
-      scope.scheduled
-    when "shared"
-      scope.joins(:social_media_posts).distinct
-    when "trash"
-      scope.trash
-    else
-      scope
-    end
-
-    scope.order(created_at: :desc).paginate(page: params[:page], per_page: 30)
-  end
 end

@@ -5,6 +5,19 @@ class Admin::BaseController < ApplicationController
   # before_action :authenticate_user!
   # before_action :require_admin_privileges
   layout "admin"
+
+  def batch_destroy
+    process_batch_action(action: :destroy)
+  end
+
+  def batch_publish
+    process_batch_action(action: :publish)
+  end
+
+  def batch_unpublish
+    process_batch_action(action: :unpublish)
+  end
+
   private
 
   def require_admin_privileges
@@ -15,7 +28,7 @@ class Admin::BaseController < ApplicationController
   def fetch_articles(scope, sort_by: :created_at)
     @page = params[:page].present? ? params[:page].to_i : 1
     @per_page = 20
-    @status = params[:status] || "publish"
+    @status = params[:status] || "all"
 
     filtered_posts = filter_by_status(scope)
     filtered_posts.paginate(page: @page, per_page: @per_page).order(sort_by => :desc)
@@ -28,5 +41,73 @@ class Admin::BaseController < ApplicationController
     else
       posts
     end
+  end
+
+  # Batch Operation Helpers
+  def process_batch_action(action:)
+    ids = params[:ids] || []
+    count = 0
+    
+    ids.each do |id|
+      record = find_record_for_batch(id)
+      next unless record
+
+      success = case action
+      when :destroy
+        perform_destroy(record)
+      when :publish
+        perform_publish(record)
+      when :unpublish
+        perform_unpublish(record)
+      end
+
+      count += 1 if success
+    end
+
+    after_batch_action
+    
+    action_past_tense = case action
+    when :destroy then "deleted"
+    when :publish then "published"
+    when :unpublish then "unpublished"
+    end
+
+    redirect_to redirect_path_after_batch, notice: "Successfully #{action_past_tense} #{count} #{model_class.model_name.human.downcase}(s)."
+  rescue => e
+    redirect_to redirect_path_after_batch, alert: "Error processing #{action} for #{model_class.model_name.human.pluralize.downcase}: #{e.message}"
+  end
+
+  def find_record_for_batch(id)
+    # Default to finding by slug, override in controller if needed (e.g. Tags use id)
+    model_class.find_by(slug: id)
+  end
+
+  def perform_destroy(record)
+    record.destroy!
+    true
+  end
+
+  def perform_publish(record)
+    record.update(status: :publish)
+  end
+
+  def perform_unpublish(record)
+    record.update(status: :draft)
+  end
+
+  def after_batch_action
+    # Hook for subclasses to implement logic after batch action (e.g. refresh cache)
+  end
+
+  def redirect_path_after_batch
+    # Infer the index path from the controller name
+    # e.g. Admin::ArticlesController -> admin_articles_path
+    send("admin_#{controller_name}_path")
+  end
+
+  def model_class
+    # Infer the model class from the controller name
+    # e.g. Admin::ArticlesController -> Article
+    controller_name.classify.constantize
   end
 end

@@ -65,6 +65,12 @@ class Admin::PagesController < Admin::BaseController
 
   private
 
+  def after_batch_action
+    refresh_pages
+  end
+
+  private
+
   def set_page
     @page = Page.find_by!(slug: params[:id])
   end

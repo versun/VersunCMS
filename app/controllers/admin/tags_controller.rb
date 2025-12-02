@@ -31,12 +31,28 @@ class Admin::TagsController < Admin::BaseController
   end
 
   def destroy
-    if @tag.articles.any?
-      redirect_to admin_tags_path, alert: "Cannot delete tag that is in use by articles."
-    else
-      @tag.destroy
-      redirect_to admin_tags_path, status: :see_other, notice: "Tag was successfully deleted."
+    # Remove tag from all associated articles before deleting
+    @tag.articles.each do |article|
+      article.tags.delete(@tag)
     end
+    
+    @tag.destroy
+    redirect_to admin_tags_path, status: :see_other, notice: "Tag was successfully deleted."
+  end
+
+  private
+
+  def find_record_for_batch(id)
+    Tag.find_by(id: id)
+  end
+
+  def perform_destroy(tag)
+    # Remove tag from all associated articles before deleting
+    tag.articles.each do |article|
+      article.tags.delete(tag)
+    end
+    
+    tag.destroy
   end
 
   private

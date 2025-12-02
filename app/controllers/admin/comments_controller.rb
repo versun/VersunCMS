@@ -48,6 +48,56 @@ class Admin::CommentsController < AdminController
     redirect_to admin_comments_path, notice: "Comment rejected and deleted."
   end
 
+  def batch_destroy
+    ids = params[:ids] || []
+    count = 0
+    
+    ids.each do |id|
+      comment = Comment.find_by(id: id)
+      if comment
+        comment.destroy
+        count += 1
+      end
+    end
+
+    redirect_to admin_comments_path, notice: "Successfully deleted #{count} comment(s)."
+  rescue => e
+    redirect_to admin_comments_path, alert: "Error deleting comments: #{e.message}"
+  end
+
+  def batch_approve
+    ids = params[:ids] || []
+    count = 0
+    
+    ids.each do |id|
+      comment = Comment.find_by(id: id)
+      if comment && comment.update(approved: true)
+        count += 1
+      end
+    end
+
+    redirect_to admin_comments_path, notice: "Successfully approved #{count} comment(s)."
+  rescue => e
+    redirect_to admin_comments_path, alert: "Error approving comments: #{e.message}"
+  end
+
+  def batch_reject
+    ids = params[:ids] || []
+    count = 0
+    
+    ids.each do |id|
+      comment = Comment.find_by(id: id)
+      if comment
+        comment.destroy
+        count += 1
+      end
+    end
+
+    redirect_to admin_comments_path, notice: "Successfully rejected and deleted #{count} comment(s)."
+  rescue => e
+    redirect_to admin_comments_path, alert: "Error rejecting comments: #{e.message}"
+  end
+
   private
 
   def set_comment
