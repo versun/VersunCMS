@@ -169,8 +169,9 @@ module Integrations
 
           # Search for replies in the conversation
           # Free tier allows basic search
+          # Include referenced_tweets to get parent relationship
           search_query = "conversation_id:#{conversation_id} is:reply"
-          search_response = client.get("tweets/search/recent?query=#{CGI.escape(search_query)}&expansions=author_id&tweet.fields=created_at&user.fields=username,name,profile_image_url&max_results=100")
+          search_response = client.get("tweets/search/recent?query=#{CGI.escape(search_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets&user.fields=username,name,profile_image_url&max_results=100")
 
           comments = []
           if search_response && search_response["data"]
@@ -181,9 +182,24 @@ module Integrations
               end
             end
 
+            # Build a map of referenced tweets for parent lookup
+            referenced_tweets_map = {}
+            if search_response["includes"] && search_response["includes"]["tweets"]
+              search_response["includes"]["tweets"].each do |ref_tweet|
+                referenced_tweets_map[ref_tweet["id"]] = ref_tweet
+              end
+            end
+
             search_response["data"].each do |tweet|
               author = users_map[tweet["author_id"]]
               next unless author
+
+              # Find parent external_id from referenced_tweets
+              parent_external_id = nil
+              if tweet["referenced_tweets"]
+                replied_to = tweet["referenced_tweets"].find { |ref| ref["type"] == "replied_to" }
+                parent_external_id = replied_to["id"] if replied_to
+              end
 
               comments << {
                 external_id: tweet["id"],
@@ -192,7 +208,8 @@ module Integrations
                 author_avatar_url: author["profile_image_url"],
                 content: tweet["text"],
                 published_at: Time.parse(tweet["created_at"]),
-                url: "https://x.com/#{author["username"]}/status/#{tweet["id"]}"
+                url: "https://x.com/#{author["username"]}/status/#{tweet["id"]}",
+                parent_external_id: parent_external_id
               }
             end
           end

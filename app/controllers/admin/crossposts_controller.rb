@@ -25,11 +25,22 @@ class Admin::CrosspostsController < Admin::BaseController
     # Rails.logger.info "Verifying #{params[:id]} platform"
     # Rails.logger.info "Params: #{params.inspect}"
 
+    @platform = params[:id]
+    @message = ""
+    @status = ""
+
     begin
-      crosspost = params[:crosspost]
+      crosspost = params[:crosspost] || {}
+      crosspost = crosspost.to_unsafe_h if crosspost.respond_to?(:to_unsafe_h)
+      crosspost = crosspost.with_indifferent_access if crosspost.respond_to?(:with_indifferent_access)
+
+      # 如果 crosspost[:platform] 为空，尝试从 params[:id] 获取
+      if crosspost[:platform].blank?
+        crosspost[:platform] = params[:id]
+      end
 
       unless crosspost[:platform] == params[:id]
-        raise "Platform mismatch: #{crosspost[:platform]} != #{params[:id]}"
+        raise "Platform mismatch: #{crosspost[:platform].inspect} != #{params[:id].inspect}"
       end
 
       results = case crosspost[:platform]
@@ -47,14 +58,22 @@ class Admin::CrosspostsController < Admin::BaseController
       end
 
       if results[:success]
-        render json: { status: "success", message: "Verified Successfully!" }
+        @status = "success"
+        @message = "Verified Successfully!"
       else
-        render json: { status: "error", message: results[:error] }
+        @status = "error"
+        @message = results[:error]
       end
     rescue => e
       # Rails.logger.error "Verification error for #{params[:id]}: #{e.message}"
       # Rails.logger.error e.backtrace.join("\n")
-      render json: { status: "error", message: "Error: #{e.message}" }, status: :unprocessable_entity
+      @status = "error"
+      @message = "Error: #{e.message}"
+    end
+
+    respond_to do |format|
+      format.turbo_stream
+      format.json { render json: { status: @status, message: @message } }
     end
   end
 

@@ -130,6 +130,7 @@ module Integrations
         if response.is_a?(Net::HTTPSuccess)
           context_data = JSON.parse(response.body)
           descendants = context_data["descendants"] || []
+          original_status_id = status_id.to_s
 
           # Parse descendants into comment data
           comments = descendants.map do |reply|
@@ -140,7 +141,9 @@ module Integrations
               author_avatar_url: reply["account"]["avatar"],
               content: reply["content"],
               published_at: Time.parse(reply["created_at"]),
-              url: reply["url"]
+              url: reply["url"],
+              # Extract parent external_id: if in_reply_to_id exists and is not the original post, use it
+              parent_external_id: reply["in_reply_to_id"].present? && reply["in_reply_to_id"] != original_status_id ? reply["in_reply_to_id"] : nil
             }
           end
 

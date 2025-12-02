@@ -95,13 +95,23 @@
                     <span class="comment-count"><%= post.comments.count %></span>
                     <% post.social_media_posts.where.not(url: nil).each do |social_post| %>
                       <% icon_class = Crosspost::PLATFORM_ICONS[social_post.platform] || "fas fa-share-alt" %>
-                      <button type="button" class="action-btn fetch-comments-btn" 
-                              data-article-slug="<%= post.slug %>" 
-                              data-platform="<%= social_post.platform %>"
-                              title="Fetch comments from <%= social_post.platform.humanize %>" 
-                              style="padding: 2px 6px; font-size: 0.8em;">
-                        <i class="<%= icon_class %>"></i>
-                      </button>
+                      <%= form_with url: fetch_comments_admin_article_path(post), method: :post, 
+                          class: "fetch-comments-form", 
+                          style: "display: inline-block; margin: 0;",
+                          data: { 
+                            controller: "fetch-comments",
+                            fetch_comments_platform_value: social_post.platform,
+                            action: "submit->fetch-comments#submit"
+                          } do |f| %>
+                        <%= f.hidden_field :platform, value: social_post.platform %>
+                        <%= f.button type: "submit", 
+                            class: "action-btn fetch-comments-btn", 
+                            title: "Fetch comments from #{social_post.platform.humanize}",
+                            style: "padding: 2px 6px; font-size: 0.8em; border: 1px solid #ddd; background: #f5f5f5; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: #666;",
+                            data: { fetch_comments_target: "button" } do %>
+                          <i class="<%= icon_class %>" data-fetch-comments-target="icon"></i>
+                        <% end %>
+                      <% end %>
                     <% end %>
                   </div>
                 </td>
@@ -134,63 +144,5 @@
 
 <% content_for :javascript do %>
   <%= render 'admin/shared/batch_form_handler' %>
-<script>
-  console.log('Fetch comments script loaded');
-  const fetchButtons = document.querySelectorAll('.fetch-comments-btn');
-  console.log('Found fetch buttons:', fetchButtons.length);
-
-  fetchButtons.forEach(button => {
-    button.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      console.log('Fetch comments button clicked');
-      const articleSlug = this.dataset.articleSlug;
-      const platform = this.dataset.platform;
-      console.log('Article slug:', articleSlug);
-      console.log('Platform:', platform);
-      
-      const icon = this.querySelector('i');
-      const originalIconClass = icon.className;
-
-      // Disable button and show loading state
-      this.disabled = true;
-      icon.className = 'fas fa-spinner fa-spin';
-
-      fetch(`/admin/posts/${articleSlug}/fetch_comments`, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ platform: platform }),
-        credentials: 'same-origin'
-      })
-      .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-          alert(data.message);
-          // Optional: Update comment count if returned in response
-        } else {
-          alert(data.message || 'Failed to fetch comments');
-        }
-      })
-      .catch(error => {
-        console.error('Fetch error:', error);
-        alert('An error occurred while fetching comments.');
-      })
-      .finally(() => {
-        this.disabled = false;
-        icon.className = originalIconClass;
-      });
-    });
-  });
-})();
-</script>
 <% end %>
 

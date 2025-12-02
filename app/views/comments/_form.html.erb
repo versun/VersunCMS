@@ -1,11 +1,15 @@
-<div class="comment-form" id="comment-form-container" style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;">
-  <% if flash[:comment_submitted] %>
+<% parent_id = local_assigns[:parent_id] %>
+<% is_reply = parent_id.present? %>
+<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;">
+  <% if flash[:comment_submitted] && !is_reply %>
     <div id="comment-success-message" style="text-align: center; border: 1px solid #333; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; background: #fff;">
       <p style="margin: 0; font-size: 0.875rem; color: #333;">Your comment will be reviewed before being published.</p>
     </div>
   <% end %>
   
   <%= form_with(model: comment, url: comments_path(article_id: @article.slug)) do |f| %>
+    <%= f.hidden_field :parent_id, value: parent_id if parent_id %>
+    
     <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
       <div style="flex: 1;">
         <%= f.text_field :author_name, required: true, placeholder: "Name *", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" %>
@@ -16,11 +20,14 @@
     </div>
 
     <div style="margin-bottom: 0.75rem;">
-      <%= f.text_area :content, required: true, placeholder: "Comment *", rows: 3, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;" %>
+      <%= f.text_area :content, required: true, placeholder: is_reply ? "Reply *" : "Comment *", rows: 3, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;" %>
     </div>
 
-    <div>
-      <%= f.submit "Submit", style: "padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;" %>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <%= f.submit is_reply ? "Reply" : "Submit", style: "padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;" %>
+      <% if is_reply %>
+        <button type="button" onclick="hideReplyForm(<%= parent_id %>)" style="padding: 0.5rem 1rem; background-color: #f0f0f0; color: #666; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Cancel</button>
+      <% end %>
     </div>
   <% end %>
 </div>

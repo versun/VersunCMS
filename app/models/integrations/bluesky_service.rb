@@ -181,11 +181,16 @@ module Integrations
         if response.is_a?(Net::HTTPSuccess)
           thread_data = JSON.parse(response.body)
 
+          # Get the original post URI to identify top-level replies
+          original_post_uri = thread_data.dig("thread", "post", "uri")
+          original_post_rkey = original_post_uri&.split("/")&.last
+
           # Get replies from thread (nested structure)
           replies = thread_data.dig("thread", "replies") || []
 
-          # Flatten nested replies into comment list
-          comments = flatten_thread_replies(replies)
+          # Flatten nested replies into comment list, preserving parent relationships
+          # Top-level replies should have parent_external_id = nil, not the original post ID
+          comments = flatten_thread_replies(replies, nil)
 
           { comments: comments, rate_limit: rate_limit_info }
         else
@@ -530,28 +535,30 @@ module Integrations
       end
     end
 
-    # Flatten nested thread replies into a flat comment list
-    def flatten_thread_replies(replies, depth = 0)
+    # Flatten nested thread replies into a flat comment list, preserving parent relationships
+    def flatten_thread_replies(replies, parent_external_id = nil)
       [].tap do |comments|
         replies.each do |reply_item|
           next unless reply_item["post"]  # Skip non-post items
 
           post = reply_item["post"]
+          current_external_id = post["uri"].split("/").last  # Extract rkey from AT-URI
 
-          # Add this reply as a comment
+          # Add this reply as a comment with parent information
           comments << {
-            external_id: post["uri"].split("/").last,  # Extract rkey from AT-URI
+            external_id: current_external_id,
             author_name: post["author"]["displayName"].presence || post["author"]["handle"],
             author_username: post["author"]["handle"],
             author_avatar_url: post["author"]["avatar"],
             content: post["record"]["text"],
             published_at: Time.parse(post["record"]["createdAt"]),
-            url: "https://bsky.app/profile/#{post["author"]["handle"]}/post/#{post["uri"].split('/').last}"
+            url: "https://bsky.app/profile/#{post["author"]["handle"]}/post/#{current_external_id}",
+            parent_external_id: parent_external_id
           }
 
-          # Recursively process nested replies
+          # Recursively process nested replies, passing current reply as parent
           if reply_item["replies"]&.any?
-            nested_comments = flatten_thread_replies(reply_item["replies"], depth + 1)
+            nested_comments = flatten_thread_replies(reply_item["replies"], current_external_id)
             comments.concat(nested_comments)
           end
         end

@@ -34,71 +34,25 @@
 
 
 <div id="comments-section">
-  <% # Prepare all comments from all sources %>
+  <% # Prepare all comments from all sources - only top level comments %>
   <% all_comments = [] %>
-  <% # Local approved comments %>
-  <% all_comments += @article.comments.local.approved.map do |c| %>
+  <% # Local approved top-level comments only %>
+  <% all_comments += @article.comments.local.approved.top_level.map do |c| %>
   <%   { type: 'local', data: c } %>
   <% end %>
-  <% # External platform comments %>
-  <% all_comments += @article.comments.mastodon.map { |c| { type: 'mastodon', data: c } } %>
-  <% all_comments += @article.comments.bluesky.map { |c| { type: 'bluesky', data: c } } %>
-  <% all_comments += @article.comments.twitter.map { |c| { type: 'twitter', data: c } } %>
+  <% # External platform comments - only top-level to avoid duplicate rendering %>
+  <% all_comments += @article.comments.mastodon.top_level.map { |c| { type: 'mastodon', data: c } } %>
+  <% all_comments += @article.comments.bluesky.top_level.map { |c| { type: 'bluesky', data: c } } %>
+  <% all_comments += @article.comments.twitter.top_level.map { |c| { type: 'twitter', data: c } } %>
 
   <% if all_comments.any? %>
     <div style="margin-top: 2rem; margin-bottom: 1.5rem;">
-      <h3 style="margin-bottom: 1rem; color: #333; font-size: 1.125rem;">Comments (<%= all_comments.size %>)</h3>
+      <% total_count = @article.comments.local.approved.count + @article.comments.mastodon.count + @article.comments.bluesky.count + @article.comments.twitter.count %>
+      <h3 style="margin-bottom: 1rem; color: #333; font-size: 1.125rem;">Comments (<%= total_count %>)</h3>
     </div>
     
     <% all_comments.each do |comment_item| %>
-      <% comment = comment_item[:data] %>
-      <% type = comment_item[:type] %>
-      
-      <% 
-        border_color = case type
-        when 'mastodon' then '#6364FF'
-        when 'bluesky' then '#0085FF'
-        when 'twitter' then '#1DA1F2'
-        else '#333'
-        end
-      %>
-      
-      <div class="comment" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
-        <div style="display: flex; align-items: start; gap: 0.5rem;">
-          <% if comment.author_avatar_url.present? %>
-            <img src="<%= comment.author_avatar_url %>" alt="<%= comment.author_name %>" style="width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;">
-          <% else %>
-            <div style="width: 32px; height: 32px; border-radius: 50%; background-color: <%= border_color %>; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.75rem; flex-shrink: 0;">
-              <%= comment.author_name.to_s.first.upcase %>
-            </div>
-          <% end %>
-          
-          <div style="flex: 1; min-width: 0;">
-            <div style="margin-bottom: 0.25rem;">
-              <% if comment.author_url.present? %>
-                <strong style="font-size: 0.875rem; color: #111;"><%= link_to comment.author_name, comment.author_url, target: "_blank", style: "text-decoration: none; color: inherit;" %></strong>
-              <% else %>
-                <strong style="font-size: 0.875rem; color: #111;"><%= comment.author_name %></strong>
-              <% end %>
-              
-              <% if type != 'local' && comment.author_username.present? %>
-                <span style="color: #666; font-size: 0.8rem; margin-left: 0.25rem;">@<%= comment.author_username %></span>
-              <% end %>
-              
-              <small style="color: #999; margin-left: 0.5rem; font-size: 0.75rem;">
-                <%= time_ago_in_words(comment.published_at) %> ago
-                <% if type != 'local' %>
-                  · <%= link_to type.titleize, comment.url, target: "_blank", style: "color: #{border_color}; text-decoration: none;" %>
-                <% end %>
-              </small>
-            </div>
-            
-            <div style="color: #333; line-height: 1.5; font-size: 0.875rem;">
-              <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
-            </div>
-          </div>
-        </div>
-      </div>
+      <%= render 'comments/comment', comment_item: comment_item %>
     <% end %>
   <% end %>
 
@@ -107,4 +61,32 @@
   <div class="giscus"></div>
   <%= raw site_settings[:giscus] %>
 </div>
+
+<script>
+  function showReplyForm(commentId) {
+    const formContainer = document.getElementById('reply-form-' + commentId);
+    if (formContainer) {
+      formContainer.style.display = 'block';
+      // Scroll to form
+      formContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // Focus on textarea
+      const textarea = formContainer.querySelector('textarea');
+      if (textarea) {
+        setTimeout(() => textarea.focus(), 100);
+      }
+    }
+  }
+
+  function hideReplyForm(commentId) {
+    const formContainer = document.getElementById('reply-form-' + commentId);
+    if (formContainer) {
+      formContainer.style.display = 'none';
+      // Clear form
+      const form = formContainer.querySelector('form');
+      if (form) {
+        form.reset();
+      }
+    }
+  }
+</script>
 <% end %>

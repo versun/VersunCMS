@@ -9,8 +9,8 @@
       <%= f.hidden_field :platform, value: 'mastodon' %>
 
       <div class="field checkbox">
-        <%= f.check_box :enabled %>
-        <%= f.label :enabled, "Enable Mastodon CrossPost" %>
+        <%= f.check_box :enabled, id: 'crosspost_enabled_mastodon' %>
+        <%= f.label :enabled, "Enable Mastodon CrossPost", for: 'crosspost_enabled_mastodon' %>
       </div>
 
       <div class="form-grid form-grid-2">
@@ -45,9 +45,20 @@
 
       <div class="form-actions">
         <%= f.submit "Save", class: 'btn btn-primary' %>
-        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'mastodon' } %>
+        <div id="verify-button-mastodon">
+          <%= button_tag "Verify", type: 'submit', class: 'btn btn-secondary', form: "verify-form-mastodon", data: { turbo_frame: "_top" } %>
+        </div>
       </div>
     <% end %>
+
+    <%= form_with(url: verify_admin_crosspost_path('mastodon'), method: :post, data: { turbo: true }, id: "verify-form-mastodon") do |vf| %>
+      <%= hidden_field_tag 'crosspost[platform]', 'mastodon' %>
+      <%= hidden_field_tag 'crosspost[server_url]', @mastodon.server_url, id: 'verify_server_url_mastodon' %>
+      <%= hidden_field_tag 'crosspost[client_key]', @mastodon.client_key, id: 'verify_client_key_mastodon' %>
+      <%= hidden_field_tag 'crosspost[client_secret]', @mastodon.client_secret, id: 'verify_client_secret_mastodon' %>
+      <%= hidden_field_tag 'crosspost[access_token]', @mastodon.access_token, id: 'verify_access_token_mastodon' %>
+    <% end %>
+    <div id="verify-messages-mastodon"></div>
   </div>
 
   <div class="form-section compact">
@@ -58,8 +69,8 @@
       <%= f.hidden_field :platform, value: 'twitter' %>
 
       <div class="field checkbox">
-        <%= f.check_box :enabled %>
-        <%= f.label :enabled, "Enable X CrossPost" %>
+        <%= f.check_box :enabled, id: 'crosspost_enabled_twitter' %>
+        <%= f.label :enabled, "Enable X CrossPost", for: 'crosspost_enabled_twitter' %>
       </div>
 
       <div class="form-grid form-grid-2">
@@ -88,9 +99,20 @@
 
       <div class="form-actions">
         <%= f.submit "Save", class: 'btn btn-primary' %>
-        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'twitter' } %>
+        <div id="verify-button-twitter">
+          <%= button_tag "Verify", type: 'submit', class: 'btn btn-secondary', form: "verify-form-twitter", data: { turbo_frame: "_top" } %>
+        </div>
       </div>
     <% end %>
+
+    <%= form_with(url: verify_admin_crosspost_path('twitter'), method: :post, data: { turbo: true }, id: "verify-form-twitter") do |vf| %>
+      <%= hidden_field_tag 'crosspost[platform]', 'twitter' %>
+      <%= hidden_field_tag 'crosspost[access_token]', @twitter.access_token, id: 'verify_access_token_twitter' %>
+      <%= hidden_field_tag 'crosspost[access_token_secret]', @twitter.access_token_secret, id: 'verify_access_token_secret_twitter' %>
+      <%= hidden_field_tag 'crosspost[api_key]', @twitter.api_key, id: 'verify_api_key_twitter' %>
+      <%= hidden_field_tag 'crosspost[api_key_secret]', @twitter.api_key_secret, id: 'verify_api_key_secret_twitter' %>
+    <% end %>
+    <div id="verify-messages-twitter"></div>
   </div>
 
   <div class="form-section compact">
@@ -101,8 +123,8 @@
       <%= f.hidden_field :platform, value: 'bluesky' %>
 
       <div class="field checkbox">
-        <%= f.check_box :enabled %>
-        <%= f.label :enabled, "Enable Bluesky CrossPost" %>
+        <%= f.check_box :enabled, id: 'crosspost_enabled_bluesky' %>
+        <%= f.label :enabled, "Enable Bluesky CrossPost", for: 'crosspost_enabled_bluesky' %>
       </div>
 
       <div class="form-grid form-grid-2">
@@ -130,9 +152,19 @@
 
       <div class="form-actions">
         <%= f.submit "Save", class: 'btn btn-primary' %>
-        <%= button_tag "Verify", type: 'button', class: 'btn btn-secondary verify-btn', data: { platform: 'bluesky' } %>
+        <div id="verify-button-bluesky">
+          <%= button_tag "Verify", type: 'submit', class: 'btn btn-secondary', form: "verify-form-bluesky", data: { turbo_frame: "_top" } %>
+        </div>
       </div>
     <% end %>
+
+    <%= form_with(url: verify_admin_crosspost_path('bluesky'), method: :post, data: { turbo: true }, id: "verify-form-bluesky") do |vf| %>
+      <%= hidden_field_tag 'crosspost[platform]', 'bluesky' %>
+      <%= hidden_field_tag 'crosspost[username]', @bluesky.username, id: 'verify_username_bluesky' %>
+      <%= hidden_field_tag 'crosspost[app_password]', @bluesky.app_password, id: 'verify_app_password_bluesky' %>
+      <%= hidden_field_tag 'crosspost[server_url]', @bluesky.server_url, id: 'verify_server_url_bluesky' %>
+    <% end %>
+    <div id="verify-messages-bluesky"></div>
   </div>
 
   <div class="form-section">
@@ -143,56 +175,66 @@
 
 <% content_for :javascript do %>
 <script>
-document.addEventListener('turbo:load', function() {
-  const verifyButtons = document.querySelectorAll('.verify-btn');
+(function() {
+  // 使用立即执行函数避免重复绑定
+  let initialized = false;
 
-  verifyButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      const platform = this.dataset.platform;
-      const form = this.closest('form');
-      const formData = new FormData(form);
-      const button = this;
+  function initFormSync() {
+    if (initialized) return;
+    initialized = true;
 
-      const jsonData = {};
+    // 同步主表单的值到 verify 表单
+    function syncFormValues(platform) {
+      const mainForm = document.querySelector(`form[action*="/admin/crossposts/${platform}"][method="patch"]`);
+      if (!mainForm) return;
+
+      const verifyForm = document.getElementById(`verify-form-${platform}`);
+      if (!verifyForm) return;
+
+      // 获取主表单的所有字段值
+      const formData = new FormData(mainForm);
       formData.forEach((value, key) => {
-        if (key.startsWith('crosspost')) {
-          const cleanKey = key.replace('crosspost[', '').replace(']', '');
-          jsonData[cleanKey] = value;
+        if (key.startsWith('crosspost[')) {
+          const fieldName = key.replace('crosspost[', '').replace(']', '');
+          const verifyField = verifyForm.querySelector(`[name="crosspost[${fieldName}]"]`);
+          if (verifyField) {
+            verifyField.value = value;
+          }
         }
       });
+    }
 
-      button.disabled = true;
-      const originalText = button.innerHTML;
-      button.innerHTML = 'Verifying...';
-
-      fetch(`/admin/crossposts/${platform}/verify`, {
-        method: 'POST',
-        body: JSON.stringify({ crosspost: jsonData }),
-        headers: {
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'same-origin'
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    // 为每个平台设置表单同步
+    ['mastodon', 'twitter', 'bluesky'].forEach(platform => {
+      const mainForm = document.querySelector(`form[action*="/admin/crossposts/${platform}"][method="patch"]`);
+      if (mainForm) {
+        // 使用事件委托，避免重复绑定
+        mainForm.addEventListener('input', () => syncFormValues(platform), { once: false });
+        mainForm.addEventListener('change', () => syncFormValues(platform), { once: false });
+        
+        // 在 verify 表单提交前同步值
+        const verifyForm = document.getElementById(`verify-form-${platform}`);
+        if (verifyForm) {
+          verifyForm.addEventListener('submit', (e) => {
+            syncFormValues(platform);
+          }, { once: false });
         }
-        return response.json();
-      })
-      .then(data => {
-        alert(data.message);
-      })
-      .catch(error => {
-        alert('An error occurred during verification.');
-        console.error('Error:', error);
-      })
-      .finally(() => {
-        button.disabled = false;
-        button.innerHTML = originalText;
-      });
+      }
     });
+  }
+
+  // 在页面加载时初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFormSync);
+  } else {
+    initFormSync();
+  }
+
+  // 支持 Turbo
+  document.addEventListener('turbo:load', function() {
+    initialized = false;
+    initFormSync();
   });
-});
+})();
 </script>
 <% end %>

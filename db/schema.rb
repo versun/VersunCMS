@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_02_011711) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_02_065910) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -88,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_011711) do
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.string "external_id"
+    t.integer "parent_id"
     t.string "platform"
     t.datetime "published_at"
     t.integer "status", default: 0, null: false
@@ -95,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_011711) do
     t.string "url"
     t.index ["article_id", "platform", "external_id"], name: "index_comments_on_article_platform_external_id", unique: true, where: "platform IS NOT NULL AND external_id IS NOT NULL"
     t.index ["article_id"], name: "index_comments_on_article_id"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
   end
 
   create_table "crossposts", force: :cascade do |t|
@@ -222,6 +224,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_011711) do
   add_foreign_key "article_tags", "articles"
   add_foreign_key "article_tags", "tags"
   add_foreign_key "comments", "articles"
+  add_foreign_key "comments", "comments", column: "parent_id", on_delete: :cascade
   add_foreign_key "sessions", "users"
   add_foreign_key "social_media_posts", "articles"
 end
