@@ -98,7 +98,7 @@ ul {
 .timeline-item {
     display: flex;
     position: relative;
-    padding-bottom: 28px;
+    padding-bottom: 16px;
 }
 
 .timeline-item:last-child {
@@ -127,7 +127,7 @@ ul {
 .timeline-header {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     gap: 8px;
     flex-wrap: wrap;
 }
@@ -151,7 +151,7 @@ ul {
     font-size: 1.4rem;
     font-weight: 700;
     color: #111;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .post-title a {
@@ -187,7 +187,7 @@ ul {
     font-family: Georgia, "Times New Roman", Times, serif;
     font-size: 1.05rem;
     line-height: 1.6;
-    margin-top: 12px;
+    margin-top: 6px;
     overflow: hidden;
     transition: all 0.3s ease;
 }
