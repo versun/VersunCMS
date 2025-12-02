@@ -6,6 +6,7 @@
       <%= link_to "All", admin_comments_path, class: "status-tab #{params[:status].blank? ? 'active' : ''}" %>
       <%= link_to "Pending", admin_comments_path(status: 'pending'), class: "status-tab #{params[:status] == 'pending' ? 'active' : ''}" %>
       <%= link_to "Approved", admin_comments_path(status: 'approved'), class: "status-tab #{params[:status] == 'approved' ? 'active' : ''}" %>
+      <%= link_to "Rejected", admin_comments_path(status: 'rejected'), class: "status-tab #{params[:status] == 'rejected' ? 'active' : ''}" %>
     </div>
   </div>
 
@@ -38,10 +39,10 @@
               <input type="checkbox" data-batch-selection-target="selectAll" data-action="change->batch-selection#toggleAll">
             </th>
             <th class="col-actions-compact">Actions</th>
+            <th class="col-compact">Status</th>
+            <th class="col-content">Content</th>
             <th class="col-title">Article</th>
             <th class="col-title">Author</th>
-            <th class="col-content">Content</th>
-            <th class="col-compact">Status</th>
             <th class="col-date-compact">Date</th>
           </tr>
         </thead>
@@ -62,6 +63,11 @@
                           <i class="fas fa-check"></i>
                         <% end %>
                       <% end %>
+                      <% unless comment.rejected? %>
+                        <%= link_to reject_admin_comment_path(comment), data: { turbo_method: :patch }, class: "action-btn", title: "Reject" do %>
+                          <i class="fas fa-ban"></i>
+                        <% end %>
+                      <% end %>
                       <%= link_to edit_admin_comment_path(comment), class: "action-btn", title: "Edit" do %>
                         <i class="fas fa-edit"></i>
                       <% end %>
@@ -71,6 +77,18 @@
                       <i class="fas fa-trash-alt"></i>
                     <% end %>
                   </div>
+                </td>
+                <td class="col-compact">
+                  <% if comment.approved? %>
+                    <span style="color: green;">✓</span>
+                  <% elsif comment.rejected? %>
+                    <span style="color: red;">✕</span>
+                  <% else %>
+                    <span style="color: orange;">⏳</span>
+                  <% end %>
+                </td>
+                <td class="col-content">
+                  <small><%= comment.content.truncate(100) %></small>
                 </td>
                 <td class="col-title">
                   <% if comment.article %>
@@ -88,16 +106,7 @@
                     <br><small style="color: #999;">via <%= comment.platform.titleize %></small>
                   <% end %>
                 </td>
-                <td class="col-content">
-                  <small><%= comment.content.truncate(100) %></small>
-                </td>
-                <td class="col-compact">
-                  <% if comment.approved? %>
-                    <span style="color: green;">✓</span>
-                  <% else %>
-                    <span style="color: orange;">⏳</span>
-                  <% end %>
-                </td>
+                
                 <td class="col-date-compact">
                   <small><%= comment.published_at&.strftime("%m/%d %H:%M") || comment.created_at.strftime("%m/%d %H:%M") %></small>
                 </td>

@@ -56,7 +56,7 @@ Rails.application.routes.draw do
       end
       member do
         patch :approve
-        delete :reject
+        patch :reject
       end
     end
 

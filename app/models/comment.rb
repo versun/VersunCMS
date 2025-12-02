@@ -15,8 +15,8 @@ class Comment < ApplicationRecord
   validates :author_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
 
   # Scopes
-  scope :approved, -> { where(approved: true) }
-  scope :pending, -> { where(approved: false) }
+  enum :status, { pending: 0, approved: 1, rejected: 2 }, default: :pending
+
   scope :local, -> { where(platform: nil) }
   scope :mastodon, -> { where(platform: "mastodon") }
   scope :bluesky, -> { where(platform: "bluesky") }

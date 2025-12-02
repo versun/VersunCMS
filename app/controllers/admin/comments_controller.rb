@@ -5,12 +5,9 @@ class Admin::CommentsController < AdminController
     @comments = Comment.includes(:article)
 
     # Filter by status
-    case params[:status]
-    when "pending"
-      @comments = @comments.pending
-    when "approved"
-      @comments = @comments.approved
-      # else show all
+    # Filter by status
+    if params[:status].present? && Comment.statuses.key?(params[:status])
+      @comments = @comments.where(status: params[:status])
     end
 
     @comments = @comments.order(created_at: :desc).paginate(page: params[:page], per_page: 30)
@@ -36,7 +33,7 @@ class Admin::CommentsController < AdminController
   end
 
   def approve
-    if @comment.update(approved: true)
+    if @comment.approved!
       redirect_to admin_comments_path, notice: "Comment approved successfully."
     else
       redirect_to admin_comments_path, alert: "Failed to approve comment."
@@ -44,8 +41,11 @@ class Admin::CommentsController < AdminController
   end
 
   def reject
-    @comment.destroy
-    redirect_to admin_comments_path, notice: "Comment rejected and deleted."
+    if @comment.rejected!
+      redirect_to admin_comments_path, notice: "Comment rejected."
+    else
+      redirect_to admin_comments_path, alert: "Failed to reject comment."
+    end
   end
 
   def batch_destroy
@@ -71,7 +71,7 @@ class Admin::CommentsController < AdminController
 
     ids.each do |id|
       comment = Comment.find_by(id: id)
-      if comment && comment.update(approved: true)
+      if comment && comment.approved!
         count += 1
       end
     end
@@ -87,13 +87,12 @@ class Admin::CommentsController < AdminController
 
     ids.each do |id|
       comment = Comment.find_by(id: id)
-      if comment
-        comment.destroy
+      if comment && comment.rejected!
         count += 1
       end
     end
 
-    redirect_to admin_comments_path, notice: "Successfully rejected and deleted #{count} comment(s)."
+    redirect_to admin_comments_path, notice: "Successfully rejected #{count} comment(s)."
   rescue => e
     redirect_to admin_comments_path, alert: "Error rejecting comments: #{e.message}"
   end
@@ -105,6 +104,6 @@ class Admin::CommentsController < AdminController
   end
 
   def comment_params
-    params.require(:comment).permit(:author_name, :author_url, :content, :approved)
+    params.require(:comment).permit(:author_name, :author_url, :content, :status)
   end
 end

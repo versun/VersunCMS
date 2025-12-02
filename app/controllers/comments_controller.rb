@@ -4,7 +4,7 @@ class CommentsController < ApplicationController
   def create
     @comment = @article.comments.build(comment_params)
     @comment.published_at = Time.current
-    @comment.approved = false # Require manual approval
+    @comment.status = :pending # Require manual approval
 
     if @comment.save
       redirect_to article_path(@article), flash: { comment_submitted: true }
