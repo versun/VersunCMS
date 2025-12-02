@@ -9,7 +9,7 @@ xml.rss version: "2.0",
 
     @articles.each do |article|
       xml.item do
-        xml.title article.title
+        xml.title article.title.presence || article.created_at.strftime("%Y-%m-%d")
         xml.description article.description
         xml.tag!("content:encoded") { xml.cdata! article.content.to_s }
         xml.pubDate article.created_at.rfc822
