@@ -119,7 +119,7 @@ class Admin::ArticlesController < Admin::BaseController
         # First pass: create/update all comments and build external_id -> comment mapping
         platform_count = 0
         external_id_to_comment = {}
-        
+
         comments_data.each do |comment_data|
           # Skip comments without content (required field)
           next if comment_data[:content].blank?
@@ -145,7 +145,7 @@ class Admin::ArticlesController < Admin::BaseController
           elsif comment.changed?
             comment.save!
           end
-          
+
           # Store mapping for parent lookup
           external_id_to_comment[comment_data[:external_id]] = comment
         end
@@ -155,10 +155,10 @@ class Admin::ArticlesController < Admin::BaseController
           # Skip comments without content to match first pass behavior
           next if comment_data[:content].blank?
           next unless comment_data[:parent_external_id]
-          
+
           comment = external_id_to_comment[comment_data[:external_id]]
           parent_comment = external_id_to_comment[comment_data[:parent_external_id]]
-          
+
           # Only set parent if both comment and parent exist and are from the same platform
           if comment && parent_comment && comment.platform == parent_comment.platform
             comment.update(parent_id: parent_comment.id) if comment.parent_id != parent_comment.id
