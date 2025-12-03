@@ -175,7 +175,7 @@ module Integrations
             client,
             "tweets/search/recent?query=#{CGI.escape(replies_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets,conversation_id&user.fields=username,name,profile_image_url&max_results=100"
           )
-          
+
           if replies_response
             comments.concat(process_tweets(replies_response, tweet_id))
           end
@@ -183,7 +183,7 @@ module Integrations
           # 2. Get quote tweets (转帖) that quote the original tweet
           # Note: Twitter API v2 free tier may have limited support for quote tweet search
           quote_tweets = []
-          
+
           begin
             # Try searching for quote tweets using URL
             # This method may not work on all API tiers, so we wrap it in error handling
@@ -192,7 +192,7 @@ module Integrations
               client,
               "tweets/search/recent?query=#{CGI.escape(quote_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets,conversation_id&user.fields=username,name,profile_image_url&max_results=100"
             )
-            
+
             if quote_response && quote_response["data"]
               quote_tweets = process_tweets(quote_response, tweet_id)
               Rails.logger.info "Found #{quote_tweets.length} quote tweets for tweet #{tweet_id}"
@@ -201,21 +201,21 @@ module Integrations
             Rails.logger.warn "Failed to fetch quote tweets (may require higher API tier): #{e.message}"
             # Continue without quote tweets - we can still fetch direct replies
           end
-          
+
           comments.concat(quote_tweets)
 
           # 3. For each quote tweet, get its replies
           quote_tweets.each do |quote_tweet|
             quote_tweet_id = quote_tweet[:external_id]
             quote_conversation_id = quote_tweet[:conversation_id]
-            
+
             if quote_conversation_id
               quote_replies_query = "conversation_id:#{quote_conversation_id} is:reply"
               quote_replies_response, rate_limit_info = make_rate_limited_request_with_retry(
                 client,
                 "tweets/search/recent?query=#{CGI.escape(quote_replies_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets,conversation_id&user.fields=username,name,profile_image_url&max_results=100"
               )
-              
+
               if quote_replies_response
                 quote_replies = process_tweets(quote_replies_response, quote_tweet_id)
                 comments.concat(quote_replies)
@@ -271,7 +271,7 @@ module Integrations
         if tweet["referenced_tweets"]
           replied_to = tweet["referenced_tweets"].find { |ref| ref["type"] == "replied_to" }
           parent_external_id = replied_to["id"] if replied_to
-          
+
           # If no replied_to, check if it's a quote tweet
           if parent_external_id.nil?
             quoted = tweet["referenced_tweets"].find { |ref| ref["type"] == "quoted" }
@@ -553,10 +553,10 @@ module Integrations
             sleep(delay_between_requests - elapsed)
           end
         end
-        
+
         response = client.get(endpoint)
         @last_request_time = Time.current
-        
+
         # Check for rate limit in response (X gem may include this in response)
         if response.is_a?(Hash) && response["errors"]
           error = response["errors"].first
@@ -623,7 +623,7 @@ module Integrations
           reset_at: Time.current + 15.minutes # Reset window is 15 minutes
         }
 
-        [response, rate_limit_info]
+        [ response, rate_limit_info ]
       rescue => e
         error_message = e.message.to_s
         if error_message.include?("Too Many Requests") || error_message.include?("Rate limit") || error_message.include?("429")
@@ -631,14 +631,14 @@ module Integrations
           if retries <= max_retries
             wait_time = calculate_backoff_time(retries)
             Rails.logger.warn "Twitter API rate limit hit, waiting #{wait_time} seconds before retry #{retries}/#{max_retries}"
-            
+
             # Log rate limit exceeded
             handle_rate_limit_exceeded({
               limit: 180,
               remaining: 0,
               reset_at: Time.current + wait_time
             })
-            
+
             sleep(wait_time)
             retry
           else
@@ -648,7 +648,7 @@ module Integrations
               remaining: 0,
               reset_at: Time.current + 15.minutes
             })
-            return [nil, { limit: 180, remaining: 0, reset_at: Time.current + 15.minutes }]
+            [ nil, { limit: 180, remaining: 0, reset_at: Time.current + 15.minutes } ]
           end
         else
           raise
@@ -660,13 +660,13 @@ module Integrations
     def calculate_backoff_time(retry_count)
       # Exponential backoff: 15s, 30s, 60s
       base_wait = 15
-      [base_wait * (2 ** (retry_count - 1)), 300].min # Cap at 5 minutes
+      [ base_wait * (2 ** (retry_count - 1)), 300 ].min # Cap at 5 minutes
     end
 
     # Handle rate limit exceeded (429 response)
     def handle_rate_limit_exceeded(rate_limit_info)
       reset_time = rate_limit_info[:reset_at] || Time.current + 15.minutes
-      wait_seconds = [(reset_time - Time.current).to_i, 0].max
+      wait_seconds = [ (reset_time - Time.current).to_i, 0 ].max
 
       Rails.logger.error "🚫 Twitter API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
 
