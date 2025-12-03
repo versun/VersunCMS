@@ -146,7 +146,7 @@ module Integrations
       end
     end
 
-    # Fetch comments (replies) for a Twitter/X post
+    # Fetch comments (replies and quote tweets) for a Twitter/X post
     # Returns a hash with :comments array and :rate_limit info
     def fetch_comments(post_url)
       default_response = { comments: [], rate_limit: nil }
@@ -162,60 +162,69 @@ module Integrations
 
         # Use Twitter API v2 to get conversation thread
         # Note: Free tier has limited access, using conversation_id lookup
-        response = client.get("tweets/#{tweet_id}?expansions=author_id,referenced_tweets.id&tweet.fields=conversation_id,created_at,author_id&user.fields=username,name,profile_image_url")
+        response = make_rate_limited_request(client, "tweets/#{tweet_id}?expansions=author_id,referenced_tweets.id&tweet.fields=conversation_id,created_at,author_id&user.fields=username,name,profile_image_url")
 
         if response && response["data"]
           conversation_id = response["data"]["conversation_id"]
-
-          # Search for replies in the conversation
-          # Free tier allows basic search
-          # Include referenced_tweets to get parent relationship
-          search_query = "conversation_id:#{conversation_id} is:reply"
-          search_response = client.get("tweets/search/recent?query=#{CGI.escape(search_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets&user.fields=username,name,profile_image_url&max_results=100")
-
           comments = []
-          if search_response && search_response["data"]
-            users_map = {}
-            if search_response["includes"] && search_response["includes"]["users"]
-              search_response["includes"]["users"].each do |user|
-                users_map[user["id"]] = user
-              end
+          rate_limit_info = nil
+
+          # 1. Get direct replies to the original tweet
+          replies_query = "conversation_id:#{conversation_id} is:reply"
+          replies_response, rate_limit_info = make_rate_limited_request_with_retry(
+            client,
+            "tweets/search/recent?query=#{CGI.escape(replies_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets,conversation_id&user.fields=username,name,profile_image_url&max_results=100"
+          )
+          
+          if replies_response
+            comments.concat(process_tweets(replies_response, tweet_id))
+          end
+
+          # 2. Get quote tweets (转帖) that quote the original tweet
+          # Note: Twitter API v2 free tier may have limited support for quote tweet search
+          quote_tweets = []
+          
+          begin
+            # Try searching for quote tweets using URL
+            # This method may not work on all API tiers, so we wrap it in error handling
+            quote_query = "url:#{CGI.escape(post_url)} is:quote"
+            quote_response, rate_limit_info = make_rate_limited_request_with_retry(
+              client,
+              "tweets/search/recent?query=#{CGI.escape(quote_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets,conversation_id&user.fields=username,name,profile_image_url&max_results=100"
+            )
+            
+            if quote_response && quote_response["data"]
+              quote_tweets = process_tweets(quote_response, tweet_id)
+              Rails.logger.info "Found #{quote_tweets.length} quote tweets for tweet #{tweet_id}"
             end
+          rescue => e
+            Rails.logger.warn "Failed to fetch quote tweets (may require higher API tier): #{e.message}"
+            # Continue without quote tweets - we can still fetch direct replies
+          end
+          
+          comments.concat(quote_tweets)
 
-            # Build a map of referenced tweets for parent lookup
-            referenced_tweets_map = {}
-            if search_response["includes"] && search_response["includes"]["tweets"]
-              search_response["includes"]["tweets"].each do |ref_tweet|
-                referenced_tweets_map[ref_tweet["id"]] = ref_tweet
+          # 3. For each quote tweet, get its replies
+          quote_tweets.each do |quote_tweet|
+            quote_tweet_id = quote_tweet[:external_id]
+            quote_conversation_id = quote_tweet[:conversation_id]
+            
+            if quote_conversation_id
+              quote_replies_query = "conversation_id:#{quote_conversation_id} is:reply"
+              quote_replies_response, rate_limit_info = make_rate_limited_request_with_retry(
+                client,
+                "tweets/search/recent?query=#{CGI.escape(quote_replies_query)}&expansions=author_id,referenced_tweets.id&tweet.fields=created_at,referenced_tweets,conversation_id&user.fields=username,name,profile_image_url&max_results=100"
+              )
+              
+              if quote_replies_response
+                quote_replies = process_tweets(quote_replies_response, quote_tweet_id)
+                comments.concat(quote_replies)
               end
-            end
-
-            search_response["data"].each do |tweet|
-              author = users_map[tweet["author_id"]]
-              next unless author
-
-              # Find parent external_id from referenced_tweets
-              parent_external_id = nil
-              if tweet["referenced_tweets"]
-                replied_to = tweet["referenced_tweets"].find { |ref| ref["type"] == "replied_to" }
-                parent_external_id = replied_to["id"] if replied_to
-              end
-
-              comments << {
-                external_id: tweet["id"],
-                author_name: author["name"],
-                author_username: author["username"],
-                author_avatar_url: author["profile_image_url"],
-                content: tweet["text"],
-                published_at: Time.parse(tweet["created_at"]),
-                url: "https://x.com/#{author["username"]}/status/#{tweet["id"]}",
-                parent_external_id: parent_external_id
-              }
             end
           end
 
-          # Extract rate limit info from response headers if available
-          rate_limit_info = {
+          # Use the last known rate limit info, or create default
+          rate_limit_info ||= {
             limit: nil,
             remaining: nil,
             reset_at: nil
@@ -231,6 +240,68 @@ module Integrations
         Rails.logger.error e.backtrace.join("\n")
         default_response
       end
+    end
+
+    # Process tweets from API response and convert to comment format
+    def process_tweets(search_response, parent_tweet_id)
+      comments = []
+      return comments unless search_response && search_response["data"]
+
+      users_map = {}
+      if search_response["includes"] && search_response["includes"]["users"]
+        search_response["includes"]["users"].each do |user|
+          users_map[user["id"]] = user
+        end
+      end
+
+      # Build a map of referenced tweets for parent lookup
+      referenced_tweets_map = {}
+      if search_response["includes"] && search_response["includes"]["tweets"]
+        search_response["includes"]["tweets"].each do |ref_tweet|
+          referenced_tweets_map[ref_tweet["id"]] = ref_tweet
+        end
+      end
+
+      search_response["data"].each do |tweet|
+        author = users_map[tweet["author_id"]]
+        next unless author
+
+        # Find parent external_id from referenced_tweets
+        parent_external_id = nil
+        if tweet["referenced_tweets"]
+          replied_to = tweet["referenced_tweets"].find { |ref| ref["type"] == "replied_to" }
+          parent_external_id = replied_to["id"] if replied_to
+          
+          # If no replied_to, check if it's a quote tweet
+          if parent_external_id.nil?
+            quoted = tweet["referenced_tweets"].find { |ref| ref["type"] == "quoted" }
+            parent_external_id = quoted["id"] if quoted
+          end
+        end
+
+        # Use the provided parent_tweet_id if no parent found in referenced_tweets
+        parent_external_id ||= parent_tweet_id
+
+        comment_data = {
+          external_id: tweet["id"],
+          author_name: author["name"],
+          author_username: author["username"],
+          author_avatar_url: author["profile_image_url"],
+          content: tweet["text"],
+          published_at: Time.parse(tweet["created_at"]),
+          url: "https://x.com/#{author["username"]}/status/#{tweet["id"]}",
+          parent_external_id: parent_external_id
+        }
+
+        # Store conversation_id for quote tweets so we can fetch their replies
+        if tweet["conversation_id"]
+          comment_data[:conversation_id] = tweet["conversation_id"]
+        end
+
+        comments << comment_data
+      end
+
+      comments
     end
 
     private
@@ -463,6 +534,166 @@ module Integrations
     def extract_tweet_id_from_url(url)
       match = url.match(%r{(?:twitter\.com|x\.com)/\w+/status/(\d+)})
       match ? match[1] : nil
+    end
+
+    # Make a rate-limited API request with delay between requests
+    # Twitter API v2 limits:
+    # - GET /2/tweets/:id: 300 requests per 15 minutes (20 RPM)
+    # - GET /2/tweets/search/recent: 180 requests per 15 minutes (12 RPM)
+    # We use conservative 10 RPM (6 seconds between requests)
+    def make_rate_limited_request(client, endpoint, max_retries: 3)
+      retries = 0
+      delay_between_requests = 6 # seconds - conservative 10 RPM limit
+
+      begin
+        # Add delay before request (except first request)
+        if @last_request_time
+          elapsed = Time.current - @last_request_time
+          if elapsed < delay_between_requests
+            sleep(delay_between_requests - elapsed)
+          end
+        end
+        
+        response = client.get(endpoint)
+        @last_request_time = Time.current
+        
+        # Check for rate limit in response (X gem may include this in response)
+        if response.is_a?(Hash) && response["errors"]
+          error = response["errors"].first
+          if error && (error["title"]&.include?("Too Many Requests") || error["detail"]&.include?("Too Many Requests"))
+            raise "Rate limit exceeded: #{error["detail"] || error["title"]}"
+          end
+        end
+
+        response
+      rescue => e
+        error_message = e.message.to_s
+        if error_message.include?("Too Many Requests") || error_message.include?("Rate limit") || error_message.include?("429")
+          retries += 1
+          if retries <= max_retries
+            wait_time = calculate_backoff_time(retries)
+            Rails.logger.warn "Twitter API rate limit hit, waiting #{wait_time} seconds before retry #{retries}/#{max_retries}"
+            sleep(wait_time)
+            retry
+          else
+            Rails.logger.error "Twitter API rate limit exceeded after #{max_retries} retries"
+            handle_rate_limit_exceeded({
+              limit: 180,
+              remaining: 0,
+              reset_at: Time.current + 15.minutes
+            })
+            raise
+          end
+        else
+          raise
+        end
+      end
+    end
+
+    # Make a rate-limited request with retry logic and return rate limit info
+    def make_rate_limited_request_with_retry(client, endpoint, max_retries: 3)
+      retries = 0
+      delay_between_requests = 6 # seconds - conservative 10 RPM limit
+
+      begin
+        # Add delay before request (except first request)
+        if @last_request_time
+          elapsed = Time.current - @last_request_time
+          if elapsed < delay_between_requests
+            sleep(delay_between_requests - elapsed)
+          end
+        end
+
+        response = client.get(endpoint)
+        @last_request_time = Time.current
+
+        # Check for rate limit errors
+        if response.is_a?(Hash) && response["errors"]
+          error = response["errors"].first
+          if error && (error["title"]&.include?("Too Many Requests") || error["detail"]&.include?("Too Many Requests"))
+            raise "Rate limit exceeded: #{error["detail"] || error["title"]}"
+          end
+        end
+
+        # Try to extract rate limit info from response
+        # Note: X gem may not expose headers directly, so we estimate based on API limits
+        rate_limit_info = {
+          limit: 180, # Twitter search API limit per 15 minutes
+          remaining: nil, # X gem may not expose this
+          reset_at: Time.current + 15.minutes # Reset window is 15 minutes
+        }
+
+        [response, rate_limit_info]
+      rescue => e
+        error_message = e.message.to_s
+        if error_message.include?("Too Many Requests") || error_message.include?("Rate limit") || error_message.include?("429")
+          retries += 1
+          if retries <= max_retries
+            wait_time = calculate_backoff_time(retries)
+            Rails.logger.warn "Twitter API rate limit hit, waiting #{wait_time} seconds before retry #{retries}/#{max_retries}"
+            
+            # Log rate limit exceeded
+            handle_rate_limit_exceeded({
+              limit: 180,
+              remaining: 0,
+              reset_at: Time.current + wait_time
+            })
+            
+            sleep(wait_time)
+            retry
+          else
+            Rails.logger.error "Twitter API rate limit exceeded after #{max_retries} retries"
+            handle_rate_limit_exceeded({
+              limit: 180,
+              remaining: 0,
+              reset_at: Time.current + 15.minutes
+            })
+            return [nil, { limit: 180, remaining: 0, reset_at: Time.current + 15.minutes }]
+          end
+        else
+          raise
+        end
+      end
+    end
+
+    # Calculate exponential backoff time for retries
+    def calculate_backoff_time(retry_count)
+      # Exponential backoff: 15s, 30s, 60s
+      base_wait = 15
+      [base_wait * (2 ** (retry_count - 1)), 300].min # Cap at 5 minutes
+    end
+
+    # Handle rate limit exceeded (429 response)
+    def handle_rate_limit_exceeded(rate_limit_info)
+      reset_time = rate_limit_info[:reset_at] || Time.current + 15.minutes
+      wait_seconds = [(reset_time - Time.current).to_i, 0].max
+
+      Rails.logger.error "🚫 Twitter API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
+
+      ActivityLog.create!(
+        action: "rate_limited",
+        target: "twitter_api",
+        level: :error,
+        description: "Twitter API rate limit exceeded. Waiting until #{reset_time}"
+      )
+    end
+
+    # Log rate limit status for monitoring
+    def log_rate_limit_status(rate_limit_info)
+      return unless rate_limit_info[:remaining]
+
+      if rate_limit_info[:remaining] < 20
+        Rails.logger.warn "⚠️  Twitter API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining (resets at #{rate_limit_info[:reset_at]})"
+
+        ActivityLog.create!(
+          action: "warning",
+          target: "twitter_api",
+          level: :warning,
+          description: "Twitter API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+        )
+      elsif rate_limit_info[:remaining] < 50
+        Rails.logger.info "Twitter API rate limit: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+      end
     end
   end
 end
