@@ -7,7 +7,7 @@ class Admin::BackupsController < Admin::BaseController
   def update
     @setting = Setting.first
     params_hash = backup_params.to_h
-    
+
     # 如果 token 字段为空，保留原有值
     if params_hash[:github_token].blank? && @setting.github_token.present?
       params_hash[:github_token] = @setting.github_token
