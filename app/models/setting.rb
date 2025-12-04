@@ -1,6 +1,7 @@
 class Setting < ApplicationRecord
   has_rich_text :footer
   before_save :parse_social_links_json
+  after_save :update_github_backup_schedule, if: :github_backup_settings_changed?
 
   # Virtual attribute for JSON textarea input
   attr_accessor :social_links_json
@@ -31,5 +32,16 @@ class Setting < ApplicationRecord
         throw :abort
       end
     end
+  end
+
+  def github_backup_settings_changed?
+    saved_change_to_github_backup_enabled? ||
+      saved_change_to_github_backup_cron? ||
+      saved_change_to_github_repo_url? ||
+      saved_change_to_github_token?
+  end
+
+  def update_github_backup_schedule
+    ScheduledGithubBackupJob.update_schedule
   end
 end

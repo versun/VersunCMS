@@ -24,30 +24,53 @@ class ScheduledGithubBackupJob < ApplicationJob
     # Remove existing scheduled job if any
     remove_schedule
 
-    # Add new scheduled job if enabled and cron is set
-    if setting.github_backup_enabled && setting.github_backup_cron.present?
+    # Add new scheduled job if enabled, cron is set, and configuration is complete
+    if setting.github_backup_enabled && 
+       setting.github_backup_cron.present? && 
+       setting.github_repo_url.present? && 
+       setting.github_token.present?
       begin
-        # Parse cron expression and schedule the job
-        # Using solid_queue's recurring task functionality
-        Rails.logger.info "Scheduling GitHub backup with cron: #{setting.github_backup_cron}"
+        # Validate cron format using Fugit (used by SolidQueue)
+        cron_schedule = setting.github_backup_cron.strip
+        fugit_cron = Fugit.parse(cron_schedule)
+        
+        unless fugit_cron
+          Rails.logger.error "Invalid cron format for GitHub backup: #{cron_schedule}"
+          return
+        end
 
-        # Note: For solid_queue, you would typically define recurring jobs in config/recurring.yml
-        # This method is a placeholder for future integration
-        # For now, users need to manually add to config/recurring.yml:
-        #
-        # scheduled_github_backup:
-        #   class: ScheduledGithubBackupJob
-        #   schedule: "0 2 * * *"  # User's cron expression
+        # Use SolidQueue::RecurringTask to create a dynamic (non-static) recurring task
+        # This allows us to programmatically manage the schedule without editing recurring.yml
+        Rails.logger.info "Scheduling GitHub backup with cron: #{cron_schedule}"
 
+        SolidQueue::RecurringTask.find_or_initialize_by(key: "github_backup").tap do |task|
+          task.class_name = "ScheduledGithubBackupJob"
+          task.schedule = cron_schedule
+          task.queue_name = "default"
+          task.priority = 0
+          task.static = false  # Mark as non-static so it can be managed programmatically
+          task.description = "GitHub Backup scheduled task"
+          task.save!
+        end
+
+        Rails.logger.info "GitHub backup scheduled successfully with cron: #{cron_schedule}"
       rescue => e
         Rails.logger.error "Failed to schedule GitHub backup: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
       end
+    else
+      Rails.logger.info "GitHub backup schedule not created: configuration incomplete or disabled"
     end
   end
 
   def self.remove_schedule
-    # Placeholder for removing scheduled job
-    # In solid_queue, you would modify config/recurring.yml
-    Rails.logger.info "Note: To enable/disable scheduled backups, update config/recurring.yml"
+    # Remove the dynamic recurring task if it exists
+    task = SolidQueue::RecurringTask.find_by(key: "github_backup", static: false)
+    if task
+      task.destroy
+      Rails.logger.info "Removed GitHub backup scheduled task"
+    end
+  rescue => e
+    Rails.logger.error "Failed to remove GitHub backup schedule: #{e.message}"
   end
 end

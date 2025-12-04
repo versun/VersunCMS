@@ -8,6 +8,8 @@ class Admin::BackupsController < Admin::BaseController
     @setting = Setting.first
 
     if @setting.update(backup_params)
+      # Update the scheduled job when backup settings are saved
+      ScheduledGithubBackupJob.update_schedule
       redirect_to admin_backups_path, notice: "Backup settings saved successfully"
     else
       render :show, alert: "Failed to save backup settings"
