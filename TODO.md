@@ -1,13 +1,13 @@
 - [x] 确定开源协议 - 采用AGPL
 - [x] 首次安装设置指南
-- [ ] github backup图片没有备份到github上
+- [x] github backup图片没有备份到github上
 - [x] 点Submit Comment后应该弹唱对话框，提示用户，感谢评论，Your comment will be reviewed before being published.
 - [ ] 评论功能可关闭
 - [x] 添加twitter的评论获取功能，只能手动获取
 - [x] Post list管理页面的action 添加评论获取功能
 - [ ] Site setting页面添加站点icon上传，自动重命名并上传到static file中
 - [ ] 添加照片集功能 
-- [ ] 添加保存到Internet Archive功能，并在article meta中提供链接
+- [x] 添加保存到Internet Archive功能，并在article meta中提供链接
 - [ ] 添加更多cross post平台
 - [ ] 添加“自定义URL格式” / Custom route: Post URL, Page URL, Tag URL
 - [ ] 添加打赏功能，Patreon，Github，AFdian
@@ -18,7 +18,7 @@
 - [ ] Newsletter功能：只有简单的订阅和发送功能，每个tag除了rss也支持newsletterter订阅；如果要模版跟踪等高级功能，则使用listmonk
 - [ ] 多站点多用户
 - [ ] 文章多修订历史功能
-- [ ] 暗黑模式
+- [x] 暗黑模式
 - [ ] AI功能
     - [ ] slug自动生成
     - [ ] description自动生成
