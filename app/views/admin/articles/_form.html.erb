@@ -111,6 +111,25 @@
       <% end %>
     <% end %>
 
+    <% internet_archive_enabled = Crosspost.find_by(platform: 'internet_archive')&.enabled? %>
+    <div class="field checkbox">
+      <%= form.check_box :crosspost_internet_archive, disabled: !internet_archive_enabled %>
+      <%= form.label :crosspost_internet_archive, "Archive to Internet Archive" %>
+      <% unless internet_archive_enabled %>
+        <span class="info-text">(not enabled)</span>
+      <% end %>
+    </div>
+    <% if internet_archive_enabled %>
+      <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'internet_archive') do |post_form| %>
+        <% if post_form.object.platform == 'internet_archive' %>
+          <div class="field">
+            <%= post_form.text_field :url, placeholder: "Archive URL" %>
+            <%= post_form.hidden_field :platform, value: "internet_archive" %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+
     <p><%= link_to "Cross Post Settings", admin_crossposts_path %></p>
   </div>
 

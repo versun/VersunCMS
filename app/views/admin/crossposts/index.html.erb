@@ -167,6 +167,32 @@
     <div id="verify-messages-bluesky"></div>
   </div>
 
+  <div class="form-section compact">
+    <h3>Internet Archive</h3>
+    <small>Automatically archive your articles to the Internet Archive's Wayback Machine. No credentials required.</small>
+    
+    <%= form_with(model: @internet_archive, url: admin_crosspost_path(@internet_archive.platform), method: :patch) do |f| %>
+      <%= f.hidden_field :platform, value: 'internet_archive' %>
+
+      <div class="field checkbox">
+        <%= f.check_box :enabled, id: 'crosspost_enabled_internet_archive' %>
+        <%= f.label :enabled, "Enable Internet Archive CrossPost", for: 'crosspost_enabled_internet_archive' %>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit "Save", class: 'btn btn-primary' %>
+        <div id="verify-button-internet_archive">
+          <%= button_tag "Verify", type: 'submit', class: 'btn btn-secondary', form: "verify-form-internet_archive", data: { turbo_frame: "_top" } %>
+        </div>
+      </div>
+    <% end %>
+
+    <%= form_with(url: verify_admin_crosspost_path('internet_archive'), method: :post, data: { turbo: true }, id: "verify-form-internet_archive") do |vf| %>
+      <%= hidden_field_tag 'crosspost[platform]', 'internet_archive' %>
+    <% end %>
+    <div id="verify-messages-internet_archive"></div>
+  </div>
+
   <div class="form-section">
     <h3>Activity History</h3>
     <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
@@ -205,7 +231,7 @@
     }
 
     // 为每个平台设置表单同步
-    ['mastodon', 'twitter', 'bluesky'].forEach(platform => {
+    ['mastodon', 'twitter', 'bluesky', 'internet_archive'].forEach(platform => {
       const mainForm = document.querySelector(`form[action*="/admin/crossposts/${platform}"][method="patch"]`);
       if (mainForm) {
         // 使用事件委托，避免重复绑定

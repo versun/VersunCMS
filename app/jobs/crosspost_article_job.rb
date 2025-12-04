@@ -23,6 +23,11 @@ class CrosspostArticleJob < ApplicationJob
         if bluesky_url
           social_media_posts["bluesky"] = bluesky_url
         end
+    when "internet_archive"
+        archive_url = Integrations::InternetArchiveService.new.post(article)
+        if archive_url
+          social_media_posts["internet_archive"] = archive_url
+        end
     end
 
     # Update article with all crosspost URLs at once
