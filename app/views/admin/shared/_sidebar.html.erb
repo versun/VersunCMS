@@ -1,7 +1,35 @@
-<aside class="admin-sidebar">
-  <div class="sidebar-header">
-    <%= link_to "VersunCMS", root_path, class: "sidebar-brand" %>
+<div data-controller="sidebar">
+  <!-- Mobile Menu Button -->
+  <button 
+    type="button" 
+    class="mobile-menu-btn"
+    data-action="click->sidebar#toggle"
+    aria-label="Toggle menu">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Overlay -->
+  <div 
+    class="sidebar-overlay"
+    data-sidebar-target="overlay"
+    data-action="click->sidebar#close">
   </div>
+
+  <aside 
+    class="admin-sidebar"
+    data-sidebar-target="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-header-content">
+        <%= link_to "VersunCMS", root_path, class: "sidebar-brand" %>
+        <button 
+          type="button" 
+          class="sidebar-close-btn"
+          data-action="click->sidebar#close"
+          aria-label="Close menu">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
 
   <nav class="sidebar-nav">
     <div class="nav-section">
@@ -77,4 +105,5 @@
       <% end %>
     </div>
   <% end %>
-</aside>
+  </aside>
+</div>
