@@ -6,8 +6,14 @@ class Admin::BackupsController < Admin::BaseController
 
   def update
     @setting = Setting.first
+    params_hash = backup_params.to_h
+    
+    # 如果 token 字段为空，保留原有值
+    if params_hash[:github_token].blank? && @setting.github_token.present?
+      params_hash[:github_token] = @setting.github_token
+    end
 
-    if @setting.update(backup_params)
+    if @setting.update(params_hash)
       # Update the scheduled job when backup settings are saved
       ScheduledGithubBackupJob.update_schedule
       redirect_to admin_backups_path, notice: "Backup settings saved successfully"

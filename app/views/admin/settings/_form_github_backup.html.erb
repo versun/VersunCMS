@@ -11,9 +11,20 @@
   <small>The GitHub repository URL where backups will be stored</small>
 </div>
 
-<div class="field">
+<div class="field" data-controller="password-toggle">
   <%= form.label :github_token, "GitHub Personal Access Token" %>
-  <%= form.password_field :github_token, placeholder: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" %>
+  <div style="position: relative; display: flex; align-items: center;">
+    <%= form.password_field :github_token, 
+        data: { password_toggle_target: "input" },
+        placeholder: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        style: "flex: 1; padding-right: 4rem;" %>
+    <button type="button" 
+            data-password-toggle-target="toggleButton"
+            data-action="click->password-toggle#toggle"
+            style="position: absolute; right: 0.5rem; padding: 0.25rem 0.5rem; font-size: 12px; border: 1px solid var(--border, #ddd); border-radius: 4px; background: var(--bg, #fff); cursor: pointer; color: var(--text, #333);">
+      Show
+    </button>
+  </div>
   <small>
     Create a token at 
     <%= link_to "GitHub Settings", "https://github.com/settings/tokens/new", target: "_blank" %>
