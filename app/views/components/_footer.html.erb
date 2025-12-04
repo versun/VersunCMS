@@ -2,4 +2,12 @@
     <small style="color:grey">
     <%= site_settings[:footer] %>
     </small>
+    <div class="theme-toggle">
+        <button type="button" 
+                data-action="click->theme-toggle#toggle"
+                class="theme-toggle-btn"
+                aria-label="theme-toggle">
+            <i class="fas fa-moon" data-theme-toggle-target="icon"></i>
+        </button>
+    </div>
 </footer>

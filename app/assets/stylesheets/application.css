@@ -75,6 +75,13 @@ ul {
     /* Hide for now to match image strictly, or keep if user wants */
 }
 
+footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
 /* Article List - Timeline Style */
 .article-list.timeline {
     display: flex;
@@ -317,4 +324,240 @@ h2 {
     .sidebar-nav li {
         margin-top: 0;
     }
+
+    footer {
+        align-items: center;
+    }
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    margin-top: 1rem;
+}
+
+.theme-toggle-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #555;
+    padding: 0;
+}
+
+.theme-toggle-btn:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
+    color: #333;
+}
+
+.theme-toggle-btn i {
+    font-size: 16px;
+}
+
+/* Dark Mode Styles */
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --border-color: #333;
+    --hover-bg: #2a2a2a;
+    --accent-color: #ff6b35;
+}
+
+[data-theme="dark"] body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .sidebar-nav a {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .sidebar-nav a:hover {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .sidebar-nav a.current {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] .post-title {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-title a {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-title a:hover {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] .post-description {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .post-content {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .tag {
+    background-color: #2a2a2a;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .tag:hover {
+    background-color: #3a3a3a;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .article h1,
+[data-theme="dark"] h2 {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] .pagination a,
+[data-theme="dark"] .pagination em,
+[data-theme="dark"] .pagination span {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .pagination a:hover {
+    background-color: var(--hover-bg);
+    border-color: #444;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .pagination .current {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+[data-theme="dark"] .article-list.timeline::before {
+    background-color: var(--border-color);
+}
+
+[data-theme="dark"] .timeline-marker {
+    background-color: var(--text-secondary);
+    border-color: var(--bg-color);
+}
+
+[data-theme="dark"] .timeline-date {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] footer small {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+    background-color: var(--hover-bg);
+    border-color: #444;
+    color: var(--text-color);
+}
+
+/* Dark Mode - Comments Section */
+[data-theme="dark"] #comments-section h3 {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .comment {
+    border-left-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .comment strong {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .comment a {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .comment span {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .comment small {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .comment div {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .reply-button {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .reply-button:hover {
+    color: var(--text-color) !important;
+}
+
+/* Dark Mode - Comment Form */
+[data-theme="dark"] .comment-form {
+    background-color: #2a2a2a !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .comment-form input[type="text"],
+[data-theme="dark"] .comment-form input[type="url"],
+[data-theme="dark"] .comment-form textarea {
+    background-color: #1a1a1a !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .comment-form input[type="text"]::placeholder,
+[data-theme="dark"] .comment-form input[type="url"]::placeholder,
+[data-theme="dark"] .comment-form textarea::placeholder {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .comment-form input[type="text"]:focus,
+[data-theme="dark"] .comment-form input[type="url"]:focus,
+[data-theme="dark"] .comment-form textarea:focus {
+    border-color: var(--accent-color) !important;
+    outline: none;
+}
+
+[data-theme="dark"] .comment-form button[type="button"][style*="background-color: #f0f0f0"] {
+    background-color: var(--hover-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .comment-form button[type="button"][style*="background-color: #f0f0f0"]:hover {
+    background-color: #3a3a3a !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] #comment-success-message {
+    background-color: #2a2a2a !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #comment-success-message p {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .comment-form input[type="submit"] {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .comment-form input[type="submit"]:hover {
+    background-color: #ff8c5a !important;
 }
