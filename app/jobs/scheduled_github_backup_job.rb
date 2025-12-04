@@ -25,15 +25,15 @@ class ScheduledGithubBackupJob < ApplicationJob
     remove_schedule
 
     # Add new scheduled job if enabled, cron is set, and configuration is complete
-    if setting.github_backup_enabled && 
-       setting.github_backup_cron.present? && 
-       setting.github_repo_url.present? && 
+    if setting.github_backup_enabled &&
+       setting.github_backup_cron.present? &&
+       setting.github_repo_url.present? &&
        setting.github_token.present?
       begin
         # Validate cron format using Fugit (used by SolidQueue)
         cron_schedule = setting.github_backup_cron.strip
         fugit_cron = Fugit.parse(cron_schedule)
-        
+
         unless fugit_cron
           Rails.logger.error "Invalid cron format for GitHub backup: #{cron_schedule}"
           return
