@@ -66,7 +66,7 @@ module Integrations
 
       encoded_url = URI.encode_www_form_component(url)
       save_uri = URI("https://web.archive.org/save/#{encoded_url}")
-      
+
       http = Net::HTTP.new(save_uri.host, save_uri.port)
       http.use_ssl = true
       http.open_timeout = 30
@@ -82,10 +82,10 @@ module Integrations
       if response.is_a?(Net::HTTPSuccess) || response.is_a?(Net::HTTPRedirection) || response.code == "200"
         # 等待一小段时间，然后检查存档状态
         sleep(2)
-        
+
         # 检查存档 URL
         archived_url = check_archived_url(url)
-        
+
         if archived_url
           archived_url
         else
@@ -146,4 +146,3 @@ module Integrations
     end
   end
 end
-
