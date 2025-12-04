@@ -273,6 +273,25 @@ h2 {
     pointer-events: none;
 }
 
+/* Loading Spinner */
+.loading-spinner {
+    min-height: 60px;
+    transition: opacity 0.3s ease;
+}
+
+.loading-spinner i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Mobile Layout */
 @media (max-width: 768px) {
     .site-container {
