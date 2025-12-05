@@ -27,6 +27,9 @@ Rails.application.routes.draw do
         post :batch_destroy
         post :batch_publish
         post :batch_unpublish
+        post :batch_add_tags
+        post :batch_crosspost
+        post :batch_newsletter
       end
       member do
         patch :publish

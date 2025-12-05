@@ -593,6 +593,11 @@ code {
     color: #991b1b;
 }
 
+.status-badge.status-shared {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
 /* Actions */
 .action-buttons {
     display: flex;

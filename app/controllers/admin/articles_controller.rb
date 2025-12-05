@@ -44,10 +44,16 @@ class Admin::ArticlesController < Admin::BaseController
   end
 
   def destroy
-    @article.destroy!
+    if @article.status != "trash"
+      @article.update(status: "trash")
+      notice_message = "Article was successfully moved to trash."
+    else
+      @article.destroy!
+      notice_message = "Article was successfully deleted."
+    end
 
     respond_to do |format|
-      format.html { redirect_to admin_articles_path, status: :see_other, notice: "Article was successfully deleted." }
+      format.html { redirect_to admin_articles_path, status: :see_other, notice: notice_message }
       format.json { head :no_content }
     end
   end
@@ -79,6 +85,193 @@ class Admin::ArticlesController < Admin::BaseController
       redirect_to admin_articles_path, notice: "Article was successfully unpublished."
     else
       redirect_to admin_articles_path, alert: "Failed to unpublish article."
+    end
+  end
+
+  def batch_add_tags
+    ids = params[:ids] || []
+    tag_names = params[:tag_names] || ""
+    
+    if ids.empty?
+      redirect_to admin_articles_path, alert: "请至少选择一个文章。"
+      return
+    end
+    
+    if tag_names.blank?
+      redirect_to admin_articles_path, alert: "请输入至少一个标签。"
+      return
+    end
+    
+    count = 0
+    errors = []
+    
+    ids.each do |id|
+      article = Article.find_by(slug: id)
+      next unless article
+      
+      begin
+        # 创建或查找新标签
+        new_tags = Tag.find_or_create_by_names(tag_names).compact
+        
+        if new_tags.empty?
+          errors << "#{article.title || article.slug || 'Unknown'}: 无法创建标签"
+          next
+        end
+        
+        # 获取现有标签的ID
+        existing_tag_ids = article.tags.pluck(:id)
+        
+        # 添加新标签（只添加不存在的标签）
+        new_tags.each do |tag|
+          next unless tag&.id # 确保tag和id都存在
+          unless existing_tag_ids.include?(tag.id)
+            ArticleTag.find_or_create_by(article_id: article.id, tag_id: tag.id)
+          end
+        end
+        
+        count += 1
+      rescue => e
+        errors << "#{article.title || article.slug || 'Unknown'}: #{e.message}"
+      end
+    end
+    
+    if errors.any?
+      redirect_to admin_articles_path, alert: "成功添加标签到 #{count} 篇文章。错误: #{errors.join('; ')}"
+    else
+      redirect_to admin_articles_path, notice: "成功添加标签到 #{count} 篇文章。"
+    end
+  end
+
+  def batch_crosspost
+    ids = params[:ids] || []
+    platforms = params[:platforms] || []
+    
+    if ids.empty?
+      redirect_to admin_articles_path, alert: "请至少选择一个文章。"
+      return
+    end
+    
+    if platforms.empty?
+      redirect_to admin_articles_path, alert: "请至少选择一个平台。"
+      return
+    end
+    
+    count = 0
+    errors = []
+    
+    ids.each do |id|
+      article = Article.find_by(slug: id)
+      next unless article
+      
+      # 确保文章已发布
+      unless article.publish?
+        article.update(status: :publish) if article.draft? || article.schedule?
+      end
+      
+      begin
+        platforms.each do |platform|
+          # 检查平台是否启用
+          crosspost = Crosspost.find_by(platform: platform)
+          next unless crosspost&.enabled?
+          
+          # 直接触发crosspost job
+          CrosspostArticleJob.perform_later(article.id, platform)
+        end
+        count += 1
+      rescue => e
+        errors << "#{article.title}: #{e.message}"
+      end
+    end
+    
+    if errors.any?
+      redirect_to admin_articles_path, alert: "成功提交 #{count} 篇文章进行跨平台发布。错误: #{errors.join('; ')}"
+    else
+      redirect_to admin_articles_path, notice: "成功提交 #{count} 篇文章进行跨平台发布。"
+    end
+  end
+
+  def batch_newsletter
+    ids = params[:ids] || []
+    
+    if ids.empty?
+      redirect_to admin_articles_path, alert: "请至少选择一个文章。"
+      return
+    end
+    
+    count = 0
+    errors = []
+    
+    ids.each do |id|
+      article = Article.find_by(slug: id)
+      next unless article
+      
+      # 确保文章已发布
+      unless article.publish?
+        article.update(status: :publish) if article.draft? || article.schedule?
+      end
+      
+      begin
+        # 检查newsletter配置
+        newsletter_setting = NewsletterSetting.instance
+        if newsletter_setting.enabled? && newsletter_setting.configured? && article.publish?
+          if newsletter_setting.native?
+            NativeNewsletterSenderJob.perform_later(article.id)
+          elsif newsletter_setting.listmonk?
+            ListmonkSenderJob.perform_later(article.id)
+          end
+          count += 1
+        else
+          errors << "#{article.title}: Newsletter未配置或未启用"
+        end
+      rescue => e
+        errors << "#{article.title}: #{e.message}"
+      end
+    end
+    
+    if errors.any?
+      redirect_to admin_articles_path, alert: "成功提交 #{count} 篇文章发送邮件。错误: #{errors.join('; ')}"
+    else
+      redirect_to admin_articles_path, notice: "成功提交 #{count} 篇文章发送邮件。"
+    end
+  end
+
+  def batch_destroy
+    ids = params[:ids] || []
+    
+    if ids.empty?
+      redirect_to admin_articles_path, alert: "请至少选择一个文章。"
+      return
+    end
+    
+    trashed_count = 0
+    deleted_count = 0
+    errors = []
+    
+    ids.each do |id|
+      article = Article.find_by(slug: id)
+      next unless article
+      
+      begin
+        if article.status != "trash"
+          article.update(status: "trash")
+          trashed_count += 1
+        else
+          article.destroy!
+          deleted_count += 1
+        end
+      rescue => e
+        errors << "#{article.title || article.slug || 'Unknown'}: #{e.message}"
+      end
+    end
+    
+    messages = []
+    messages << "成功将 #{trashed_count} 篇文章移动到垃圾箱。" if trashed_count > 0
+    messages << "成功删除 #{deleted_count} 篇文章。" if deleted_count > 0
+    
+    if errors.any?
+      redirect_to admin_articles_path, alert: "#{messages.join(' ')}错误: #{errors.join('; ')}"
+    else
+      redirect_to admin_articles_path, notice: messages.join(' ')
     end
   end
 
@@ -215,4 +408,5 @@ class Admin::ArticlesController < Admin::BaseController
   def article_params
     params.require(:article).permit(:title, :content, :excerpt, :slug, :status, :published_at, :meta_description, :tags, :description, :created_at, :scheduled_at, :send_newsletter, :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, :crosspost_internet_archive, :tag_list, social_media_posts_attributes: [ :id, :platform, :url, :_destroy ])
   end
+
 end

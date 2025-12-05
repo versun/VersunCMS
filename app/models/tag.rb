@@ -26,6 +26,20 @@ class Tag < ApplicationRecord
   private
 
   def generate_slug
-    self.slug = name.to_s.parameterize if name.present? && slug.blank?
+    return if slug.present? || name.blank?
+    
+    # 直接使用名称作为slug，支持中文
+    # 只做基本的清理：去除首尾空格，将多个空格替换为单个空格
+    slug_candidate = name.to_s.strip.gsub(/\s+/, ' ')
+    
+    # 确保slug唯一
+    base_slug = slug_candidate
+    counter = 1
+    while Tag.where(slug: slug_candidate).where.not(id: id || 0).exists?
+      slug_candidate = "#{base_slug}-#{counter}"
+      counter += 1
+    end
+    
+    self.slug = slug_candidate
   end
 end
