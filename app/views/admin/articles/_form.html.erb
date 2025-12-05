@@ -11,158 +11,150 @@
   <% end %>
 
   <div class="form-section compact">
-    <h3>Basic Information</h3>
-
     <div class="form-grid form-grid-2">
       <div class="field">
         <%= form.label :title %>
         <%= form.text_field :title %>
       </div>
-
       <div class="field">
         <%= form.label :slug %>
         <%= form.text_field :slug %>
       </div>
     </div>
 
-    <div class="field">
-      <%= form.label :created_at, "Created At" %>
-      <%= form.datetime_field :created_at %>
-    </div>
-
-    <div class="field">
-      <%= form.label :tag_list, "Tags" %>
-      <%= form.text_field :tag_list, placeholder: "e.g., ruby, rails, web development" %>
-      <small class="help-text">Separate tags with commas. New tags will be created automatically.</small>
-    </div>
-  </div>
-
-  <div class="form-section compact">
-    <h3>Description</h3>
-    <div class="field">
-      <%= form.text_area :description, rows: 2 %>
+    <div class="form-grid form-grid-2">
+      <div class="field">
+        <%= form.label :created_at, "Created At" %>
+        <%= form.datetime_field :created_at %>
+      </div>
+      <div class="field">
+        <%= form.label :tag_list, "Tags" %>
+        <%= form.text_field :tag_list, placeholder: "ruby, rails, web development" %>
+      </div>
     </div>
   </div>
 
   <div class="form-section compact">
-    <h3>Content</h3>
     <div class="field">
+      <%= form.label :description %>
+      <%= form.text_area :description, rows: 1, class: "description-compact" %>
+    </div>
+  </div>
+
+  <div class="form-section compact">
+    <div class="field">
+      <%= form.label :content %>
       <%= form.rich_text_area :content, required: true %>
     </div>
   </div>
 
   <div class="form-section compact">
-    <h3>Cross Post</h3>
-
-    <% mastodon_enabled = Crosspost.find_by(platform: 'mastodon')&.enabled? %>
-    <div class="field checkbox">
-      <%= form.check_box :crosspost_mastodon, disabled: !mastodon_enabled %>
-      <%= form.label :crosspost_mastodon, "Post to Mastodon" %>
-      <% unless mastodon_enabled %>
-        <span class="info-text">(not enabled)</span>
-      <% end %>
+    <div class="form-grid form-grid-2">
+      <div class="field">
+        <%= form.label :status %>
+        <%= form.select :status, Article.statuses.keys, 
+            { prompt: 'Choose a status', selected: @article.status.presence || 'draft' }, 
+            { id: 'status_select', required: true } %>
+      </div>
+      <div class="field" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
+        <%= form.label :scheduled_at, "Schedule For" %>
+        <%= form.datetime_field :scheduled_at, value: @article.scheduled_at&.in_time_zone %>
+      </div>
     </div>
-    <% if mastodon_enabled %>
-      <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
-        <% if post_form.object.platform == 'mastodon' %>
-          <div class="field">
-            <%= post_form.text_field :url, placeholder: "Post URL" %>
-            <%= post_form.hidden_field :platform, value: "mastodon" %>
-          </div>
-        <% end %>
-      <% end %>
-    <% end %>
-
-    <% twitter_enabled = Crosspost.find_by(platform: 'twitter')&.enabled? %>
-    <div class="field checkbox">
-      <%= form.check_box :crosspost_twitter, disabled: !twitter_enabled %>
-      <%= form.label :crosspost_twitter, "Post to Twitter" %>
-      <% unless twitter_enabled %>
-        <span class="info-text">(not enabled)</span>
-      <% end %>
-    </div>
-    <% if twitter_enabled %>
-      <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
-        <% if post_form.object.platform == 'twitter' %>
-          <div class="field">
-            <%= post_form.text_field :url, placeholder: "Post URL" %>
-            <%= post_form.hidden_field :platform, value: "twitter" %>
-          </div>
-        <% end %>
-      <% end %>
-    <% end %>
-
-    <% bluesky_enabled = Crosspost.find_by(platform: 'bluesky')&.enabled? %>
-    <div class="field checkbox">
-      <%= form.check_box :crosspost_bluesky, disabled: !bluesky_enabled %>
-      <%= form.label :crosspost_bluesky, "Post to Bluesky" %>
-      <% unless bluesky_enabled %>
-        <span class="info-text">(not enabled)</span>
-      <% end %>
-    </div>
-    <% if bluesky_enabled %>
-      <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
-        <% if post_form.object.platform == 'bluesky' %>
-          <div class="field">
-            <%= post_form.text_field :url, placeholder: "Post URL" %>
-            <%= post_form.hidden_field :platform, value: "bluesky" %>
-          </div>
-        <% end %>
-      <% end %>
-    <% end %>
-
-    <% internet_archive_enabled = Crosspost.find_by(platform: 'internet_archive')&.enabled? %>
-    <div class="field checkbox">
-      <%= form.check_box :crosspost_internet_archive, disabled: !internet_archive_enabled %>
-      <%= form.label :crosspost_internet_archive, "Archive to Internet Archive" %>
-      <% unless internet_archive_enabled %>
-        <span class="info-text">(not enabled)</span>
-      <% end %>
-    </div>
-    <% if internet_archive_enabled %>
-      <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'internet_archive') do |post_form| %>
-        <% if post_form.object.platform == 'internet_archive' %>
-          <div class="field">
-            <%= post_form.text_field :url, placeholder: "Archive URL" %>
-            <%= post_form.hidden_field :platform, value: "internet_archive" %>
-          </div>
-        <% end %>
-      <% end %>
-    <% end %>
-
-    <p><%= link_to "Cross Post Settings", admin_crossposts_path %></p>
+    <small id="scheduled_at_hint" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">Current: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %></small>
   </div>
 
   <div class="form-section compact">
-    <h3>Newsletter</h3>
+    <div class="checkbox-group">
+      <% newsletter_setting = NewsletterSetting.instance %>
+      <% newsletter_enabled = newsletter_setting.enabled? %>
+      <div class="field checkbox">
+        <%= form.check_box :send_newsletter, disabled: !newsletter_enabled %>
+        <%= form.label :send_newsletter, "Send Newsletter" %>
+        <% unless newsletter_enabled %>
+          <span class="info-text">(not enabled)</span>
+        <% end %>
+      </div>
 
-    <% newsletter_setting = NewsletterSetting.instance %>
-    <% newsletter_enabled = newsletter_setting.enabled? %>
-    <div class="field checkbox">
-      <%= form.check_box :send_newsletter, disabled: !newsletter_enabled %>
-      <%= form.label :send_newsletter, "Send Newsletter" %>
-      <% unless newsletter_enabled %>
-        <span class="info-text">(not enabled)</span>
+      <% mastodon_enabled = Crosspost.find_by(platform: 'mastodon')&.enabled? %>
+      <div class="field checkbox">
+        <%= form.check_box :crosspost_mastodon, disabled: !mastodon_enabled %>
+        <%= form.label :crosspost_mastodon, "Mastodon" %>
+        <% unless mastodon_enabled %>
+          <span class="info-text">(off)</span>
+        <% end %>
+      </div>
+      <% if mastodon_enabled %>
+        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
+          <% if post_form.object.platform == 'mastodon' %>
+            <div class="field compact">
+              <%= post_form.label :url, "Mastodon URL", class: "sr-only" %>
+              <%= post_form.text_field :url, placeholder: "Post URL" %>
+              <%= post_form.hidden_field :platform, value: "mastodon" %>
+            </div>
+          <% end %>
+        <% end %>
       <% end %>
-    </div>
 
-    <p><%= link_to "Newsletter Settings", admin_newsletter_path %></p>
-  </div>
+      <% twitter_enabled = Crosspost.find_by(platform: 'twitter')&.enabled? %>
+      <div class="field checkbox">
+        <%= form.check_box :crosspost_twitter, disabled: !twitter_enabled %>
+        <%= form.label :crosspost_twitter, "Twitter" %>
+        <% unless twitter_enabled %>
+          <span class="info-text">(off)</span>
+        <% end %>
+      </div>
+      <% if twitter_enabled %>
+        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
+          <% if post_form.object.platform == 'twitter' %>
+            <div class="field compact">
+              <%= post_form.label :url, "Twitter URL", class: "sr-only" %>
+              <%= post_form.text_field :url, placeholder: "Post URL" %>
+              <%= post_form.hidden_field :platform, value: "twitter" %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
 
-  <div class="form-section compact">
-    <h3>Publishing</h3>
+      <% bluesky_enabled = Crosspost.find_by(platform: 'bluesky')&.enabled? %>
+      <div class="field checkbox">
+        <%= form.check_box :crosspost_bluesky, disabled: !bluesky_enabled %>
+        <%= form.label :crosspost_bluesky, "Bluesky" %>
+        <% unless bluesky_enabled %>
+          <span class="info-text">(off)</span>
+        <% end %>
+      </div>
+      <% if bluesky_enabled %>
+        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
+          <% if post_form.object.platform == 'bluesky' %>
+            <div class="field compact">
+              <%= post_form.label :url, "Bluesky URL", class: "sr-only" %>
+              <%= post_form.text_field :url, placeholder: "Post URL" %>
+              <%= post_form.hidden_field :platform, value: "bluesky" %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
 
-    <div class="field">
-      <%= form.label :status %>
-      <%= form.select :status, Article.statuses.keys, 
-          { prompt: 'Choose a status', selected: @article.status.presence || 'draft' }, 
-          { id: 'status_select', required: true } %>
-    </div>
-
-    <div class="field" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
-      <%= form.label :scheduled_at, "Schedule For" %>
-      <%= form.datetime_field :scheduled_at, value: @article.scheduled_at&.in_time_zone %>
-      <small>Current: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %></small>
+      <% internet_archive_enabled = Crosspost.find_by(platform: 'internet_archive')&.enabled? %>
+      <div class="field checkbox">
+        <%= form.check_box :crosspost_internet_archive, disabled: !internet_archive_enabled %>
+        <%= form.label :crosspost_internet_archive, "Internet Archive" %>
+        <% unless internet_archive_enabled %>
+          <span class="info-text">(off)</span>
+        <% end %>
+      </div>
+      <% if internet_archive_enabled %>
+        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'internet_archive') do |post_form| %>
+          <% if post_form.object.platform == 'internet_archive' %>
+            <div class="field compact">
+              <%= post_form.label :url, "Archive URL", class: "sr-only" %>
+              <%= post_form.text_field :url, placeholder: "Archive URL" %>
+              <%= post_form.hidden_field :platform, value: "internet_archive" %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
     </div>
   </div>
 
@@ -180,10 +172,15 @@
   function initializeScheduledAt() {
     const statusSelect = document.getElementById('status_select');
     const scheduledAtContainer = document.getElementById('scheduled_at');
+    const scheduledAtHint = document.getElementById('scheduled_at_hint');
     
     if (statusSelect && scheduledAtContainer) {
       statusSelect.addEventListener('change', function() {
-        scheduledAtContainer.style.display = this.value === 'schedule' ? 'block' : 'none';
+        const isSchedule = this.value === 'schedule';
+        scheduledAtContainer.style.display = isSchedule ? 'block' : 'none';
+        if (scheduledAtHint) {
+          scheduledAtHint.style.display = isSchedule ? 'block' : 'none';
+        }
       });
     }
   }
