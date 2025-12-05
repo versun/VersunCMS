@@ -68,8 +68,8 @@ class Admin::NewsletterController < Admin::BaseController
     end
 
     # Validate required fields
-    if smtp_params[:smtp_address].blank? || smtp_params[:smtp_port].blank? || 
-       smtp_params[:smtp_user_name].blank? || smtp_params[:smtp_password].blank? || 
+    if smtp_params[:smtp_address].blank? || smtp_params[:smtp_port].blank? ||
+       smtp_params[:smtp_user_name].blank? || smtp_params[:smtp_password].blank? ||
        smtp_params[:from_email].blank?
       render json: {
         success: false,
@@ -80,42 +80,42 @@ class Admin::NewsletterController < Admin::BaseController
 
     begin
       # Test SMTP connection and authentication directly using Net::SMTP
-      require 'net/smtp'
-      
+      require "net/smtp"
+
       domain = smtp_params[:smtp_domain].presence || smtp_params[:from_email].split("@").last
       authentication = smtp_params[:smtp_authentication].presence || "plain"
       enable_starttls = smtp_params[:smtp_enable_starttls] != "0"
       port = smtp_params[:smtp_port].to_i
-      
+
       # Convert authentication string to symbol
       auth_type = case authentication.to_s.downcase
-                  when 'plain'
+      when "plain"
                     :plain
-                  when 'login'
+      when "login"
                     :login
-                  when 'cram_md5'
+      when "cram_md5"
                     :cram_md5
-                  else
+      else
                     :plain
-                  end
-      
+      end
+
       # Use Net::SMTP to directly test connection and authentication
       smtp = Net::SMTP.new(smtp_params[:smtp_address], port)
       smtp.open_timeout = 5
       smtp.read_timeout = 5
-      
+
       # Enable STARTTLS if needed (must be done before start)
       if enable_starttls
         smtp.enable_starttls
       end
-      
+
       # Start SMTP session with authentication
       # This will raise Net::SMTPAuthenticationError if credentials are invalid
       smtp.start(domain, smtp_params[:smtp_user_name], smtp_params[:smtp_password], auth_type) do |smtp_session|
         # Connection and authentication successful if we reach here
         # We can optionally send a test email, but just connecting and authenticating is enough for verification
       end
-      
+
       # If we get here, the connection and authentication were successful
       ActivityLog.create!(
         action: "verified",
@@ -179,12 +179,12 @@ class Admin::NewsletterController < Admin::BaseController
     # Update newsletter setting (native email)
     if params[:newsletter_setting].present?
       setting_params = newsletter_setting_params
-      
+
       # 如果密码是占位符（••••••••）或为空，且数据库中有保存的密码，则保留原有密码
       if (setting_params[:smtp_password] == "••••••••" || setting_params[:smtp_password].blank?) && @newsletter_setting.smtp_password.present?
         setting_params[:smtp_password] = @newsletter_setting.smtp_password
       end
-      
+
       if @newsletter_setting.update(setting_params)
         # Configure ActionMailer for SMTP if native is enabled
         configure_action_mailer if @newsletter_setting.enabled? && @newsletter_setting.native?

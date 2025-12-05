@@ -84,15 +84,15 @@ class NativeNewsletterSenderJob < ApplicationJob
 
     # 转换认证类型为符号
     auth_type = case authentication.to_s.downcase
-                when 'plain'
+    when "plain"
                   :plain
-                when 'login'
+    when "login"
                   :login
-                when 'cram_md5'
+    when "cram_md5"
                   :cram_md5
-                else
+    else
                   :plain
-                end
+    end
 
     # 动态配置 ActionMailer 的 SMTP 设置
     ActionMailer::Base.delivery_method = :smtp
@@ -112,4 +112,3 @@ class NativeNewsletterSenderJob < ApplicationJob
     Rails.logger.info "ActionMailer configured for SMTP: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}, from: #{newsletter_setting.from_email}"
   end
 end
-

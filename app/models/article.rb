@@ -127,7 +127,7 @@ class Article < ApplicationRecord
 
   def should_send_newsletter?
     Rails.logger.info "Newsletter check start: article_id=#{id}, status=#{status}, publish?=#{publish?}, send_newsletter=#{send_newsletter.inspect}, resend_newsletter=#{resend_newsletter.inspect}"
-    
+
     unless publish?
       Rails.logger.info "Newsletter check: article is not published, skipping"
       return false
@@ -137,12 +137,12 @@ class Article < ApplicationRecord
     enabled = newsletter_setting.enabled?
     configured = newsletter_setting.configured?
     missing_fields = newsletter_setting.missing_config_fields
-    
+
     Rails.logger.info "Newsletter setting: enabled=#{enabled}, configured=#{configured}, provider=#{newsletter_setting.provider}"
     if missing_fields.any?
       Rails.logger.warn "Newsletter missing required fields: #{missing_fields.join(', ')}. Please configure these in Newsletter Settings."
     end
-    
+
     unless enabled && configured
       Rails.logger.info "Newsletter check: newsletter setting not enabled or not configured, skipping"
       return false
@@ -166,7 +166,7 @@ class Article < ApplicationRecord
 
   def handle_newsletter
     Rails.logger.info "handle_newsletter called: article_id=#{id}, status=#{status}"
-    
+
     unless should_send_newsletter?
       Rails.logger.info "handle_newsletter: should_send_newsletter? returned false, skipping"
       return
@@ -174,7 +174,7 @@ class Article < ApplicationRecord
 
     newsletter_setting = NewsletterSetting.instance
     Rails.logger.info "handle_newsletter: sending newsletter, provider=#{newsletter_setting.provider}"
-    
+
     if newsletter_setting.native?
       Rails.logger.info "handle_newsletter: enqueuing NativeNewsletterSenderJob for article #{id}"
       NativeNewsletterSenderJob.perform_later(id)

@@ -20,7 +20,7 @@ class NewsletterSetting < ApplicationRecord
     return false unless enabled?
 
     if native?
-      smtp_address.present? && smtp_port.present? && smtp_user_name.present? && 
+      smtp_address.present? && smtp_port.present? && smtp_user_name.present? &&
       smtp_password.present? && from_email.present?
     else
       listmonk = Listmonk.first
@@ -41,8 +41,7 @@ class NewsletterSetting < ApplicationRecord
       missing
     else
       listmonk = Listmonk.first
-      listmonk ? [] : ["listmonk configuration"]
+      listmonk ? [] : [ "listmonk configuration" ]
     end
   end
 end
-

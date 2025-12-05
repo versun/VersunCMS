@@ -6,6 +6,6 @@ class CreateSubscriberTags < ActiveRecord::Migration[8.1]
 
       t.timestamps
     end
-    add_index :subscriber_tags, [:subscriber_id, :tag_id], unique: true
+    add_index :subscriber_tags, [ :subscriber_id, :tag_id ], unique: true
   end
 end

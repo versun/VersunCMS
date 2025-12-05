@@ -30,14 +30,14 @@ class Admin::SubscribersController < Admin::BaseController
       # 查找或创建订阅者
       subscriber = Subscriber.find_or_initialize_by(email: email)
       is_new = subscriber.new_record?
-      
+
       # 如果是新订阅者，先保存
       unless subscriber.save
         error_count += 1
         errors << "#{email}: #{subscriber.errors.full_messages.join(', ')}"
         next
       end
-      
+
       # 如果是新订阅者，自动确认
       subscriber.confirm! if is_new && !subscriber.confirmed?
 
@@ -73,4 +73,3 @@ class Admin::SubscribersController < Admin::BaseController
     redirect_to admin_subscribers_path, notice: "订阅者已删除。"
   end
 end
-

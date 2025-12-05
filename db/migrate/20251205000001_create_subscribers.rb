@@ -15,4 +15,3 @@ class CreateSubscribers < ActiveRecord::Migration[8.0]
     add_index :subscribers, :unsubscribe_token, unique: true
   end
 end
-

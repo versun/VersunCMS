@@ -3,7 +3,7 @@ class SubscriptionsController < ApplicationController
 
   def create
     email = params.dig(:subscription, :email) || params[:email]
-    
+
     if email.blank?
       respond_to do |format|
         format.html { redirect_to root_path, alert: "请输入有效的邮箱地址。" }
@@ -38,9 +38,9 @@ class SubscriptionsController < ApplicationController
         # 如果没有选择tag，则订阅所有内容（tags为空）
         @subscriber.tags = []
       end
-      
+
       NewsletterMailer.confirmation_email(@subscriber, CacheableSettings.site_info).deliver_later
-      
+
       respond_to do |format|
         format.html do
           flash[:notice] = "订阅成功！请检查您的邮箱并点击确认链接。"
@@ -91,4 +91,3 @@ class SubscriptionsController < ApplicationController
 
   private
 end
-

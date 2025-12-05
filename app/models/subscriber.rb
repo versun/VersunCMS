@@ -7,16 +7,16 @@ class Subscriber < ApplicationRecord
 
   scope :confirmed, -> { where.not(confirmed_at: nil) }
   scope :active, -> { confirmed.where(unsubscribed_at: nil) }
-  
+
   # 查找订阅了特定tag的订阅者
   scope :subscribed_to_tag, ->(tag) { joins(:tags).where(tags: { id: tag.id }) }
-  
+
   # 查找订阅了任何指定tags的订阅者（用于文章发送）
   scope :subscribed_to_any_tags, ->(tag_ids) {
     return all if tag_ids.blank?
     joins(:tags).where(tags: { id: tag_ids }).distinct
   }
-  
+
   # 查找没有订阅任何tag的订阅者（订阅所有内容）
   scope :subscribed_to_all, -> { left_joins(:tags).where(tags: { id: nil }) }
 
@@ -62,4 +62,3 @@ class Subscriber < ApplicationRecord
     self.unsubscribe_token = SecureRandom.urlsafe_base64(32)
   end
 end
-

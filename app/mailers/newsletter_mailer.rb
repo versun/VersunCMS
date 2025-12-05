@@ -19,10 +19,10 @@ class NewsletterMailer < ApplicationMailer
       from: from_email,
       subject: "#{@article.title} | #{@site_info[:title]}"
     )
-    
+
     # 验证邮件对象设置
     Rails.logger.info "NewsletterMailer: 邮件对象已创建 - TO: #{mail_obj.to.inspect}, FROM: #{mail_obj.from.inspect}"
-    
+
     mail_obj
   end
 
@@ -41,4 +41,3 @@ class NewsletterMailer < ApplicationMailer
     )
   end
 end
-

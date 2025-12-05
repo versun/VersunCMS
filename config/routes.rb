@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   resources :subscriptions, only: [ :create ]
   get "/confirm", to: "subscriptions#confirm", as: :confirm_subscription
   get "/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe
-  
+
   # Admin namespace - 统一所有后台管理功能
   namespace :admin do
     # Admin root now points to articles index
