@@ -22,7 +22,11 @@ class Admin::ArticlesController < Admin::BaseController
 
     respond_to do |format|
       if @article.save
-        format.html { redirect_to admin_articles_path, notice: "Article was successfully created." }
+        if params[:create_and_add_another].present?
+          format.html { redirect_to new_admin_article_path, notice: "Article was successfully created." }
+        else
+          format.html { redirect_to admin_articles_path, notice: "Article was successfully created." }
+        end
         format.json { render :show, status: :created, location: @article }
       else
         format.html { render :new }
@@ -162,13 +166,13 @@ class Admin::ArticlesController < Admin::BaseController
     ids.each do |id|
       article = Article.find_by(slug: id)
       next unless article
-
-      # 确保文章已发布
       unless article.publish?
-        article.update(status: :publish) if article.draft? || article.schedule?
+        errors << "#{article.title}: 文章未发布，无法进行跨平台发布"
+        next
       end
 
       begin
+        jobs_queued = false
         platforms.each do |platform|
           # 检查平台是否启用
           crosspost = Crosspost.find_by(platform: platform)
@@ -176,8 +180,9 @@ class Admin::ArticlesController < Admin::BaseController
 
           # 直接触发crosspost job
           CrosspostArticleJob.perform_later(article.id, platform)
+          jobs_queued = true
         end
-        count += 1
+        count += 1 if jobs_queued
       rescue => e
         errors << "#{article.title}: #{e.message}"
       end
@@ -204,16 +209,15 @@ class Admin::ArticlesController < Admin::BaseController
     ids.each do |id|
       article = Article.find_by(slug: id)
       next unless article
-
-      # 确保文章已发布
       unless article.publish?
-        article.update(status: :publish) if article.draft? || article.schedule?
+        errors << "#{article.title}: 文章未发布，无法发送邮件"
+        next
       end
 
       begin
         # 检查newsletter配置
         newsletter_setting = NewsletterSetting.instance
-        if newsletter_setting.enabled? && newsletter_setting.configured? && article.publish?
+        if newsletter_setting.enabled? && newsletter_setting.configured?
           if newsletter_setting.native?
             NativeNewsletterSenderJob.perform_later(article.id)
           elsif newsletter_setting.listmonk?
