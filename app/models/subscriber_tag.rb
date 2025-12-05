@@ -4,3 +4,4 @@ class SubscriberTag < ApplicationRecord
 
   validates :subscriber_id, uniqueness: { scope: :tag_id }
 end
+
