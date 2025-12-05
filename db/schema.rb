@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_02_065910) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_05_061101) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -129,6 +129,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_065910) do
     t.string "username"
   end
 
+  create_table "newsletter_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: false, null: false
+    t.string "from_email"
+    t.string "provider", default: "native", null: false
+    t.string "smtp_address"
+    t.string "smtp_authentication", default: "plain"
+    t.string "smtp_domain"
+    t.boolean "smtp_enable_starttls", default: true
+    t.string "smtp_password"
+    t.integer "smtp_port", default: 587
+    t.string "smtp_user_name"
+    t.datetime "updated_at", null: false
+  end
+
   create_table "pages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "page_order", default: 0, null: false
@@ -202,6 +217,29 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_065910) do
     t.index ["filename"], name: "index_static_files_on_filename", unique: true
   end
 
+  create_table "subscriber_tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "subscriber_id", null: false
+    t.integer "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subscriber_id", "tag_id"], name: "index_subscriber_tags_on_subscriber_id_and_tag_id", unique: true
+    t.index ["subscriber_id"], name: "index_subscriber_tags_on_subscriber_id"
+    t.index ["tag_id"], name: "index_subscriber_tags_on_tag_id"
+  end
+
+  create_table "subscribers", force: :cascade do |t|
+    t.string "confirmation_token"
+    t.datetime "confirmed_at"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "unsubscribe_token"
+    t.datetime "unsubscribed_at"
+    t.datetime "updated_at", null: false
+    t.index ["confirmation_token"], name: "index_subscribers_on_confirmation_token", unique: true
+    t.index ["email"], name: "index_subscribers_on_email", unique: true
+    t.index ["unsubscribe_token"], name: "index_subscribers_on_unsubscribe_token", unique: true
+  end
+
   create_table "tags", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -227,4 +265,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_065910) do
   add_foreign_key "comments", "comments", column: "parent_id", on_delete: :cascade
   add_foreign_key "sessions", "users"
   add_foreign_key "social_media_posts", "articles"
+  add_foreign_key "subscriber_tags", "subscribers"
+  add_foreign_key "subscriber_tags", "tags"
 end

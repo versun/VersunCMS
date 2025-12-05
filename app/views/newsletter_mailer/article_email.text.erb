@@ -1,0 +1,16 @@
+<%= @article.title %>
+
+<% if @article.description.present? %>
+<%= @article.description %>
+
+<% end %>
+<%= ActionView::Base.full_sanitizer.sanitize(@article.content.to_s) %>
+
+阅读全文: <%= @site_info[:url] %>/<%= Rails.application.config.x.article_route_prefix %>/<%= @article.slug %>
+
+<% if @footer.present? %>
+<%= ActionView::Base.full_sanitizer.sanitize(@footer.to_s) %>
+<% end %>
+
+不想再收到这些邮件？取消订阅: <%= @site_info[:url] %>/unsubscribe?token=<%= @subscriber.unsubscribe_token %>
+

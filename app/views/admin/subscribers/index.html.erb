@@ -1,0 +1,75 @@
+<h3>订阅者管理</h3>
+
+<div style="margin-bottom: 30px; padding: 20px; background: #f5f5f5; border-radius: 4px;">
+  <h4 style="margin-top: 0;">批量添加订阅者</h4>
+  <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+    每行输入一个邮箱地址，可以在邮箱后加逗号，再输入tag名称来订阅特定内容。格式示例：<br>
+    <code>a@example.com,tag1</code><br>
+    <code>b@example.com</code><br>
+    <code>c@example.com,tag2,tag3,tag4</code>
+  </p>
+  <%= form_with url: batch_create_admin_subscribers_path, method: :post, local: true do |form| %>
+    <div style="margin-bottom: 10px;">
+      <%= form.text_area :emails_text, 
+          rows: 8, 
+          placeholder: "a@example.com,tag1\nb@example.com\nc@example.com,tag2,tag3", 
+          style: "width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 14px;" %>
+    </div>
+    <%= form.submit "批量添加", class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>状态</th>
+        <th>订阅内容</th>
+        <th>订阅时间</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @subscribers.each do |subscriber| %>
+        <tr>
+          <td><%= subscriber.email %></td>
+          <td>
+            <% if subscriber.active? %>
+              <span class="badge badge-success">已确认</span>
+            <% elsif subscriber.confirmed? %>
+              <span class="badge badge-warning">已取消</span>
+            <% else %>
+              <span class="badge badge-secondary">待确认</span>
+            <% end %>
+          </td>
+          <td>
+            <% if subscriber.tags.any? %>
+              <span style="color: #666;">
+                <%= subscriber.tags.pluck(:name).join(", ") %>
+              </span>
+            <% else %>
+              <span style="color: #28a745; font-weight: 500;">所有内容</span>
+            <% end %>
+          </td>
+          <td><%= subscriber.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+          <td>
+            <%= link_to "删除", admin_subscriber_path(subscriber), 
+                method: :delete, 
+                data: { turbo_confirm: "确定要删除这个订阅者吗？" },
+                class: "btn btn-danger btn-sm" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div style="margin-top: 20px;">
+  <%= will_paginate @subscribers %>
+</div>
+
+<p style="margin-top: 20px;">
+  <%= link_to "返回 Newsletter 设置", admin_newsletter_path, class: "btn btn-secondary" %>
+</p>
+

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .article-content {
+        margin: 20px 0;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        font-size: 12px;
+        color: #666;
+      }
+      .unsubscribe {
+        margin-top: 20px;
+        font-size: 11px;
+        color: #999;
+      }
+      a {
+        color: #0066cc;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><%= @article.title %></h1>
+    
+    <% if @article.description.present? %>
+      <p><%= @article.description %></p>
+    <% end %>
+
+    <div class="article-content">
+      <%= @article.content.to_s.html_safe %>
+    </div>
+
+    <p>
+      <% article_url = "#{@site_info[:url]}/#{Rails.application.config.x.article_route_prefix || 'articles'}/#{@article.slug}" %>
+      <a href="<%= article_url %>">阅读全文</a>
+    </p>
+
+    <% if @footer.present? %>
+      <div class="footer">
+        <%= @footer.to_s.html_safe %>
+      </div>
+    <% end %>
+
+    <div class="unsubscribe">
+      <p>
+        不想再收到这些邮件？
+        <% unsubscribe_url = "#{@site_info[:url]}/unsubscribe?token=#{@subscriber.unsubscribe_token}" %>
+        <a href="<%= unsubscribe_url %>">取消订阅</a>
+      </p>
+    </div>
+  </body>
+</html>
+

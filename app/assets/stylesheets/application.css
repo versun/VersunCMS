@@ -75,6 +75,153 @@ ul {
     /* Hide for now to match image strictly, or keep if user wants */
 }
 
+/* Newsletter Subscription Form */
+.newsletter-subscription {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.newsletter-form-group {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+}
+
+.newsletter-email-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.newsletter-email-input:focus {
+    outline: none;
+    border-color: #c04000;
+}
+
+.newsletter-submit-btn {
+    padding: 8px 16px;
+    background-color: #c04000;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-family: inherit;
+}
+
+.newsletter-submit-btn:hover:not(:disabled) {
+    background-color: #a03000;
+}
+
+.newsletter-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.newsletter-message {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+.newsletter-message-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.newsletter-message-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Tag page subscription form */
+.tag-subscription-form {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+.tag-subscription-form p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.tag-subscription-form-inline {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.tag-subscription-form-inline .newsletter-email-input {
+    flex: 1;
+}
+
+/* Inline tag subscription form (small, no background) */
+.tag-subscription-inline {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.tag-subscription-form-inline-small {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.newsletter-email-input-small {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: inherit;
+    width: 200px;
+    transition: border-color 0.2s;
+}
+
+.newsletter-email-input-small:focus {
+    outline: none;
+    border-color: #c04000;
+}
+
+.newsletter-submit-btn-small {
+    padding: 4px 10px;
+    background-color: #c04000;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.newsletter-submit-btn-small:hover:not(:disabled) {
+    background-color: #a03000;
+}
+
+.newsletter-submit-btn-small:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 footer {
     display: flex;
     flex-direction: column;
@@ -328,6 +475,15 @@ h2 {
     footer {
         align-items: center;
     }
+
+    .newsletter-subscription {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+    }
+
+    .newsletter-form-group {
+        gap: 6px;
+    }
 }
 
 /* Theme Toggle Button */
@@ -560,4 +716,78 @@ h2 {
 
 [data-theme="dark"] .comment-form input[type="submit"]:hover {
     background-color: #ff8c5a !important;
+}
+
+/* Dark Mode - Newsletter Subscription */
+[data-theme="dark"] .newsletter-subscription {
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .newsletter-email-input {
+    background-color: #2a2a2a;
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .newsletter-email-input::placeholder {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .newsletter-email-input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+[data-theme="dark"] .newsletter-submit-btn {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+[data-theme="dark"] .newsletter-submit-btn:hover:not(:disabled) {
+    background-color: #ff8c5a;
+}
+
+[data-theme="dark"] .newsletter-message-success {
+    background-color: #1e3a1e;
+    color: #90ee90;
+    border-color: #2d5a2d;
+}
+
+[data-theme="dark"] .newsletter-message-error {
+    background-color: #3a1e1e;
+    color: #ff6b6b;
+    border-color: #5a2d2d;
+}
+
+[data-theme="dark"] .tag-subscription-form {
+    background-color: #2a2a2a;
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .tag-subscription-form p {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .newsletter-email-input-small {
+    background-color: #2a2a2a;
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .newsletter-email-input-small::placeholder {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .newsletter-email-input-small:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+[data-theme="dark"] .newsletter-submit-btn-small {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+[data-theme="dark"] .newsletter-submit-btn-small:hover:not(:disabled) {
+    background-color: #ff8c5a;
 }

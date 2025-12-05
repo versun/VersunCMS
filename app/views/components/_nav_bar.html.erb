@@ -13,3 +13,26 @@
     <% end %>     
   <% end %>
 </ul>
+
+<%# Newsletter subscription form - only show on index page when newsletter is enabled and using native mail %>
+<% if current_page?(root_path) %>
+  <% newsletter_setting = NewsletterSetting.instance %>
+  <% if newsletter_setting.enabled? && newsletter_setting.native? %>
+    <div class="newsletter-subscription" data-controller="newsletter-subscription" data-action="submit->newsletter-subscription#submit">
+      <%= form_with url: subscriptions_path, method: :post, data: { newsletter_subscription_target: "form", turbo: false } do |form| %>
+        <div class="newsletter-form-group">
+          <%= form.email_field :email, 
+              name: "subscription[email]",
+              placeholder: "通过邮件订阅更新", 
+              required: true,
+              class: "newsletter-email-input",
+              data: { newsletter_subscription_target: "emailInput" } %>
+          <%= form.submit "Subscribe", 
+              class: "newsletter-submit-btn",
+              data: { newsletter_subscription_target: "submitBtn" } %>
+        </div>
+        <div class="newsletter-message" data-newsletter-subscription-target="message"></div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

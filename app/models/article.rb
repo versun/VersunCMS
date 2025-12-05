@@ -126,28 +126,64 @@ class Article < ApplicationRecord
   end
 
   def should_send_newsletter?
-    return false unless publish?
+    Rails.logger.info "Newsletter check start: article_id=#{id}, status=#{status}, publish?=#{publish?}, send_newsletter=#{send_newsletter.inspect}, resend_newsletter=#{resend_newsletter.inspect}"
+    
+    unless publish?
+      Rails.logger.info "Newsletter check: article is not published, skipping"
+      return false
+    end
 
-    # 首先检查 Listmonk 是否启用（后端安全检查）
-    newsletter_enabled = Listmonk.first&.enabled?
-    return false unless newsletter_enabled
+    newsletter_setting = NewsletterSetting.instance
+    enabled = newsletter_setting.enabled?
+    configured = newsletter_setting.configured?
+    missing_fields = newsletter_setting.missing_config_fields
+    
+    Rails.logger.info "Newsletter setting: enabled=#{enabled}, configured=#{configured}, provider=#{newsletter_setting.provider}"
+    if missing_fields.any?
+      Rails.logger.warn "Newsletter missing required fields: #{missing_fields.join(', ')}. Please configure these in Newsletter Settings."
+    end
+    
+    unless enabled && configured
+      Rails.logger.info "Newsletter check: newsletter setting not enabled or not configured, skipping"
+      return false
+    end
 
     # 检查 send_newsletter 虚拟属性（用于新文章）
-    send_checked = send_newsletter == "1"
+    # Rails check_box 会发送 "1" 当勾选时，"0" 当未勾选时
+    # 但也可能收到 true/false 布尔值，或者字符串 "true"/"false"
+    send_checked = send_newsletter.to_s == "1" || send_newsletter == true || send_newsletter.to_s == "true"
 
     # 检查 resend_newsletter 虚拟属性（用于已存在文章）
-    resend_checked = resend_newsletter == "1"
+    resend_checked = resend_newsletter.to_s == "1" || resend_newsletter == true || resend_newsletter.to_s == "true"
 
     # 只要勾选了任一复选框即发送
     result = send_checked || resend_checked
 
-    Rails.logger.info "Newsletter check: should_send=#{result}, send_checked=#{send_checked}, resend_checked=#{resend_checked}"
+    Rails.logger.info "Newsletter check result: should_send=#{result}, send_checked=#{send_checked}, resend_checked=#{resend_checked}, send_newsletter_value=#{send_newsletter.inspect}, resend_newsletter_value=#{resend_newsletter.inspect}"
 
     result
   end
 
   def handle_newsletter
-    ListmonkSenderJob.perform_later(id) if should_send_newsletter?
+    Rails.logger.info "handle_newsletter called: article_id=#{id}, status=#{status}"
+    
+    unless should_send_newsletter?
+      Rails.logger.info "handle_newsletter: should_send_newsletter? returned false, skipping"
+      return
+    end
+
+    newsletter_setting = NewsletterSetting.instance
+    Rails.logger.info "handle_newsletter: sending newsletter, provider=#{newsletter_setting.provider}"
+    
+    if newsletter_setting.native?
+      Rails.logger.info "handle_newsletter: enqueuing NativeNewsletterSenderJob for article #{id}"
+      NativeNewsletterSenderJob.perform_later(id)
+    elsif newsletter_setting.listmonk?
+      Rails.logger.info "handle_newsletter: enqueuing ListmonkSenderJob for article #{id}"
+      ListmonkSenderJob.perform_later(id)
+    else
+      Rails.logger.warn "handle_newsletter: unknown provider #{newsletter_setting.provider}"
+    end
   end
 
   def handle_time_zone

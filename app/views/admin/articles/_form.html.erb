@@ -136,7 +136,8 @@
   <div class="form-section compact">
     <h3>Newsletter</h3>
 
-    <% newsletter_enabled = Listmonk.first&.enabled? %>
+    <% newsletter_setting = NewsletterSetting.instance %>
+    <% newsletter_enabled = newsletter_setting.enabled? %>
     <div class="field checkbox">
       <%= form.check_box :send_newsletter, disabled: !newsletter_enabled %>
       <%= form.label :send_newsletter, "Send Newsletter" %>

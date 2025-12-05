@@ -9,6 +9,11 @@ Rails.application.routes.draw do
   resources :passwords
   resource :setup, only: [ :show, :create ], controller: "setup"
 
+  # Newsletter subscriptions
+  resources :subscriptions, only: [ :create ]
+  get "/confirm", to: "subscriptions#confirm", as: :confirm_subscription
+  get "/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe
+  
   # Admin namespace - 统一所有后台管理功能
   namespace :admin do
     # Admin root now points to articles index
@@ -68,6 +73,11 @@ Rails.application.routes.draw do
     resource :newsletter, only: [ :show, :update ], controller: "newsletter" do
       collection do
         post :verify
+      end
+    end
+    resources :subscribers, only: [ :index, :destroy ] do
+      collection do
+        post :batch_create
       end
     end
     resources :migrates, only: [ :index, :create ]

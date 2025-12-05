@@ -1,117 +1,119 @@
 <h3>Newsletter Settings</h3>
 
-<%= form_with(model: @listmonk, url: admin_newsletter_path, method: :patch) do |form| %>
-  <div class="form-group">
-    <%= form.label :enabled, "Enable Newsletter" %>
-    <%= form.check_box :enabled %>
-  </div>
+<div data-controller="newsletter" data-newsletter-verify-url-value="<%= verify_admin_newsletter_path %>">
+  <div class="form-section">
+    <%= form_with(model: @newsletter_setting, url: admin_newsletter_path, method: :patch) do |form| %>
+      <div class="field">
+        <%= form.label :enabled, "Enable Newsletter" %>
+        <%= form.check_box :enabled %>
+      </div>
+      <h4>Select Email Service Provider</h4>
+      <div class="field">
+        <%= form.label :provider, "Provider" %>
+        <%= form.select :provider, [["Native Email", "native"], ["Listmonk", "listmonk"]], { selected: @newsletter_setting.provider || "native" }, { data: { newsletter_target: "providerSelect", action: "change->newsletter#providerChanged" } } %>
+      </div>
 
-  <div>
-    <%= form.label :url, "Listmonk URL" %>
-    <%= form.text_field :url, placeholder: "https://example.com" %>
-  </div>
-
-  <div>
-    <%= form.label :username, "Username" %>
-    <%= form.text_field :username %>
-  </div>
-
-  <div>
-    <%= form.label :api_key, "API Key" %>
-    <%= form.text_field :api_key %>
-  </div>
-
-  <div style="margin: 15px 0;">
-    <button type="button" id="verify-btn" class="btn btn-secondary">Verify Configuration</button>
-    <span id="verify-status" style="margin-left: 10px;"></span>
-  </div>
-
-  <div id="list-template-container">
-    <div>
-      <%= form.label :list_id, "List" %>
-      <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @listmonk.list_id), { include_blank: "Select a List" }, { id: "list-select" } %>
-    </div>
-    <div>
-      <%= form.label :template_id, "Template" %>
-      <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @listmonk.template_id), { include_blank: "Select a Template" }, { id: "template-select" } %>
-    </div>
-  </div>
-
-  <div><%= form.submit "Save" %></div>
-<% end %>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const verifyBtn = document.getElementById('verify-btn');
-  const verifyStatus = document.getElementById('verify-status');
-  const listTemplateContainer = document.getElementById('list-template-container');
-  const listSelect = document.getElementById('list-select');
-  const templateSelect = document.getElementById('template-select');
-
-  verifyBtn.addEventListener('click', function() {
-    verifyStatus.textContent = 'Verifying...';
-    verifyStatus.style.color = 'gray';
-    verifyBtn.disabled = true;
-
-    // Collect form data
-    const formData = {
-      url: document.getElementById('listmonk_url').value,
-      username: document.getElementById('listmonk_username').value,
-      api_key: document.getElementById('listmonk_api_key').value
-    };
-
-    fetch('<%= verify_admin_newsletter_path %>', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-      },
-      body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        verifyStatus.textContent = '✓ Verification successful!';
-        verifyStatus.style.color = 'green';
+      <div id="native-email-settings" data-newsletter-target="nativeSettings" style="display: <%= @newsletter_setting.native? ? 'block' : 'none' %>">
+        <h4>SMTP Configuration</h4>
         
-        // Populate lists
-        listSelect.innerHTML = '<option value="">Select a List</option>';
-        data.lists.forEach(list => {
-          const option = document.createElement('option');
-          option.value = list.id;
-          option.textContent = list.name;
-          if (list.id === data.current_list_id) {
-            option.selected = true;
-          }
-          listSelect.appendChild(option);
-        });
+        <div class="field">
+          <%= form.label :smtp_address, "SMTP Address" %>
+          <%= form.text_field :smtp_address, placeholder: "smtp.example.com" %>
+        </div>
 
-        // Populate templates
-        templateSelect.innerHTML = '<option value="">Select a Template</option>';
-        data.templates.forEach(template => {
-          const option = document.createElement('option');
-          option.value = template.id;
-          option.textContent = template.name;
-          if (template.id === data.current_template_id) {
-            option.selected = true;
-          }
-          templateSelect.appendChild(option);
-        });
-      } else {
-        verifyStatus.textContent = '✗ ' + (data.error || 'Verification failed');
-        verifyStatus.style.color = 'red';
-      }
-    })
-    .catch(error => {
-      verifyStatus.textContent = '✗ Error: ' + error.message;
-      verifyStatus.style.color = 'red';
-    })
-    .finally(() => {
-      verifyBtn.disabled = false;
-    });
-  });
-});
-</script>
+        <div class="field">
+          <%= form.label :smtp_port, "SMTP Port" %>
+          <%= form.number_field :smtp_port, placeholder: "587", value: @newsletter_setting.smtp_port || 587 %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_user_name, "SMTP Username" %>
+          <%= form.text_field :smtp_user_name %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_password, "SMTP Password" %>
+          <%= form.password_field :smtp_password, value: @newsletter_setting.smtp_password.present? ? "••••••••" : nil, placeholder: "Enter password" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_domain, "SMTP Domain (optional)" %>
+          <%= form.text_field :smtp_domain, placeholder: "example.com" %>
+          <small>Leave blank to auto-detect from From Email</small>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_authentication, "Authentication" %>
+          <%= form.select :smtp_authentication, [["Plain", "plain"], ["Login", "login"], ["CRAM-MD5", "cram_md5"]], { selected: @newsletter_setting.smtp_authentication || "plain" } %>
+        </div>
+
+        <div class="field">
+          <%= form.label :smtp_enable_starttls, "Enable STARTTLS" %>
+          <%= form.check_box :smtp_enable_starttls, checked: @newsletter_setting.smtp_enable_starttls.nil? ? true : @newsletter_setting.smtp_enable_starttls %>
+        </div>
+
+        <div class="field">
+          <%= form.label :from_email, "From Email" %>
+          <%= form.email_field :from_email, placeholder: "noreply@example.com" %>
+        </div>
+
+        <div style="margin: 15px 0;">
+          <button type="button" data-newsletter-target="sesVerifyBtn" data-action="click->newsletter#verifySes" class="btn btn-secondary">Verify SMTP Configuration</button>
+          <span data-newsletter-target="sesVerifyStatus" style="margin-left: 10px;"></span>
+        </div>
+
+        <div class="field">
+          <%= form.label :footer, "Email Footer (Rich Text)" %>
+          <%= form.rich_text_area :footer %>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <%= link_to "Manage Subscribers", admin_subscribers_path, class: "btn btn-secondary" %>
+        </div>
+        <div><%= form.submit "Save Native Email Settings", name: "newsletter_setting[submit]" %></div>
+
+      </div>
+
+    <% end %>
+  </div>
+
+  <div class="form-section" id="listmonk-settings" data-newsletter-target="listmonkSettings" style="display: <%= @newsletter_setting.listmonk? ? 'block' : 'none' %>">
+  <h4>Listmonk Configuration</h4>
+  <%= form_with(model: @listmonk, url: admin_newsletter_path, method: :patch) do |form| %>
+    <div>
+      <%= form.label :url, "Listmonk URL" %>
+      <%= form.text_field :url, placeholder: "https://example.com" %>
+    </div>
+
+    <div>
+      <%= form.label :username, "Username" %>
+      <%= form.text_field :username %>
+    </div>
+
+    <div>
+      <%= form.label :api_key, "API Key" %>
+      <%= form.text_field :api_key %>
+    </div>
+
+    <div style="margin: 15px 0;">
+      <button type="button" data-newsletter-target="verifyBtn" data-action="click->newsletter#verify" class="btn btn-secondary">Verify Configuration</button>
+      <span data-newsletter-target="verifyStatus" style="margin-left: 10px;"></span>
+    </div>
+
+    <div id="list-template-container">
+      <div>
+        <%= form.label :list_id, "List" %>
+        <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @listmonk.list_id), { include_blank: "Select a List" }, { id: "list-select", data: { newsletter_target: "listSelect" } } %>
+      </div>
+      <div>
+        <%= form.label :template_id, "Template" %>
+        <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @listmonk.template_id), { include_blank: "Select a Template" }, { id: "template-select", data: { newsletter_target: "templateSelect" } } %>
+      </div>
+    </div>
+
+    <div><%= form.submit "Save Listmonk Settings" %></div>
+  <% end %>
+  </div>
+</div>
 
 <%= render 'admin/shared/activitylog', activity_logs: @activity_logs %>
-
