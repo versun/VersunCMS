@@ -49,6 +49,9 @@
       <%= link_to admin_comments_path, class: "nav-link" do %>
         <i class="fa fa-comments"></i>
         <span>Comments</span>
+        <% if pending_comments_count > 0 %>
+          <span class="nav-badge"></span>
+        <% end %>
       <% end %>
       <%= link_to admin_static_files_path, class: "nav-link" do %>
         <i class="fa fa-folder"></i>
