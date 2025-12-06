@@ -2,7 +2,6 @@ class Admin::NewsletterController < Admin::BaseController
   def show
     @newsletter_setting = NewsletterSetting.instance
     @listmonk = Listmonk.first_or_initialize
-    @activity_logs = ActivityLog.track_activity("newsletter")
 
     # Fetch lists and templates if configuration exists and is saved in database
     if @listmonk.persisted? && @listmonk.configured?
@@ -174,7 +173,6 @@ class Admin::NewsletterController < Admin::BaseController
   def update
     @newsletter_setting = NewsletterSetting.instance
     @listmonk = Listmonk.first_or_initialize
-    @activity_logs = ActivityLog.track_activity("newsletter")
 
     # Update newsletter setting (native email)
     if params[:newsletter_setting].present?

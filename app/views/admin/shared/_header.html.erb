@@ -23,6 +23,7 @@
     <div class="nav-right">
       <% if Current.user.present? %>
         <%= link_to "Account", edit_user_path(Current.user), class: "admin-nav-link" %>
+        <%= link_to "Activity", admin_activities_path, class: "admin-nav-link" %>
         <%= link_to "Logout", session_path, method: :delete, data: { turbo_method: :delete }, class: "admin-button logout-btn" %>
       <% end %>
     </div>

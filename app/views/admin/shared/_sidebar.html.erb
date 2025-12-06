@@ -102,6 +102,10 @@
         <i class="fa fa-user"></i>
         <span>Account</span>
       <% end %>
+      <%= link_to admin_activities_path, class: "nav-link" do %>
+        <i class="fa fa-history"></i>
+        <span>Activity</span>
+      <% end %>
       <%= link_to session_path, method: :delete, data: { turbo_method: :delete }, class: "nav-link logout-link" do %>
         <i class="fa fa-sign-out"></i>
         <span>Logout</span>

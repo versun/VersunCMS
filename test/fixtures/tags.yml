@@ -1,0 +1,17 @@
+ruby:
+  name: Ruby
+  slug: ruby
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>
+
+rails:
+  name: Rails
+  slug: rails
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>
+
+javascript:
+  name: JavaScript
+  slug: javascript
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>

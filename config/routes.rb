@@ -94,6 +94,9 @@ Rails.application.routes.draw do
       end
     end
 
+    # Activity logs
+    resources :activities, only: [ :index ]
+
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end

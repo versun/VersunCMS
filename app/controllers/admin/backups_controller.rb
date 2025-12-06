@@ -1,7 +1,6 @@
 class Admin::BackupsController < Admin::BaseController
   def show
     @setting = Setting.first || Setting.create!
-    @activity_logs = ActivityLog.track_activity("github_backup")
   end
 
   def update

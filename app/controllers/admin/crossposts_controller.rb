@@ -4,11 +4,9 @@ class Admin::CrosspostsController < Admin::BaseController
     @twitter = Crosspost.twitter
     @bluesky = Crosspost.bluesky
     @internet_archive = Crosspost.internet_archive
-    @activity_logs = ActivityLog.track_activity("crosspost")
   end
 
   def update
-    @activity_logs = ActivityLog.track_activity("crosspost")
     @settings = Crosspost.find_or_create_by(platform: params[:id])
     # Rails.logger.info "Updating Crosspost: #{params[:id]}"
     # Rails.logger.info "Params: #{params.inspect}"
