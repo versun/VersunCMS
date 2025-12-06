@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_05_061101) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -58,6 +58,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "article_tags", force: :cascade do |t|
+    t.integer "article_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["article_id", "tag_id"], name: "index_article_tags_on_article_id_and_tag_id", unique: true
+    t.index ["article_id"], name: "index_article_tags_on_article_id"
+    t.index ["tag_id"], name: "index_article_tags_on_tag_id"
+  end
+
   create_table "articles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
@@ -72,17 +82,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
   create_table "comments", force: :cascade do |t|
     t.integer "article_id", null: false
     t.string "author_avatar_url"
-    t.string "author_name"
+    t.string "author_name", null: false
+    t.string "author_url"
     t.string "author_username"
-    t.text "content"
+    t.text "content", null: false
     t.datetime "created_at", null: false
-    t.string "external_id", null: false
-    t.string "platform", null: false
+    t.string "external_id"
+    t.integer "parent_id"
+    t.string "platform"
     t.datetime "published_at"
+    t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.string "url"
-    t.index ["article_id", "platform", "external_id"], name: "index_comments_on_article_id_and_platform_and_external_id", unique: true
+    t.index ["article_id", "platform", "external_id"], name: "index_comments_on_article_platform_external_id", unique: true, where: "platform IS NOT NULL AND external_id IS NOT NULL"
     t.index ["article_id"], name: "index_comments_on_article_id"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
   end
 
   create_table "crossposts", force: :cascade do |t|
@@ -113,6 +127,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
     t.datetime "updated_at", null: false
     t.string "url"
     t.string "username"
+  end
+
+  create_table "newsletter_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: false, null: false
+    t.string "from_email"
+    t.string "provider", default: "native", null: false
+    t.string "smtp_address"
+    t.string "smtp_authentication", default: "plain"
+    t.string "smtp_domain"
+    t.boolean "smtp_enable_starttls", default: true
+    t.string "smtp_password"
+    t.integer "smtp_port", default: 587
+    t.string "smtp_user_name"
+    t.datetime "updated_at", null: false
   end
 
   create_table "pages", force: :cascade do |t|
@@ -151,7 +180,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
     t.text "custom_css"
     t.text "description"
     t.text "giscus"
+    t.string "git_user_email"
+    t.string "git_user_name"
+    t.string "github_backup_branch", default: "main"
+    t.string "github_backup_cron"
+    t.boolean "github_backup_enabled", default: false
+    t.string "github_repo_url"
+    t.string "github_token"
     t.text "head_code"
+    t.datetime "last_backup_at"
+    t.boolean "setup_completed", default: false
     t.json "social_links"
     t.json "static_files", default: {}
     t.string "time_zone", default: "UTC"
@@ -171,16 +209,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
     t.index ["article_id"], name: "index_social_media_posts_on_article_id"
   end
 
-  create_table "solid_cable_messages", force: :cascade do |t|
-    t.binary "channel", limit: 1024, null: false
-    t.integer "channel_hash", limit: 8, null: false
-    t.datetime "created_at", null: false
-    t.binary "payload", limit: 536870912, null: false
-    t.index ["channel"], name: "index_solid_cable_messages_on_channel"
-    t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
-    t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
-  end
-
   create_table "static_files", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -189,9 +217,54 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_25_000001) do
     t.index ["filename"], name: "index_static_files_on_filename", unique: true
   end
 
+  create_table "subscriber_tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "subscriber_id", null: false
+    t.integer "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subscriber_id", "tag_id"], name: "index_subscriber_tags_on_subscriber_id_and_tag_id", unique: true
+    t.index ["subscriber_id"], name: "index_subscriber_tags_on_subscriber_id"
+    t.index ["tag_id"], name: "index_subscriber_tags_on_tag_id"
+  end
+
+  create_table "subscribers", force: :cascade do |t|
+    t.string "confirmation_token"
+    t.datetime "confirmed_at"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "unsubscribe_token"
+    t.datetime "unsubscribed_at"
+    t.datetime "updated_at", null: false
+    t.index ["confirmation_token"], name: "index_subscribers_on_confirmation_token", unique: true
+    t.index ["email"], name: "index_subscribers_on_email", unique: true
+    t.index ["unsubscribe_token"], name: "index_subscribers_on_unsubscribe_token", unique: true
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_tags_on_name", unique: true
+    t.index ["slug"], name: "index_tags_on_slug", unique: true
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "password_digest", null: false
+    t.datetime "updated_at", null: false
+    t.string "user_name", null: false
+    t.index ["user_name"], name: "index_users_on_user_name", unique: true
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "article_tags", "articles"
+  add_foreign_key "article_tags", "tags"
   add_foreign_key "comments", "articles"
+  add_foreign_key "comments", "comments", column: "parent_id", on_delete: :cascade
   add_foreign_key "sessions", "users"
   add_foreign_key "social_media_posts", "articles"
+  add_foreign_key "subscriber_tags", "subscribers"
+  add_foreign_key "subscriber_tags", "tags"
 end
