@@ -10,6 +10,6 @@ default: &default
 
 development: *default
 test: *default
-beta: *default
-staging: *default
+# beta: *default
+# staging: *default
 production: *default

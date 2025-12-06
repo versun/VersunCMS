@@ -10,6 +10,6 @@ cable: &cable
 development: *cable
 test:
   adapter: test
-beta: *cable
-staging: *cable
+# beta: *cable
+# staging: *cable
 production: *cable
