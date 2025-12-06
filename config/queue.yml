@@ -5,14 +5,11 @@ default: &default
   workers:
     - queues: "*"
       threads: 3
-      processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+      processes: <%= ENV.fetch("JOB_CONCURRENCY", Concurrent.physical_processor_count) %>
       polling_interval: 0.1
 
-development:
-  <<: *default
-
-test:
-  <<: *default
-
-production:
-  <<: *default
+development: *default
+test: *default
+beta: *default
+staging: *default
+production: *default
