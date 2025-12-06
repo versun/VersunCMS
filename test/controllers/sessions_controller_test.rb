@@ -17,7 +17,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
         password: "password123"
       }
     }
-    
+
     assert_redirected_to root_path
   end
 
@@ -28,7 +28,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
         password: "password123"
       }
     }
-    
+
     assert_response :unprocessable_entity
   end
 
@@ -39,13 +39,13 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
         password: "wrongpassword"
       }
     }
-    
+
     assert_response :unprocessable_entity
   end
 
   test "should destroy session" do
     sign_in(@user)
-    
+
     delete session_path(@user.sessions.first.id)
     assert_redirected_to root_path
   end

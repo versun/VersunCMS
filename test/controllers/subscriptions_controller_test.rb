@@ -13,7 +13,7 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    
+
     assert_response :success
   end
 
@@ -39,9 +39,9 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should confirm subscription with valid token" do
     subscriber = subscribers(:unconfirmed_subscriber)
-    
+
     get confirm_subscription_path(token: subscriber.confirmation_token)
-    
+
     subscriber.reload
     assert subscriber.confirmed?
   end
@@ -53,9 +53,9 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should unsubscribe with valid token" do
     subscriber = subscribers(:confirmed_subscriber)
-    
+
     get unsubscribe_subscription_path(token: subscriber.unsubscribe_token)
-    
+
     subscriber.reload
     assert subscriber.unsubscribed?
   end

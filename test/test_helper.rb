@@ -10,7 +10,7 @@ class ActiveSupport::TestCase
   fixtures :all
 
   # Add more helper methods to be used by all tests here...
-  
+
   # Helper method to create a user with authentication
   def create_user(user_name: "testuser", password: "password123")
     User.create!(
@@ -82,10 +82,10 @@ class ActionDispatch::IntegrationTest
       ip_address: "127.0.0.1",
       user_agent: "Test Agent"
     )
-    
+
     # Set session cookie
     cookies[:_session_id] = session.id.to_s
-    
+
     # Make the request
     send(method, path, params: params)
   end

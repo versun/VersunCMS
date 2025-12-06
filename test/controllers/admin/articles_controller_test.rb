@@ -39,7 +39,7 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    
+
     assert_redirected_to admin_articles_path
   end
 
@@ -55,7 +55,7 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
         create_and_add_another: "1"
       }
     end
-    
+
     assert_redirected_to new_admin_article_path
   end
 
@@ -65,7 +65,7 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
         title: "Updated Title"
       }
     }
-    
+
     assert_redirected_to admin_articles_path
     @article.reload
     assert_equal "Updated Title", @article.title
@@ -83,7 +83,7 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
 
   test "should publish article" do
     patch publish_admin_article_path(@draft_article.slug)
-    
+
     assert_redirected_to admin_articles_path
     @draft_article.reload
     assert @draft_article.publish?
@@ -91,7 +91,7 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
 
   test "should unpublish article" do
     patch unpublish_admin_article_path(@article.slug)
-    
+
     assert_redirected_to admin_articles_path
     @article.reload
     assert @article.draft?
@@ -99,12 +99,12 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
 
   test "should batch add tags" do
     tag = tags(:ruby)
-    
+
     post batch_add_tags_admin_articles_path, params: {
-      ids: [@article.slug],
+      ids: [ @article.slug ],
       tag_names: "ruby, rails"
     }
-    
+
     assert_redirected_to admin_articles_path
     @article.reload
     assert @article.tags.pluck(:name).include?("ruby")
@@ -115,24 +115,24 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
       ids: [],
       tag_names: "ruby"
     }
-    
+
     assert_redirected_to admin_articles_path
   end
 
   test "should not batch add tags without tag names" do
     post batch_add_tags_admin_articles_path, params: {
-      ids: [@article.slug],
+      ids: [ @article.slug ],
       tag_names: ""
     }
-    
+
     assert_redirected_to admin_articles_path
   end
 
   test "should batch destroy articles" do
     post batch_destroy_admin_articles_path, params: {
-      ids: [@article.slug]
+      ids: [ @article.slug ]
     }
-    
+
     assert_redirected_to admin_articles_path
     @article.reload
     assert_equal "trash", @article.status
@@ -140,10 +140,10 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
 
   test "should permanently delete trashed articles in batch" do
     trash_article = articles(:trash_article)
-    
+
     assert_difference "Article.count", -1 do
       post batch_destroy_admin_articles_path, params: {
-        ids: [trash_article.slug]
+        ids: [ trash_article.slug ]
       }
     end
   end

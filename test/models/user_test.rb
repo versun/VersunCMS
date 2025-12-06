@@ -64,7 +64,7 @@ class UserTest < ActiveSupport::TestCase
       ip_address: "127.0.0.1",
       user_agent: "Test Agent"
     )
-    
+
     assert_difference "Session.count", -1 do
       @user.destroy
     end

@@ -38,13 +38,13 @@ class PageTest < ActiveSupport::TestCase
       slug: "published-page",
       status: :publish
     )
-    
+
     draft_page = Page.create!(
       title: "Draft Page",
       slug: "draft-page",
       status: :draft
     )
-    
+
     published = Page.published
     assert_includes published, published_page
     assert_not_includes published, draft_page

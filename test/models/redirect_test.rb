@@ -46,13 +46,13 @@ class RedirectTest < ActiveSupport::TestCase
       replacement: "/new-enabled",
       enabled: true
     )
-    
+
     disabled_redirect = Redirect.create!(
       regex: "^/disabled$",
       replacement: "/new-disabled",
       enabled: false
     )
-    
+
     enabled = Redirect.enabled
     assert_includes enabled, enabled_redirect
     assert_not_includes enabled, disabled_redirect
@@ -63,7 +63,7 @@ class RedirectTest < ActiveSupport::TestCase
       regex: "^/old-article$",
       replacement: "/new-article"
     )
-    
+
     assert redirect.match?("/old-article")
     assert_not redirect.match?("/old-article/extra")
   end
@@ -74,7 +74,7 @@ class RedirectTest < ActiveSupport::TestCase
       replacement: "/new-article",
       enabled: false
     )
-    
+
     assert_not redirect.match?("/old-article")
   end
 
@@ -83,7 +83,7 @@ class RedirectTest < ActiveSupport::TestCase
       regex: "^/old-article$",
       replacement: "/new-article"
     )
-    
+
     assert_equal "/new-article", redirect.apply_to("/old-article")
     assert_nil redirect.apply_to("/other-path")
   end

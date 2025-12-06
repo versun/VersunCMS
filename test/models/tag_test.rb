@@ -52,7 +52,7 @@ class TagTest < ActiveSupport::TestCase
   test "alphabetical scope should order by name" do
     tag1 = Tag.create!(name: "Zebra")
     tag2 = Tag.create!(name: "Apple")
-    
+
     alphabetical = Tag.alphabetical
     assert_equal tag2, alphabetical.first
     assert_equal tag1, alphabetical.last
@@ -60,7 +60,7 @@ class TagTest < ActiveSupport::TestCase
 
   test "find_or_create_by_names should create tags from comma-separated string" do
     tags = Tag.find_or_create_by_names("ruby, rails, javascript")
-    
+
     assert_equal 3, tags.count
     assert tags.map(&:name).include?("ruby")
     assert tags.map(&:name).include?("rails")
@@ -70,7 +70,7 @@ class TagTest < ActiveSupport::TestCase
   test "find_or_create_by_names should reuse existing tags" do
     existing_tag = tags(:ruby)
     tags = Tag.find_or_create_by_names("ruby, new-tag")
-    
+
     assert_equal 2, tags.count
     assert_includes tags, existing_tag
   end
@@ -101,10 +101,10 @@ class TagTest < ActiveSupport::TestCase
     tag = tags(:ruby)
     article1 = create_published_article
     article2 = create_published_article
-    
+
     article1.tags << tag
     article2.tags << tag
-    
+
     assert_equal 2, tag.articles_count
   end
 
@@ -117,7 +117,7 @@ class TagTest < ActiveSupport::TestCase
     tag = tags(:ruby)
     article = create_published_article
     article.tags << tag
-    
+
     assert_difference "ArticleTag.count", -1 do
       tag.destroy
     end

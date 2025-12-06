@@ -53,7 +53,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create article when authenticated" do
     sign_in(@user)
-    
+
     assert_difference "Article.count", 1 do
       post articles_path, params: {
         article: {
@@ -64,13 +64,13 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    
+
     assert_redirected_to admin_articles_path
   end
 
   test "should not create article with invalid params" do
     sign_in(@user)
-    
+
     assert_no_difference "Article.count" do
       post articles_path, params: {
         article: {
@@ -89,14 +89,14 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update article when authenticated" do
     sign_in(@user)
-    
+
     patch article_path(@article.slug), params: {
       article: {
         title: "Updated Title",
         description: "Updated description"
       }
     }
-    
+
     assert_redirected_to admin_articles_path
     @article.reload
     assert_equal "Updated Title", @article.title
@@ -104,11 +104,11 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
 
   test "should move article to trash when destroying" do
     sign_in(@user)
-    
+
     assert_no_difference "Article.count" do
       delete article_path(@article.slug)
     end
-    
+
     @article.reload
     assert_equal "trash", @article.status
   end
@@ -116,7 +116,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   test "should permanently delete article from trash" do
     sign_in(@user)
     trash_article = articles(:trash_article)
-    
+
     assert_difference "Article.count", -1 do
       delete article_path(trash_article.slug)
     end

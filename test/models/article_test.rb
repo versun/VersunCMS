@@ -56,7 +56,7 @@ class ArticleTest < ActiveSupport::TestCase
   test "published scope should return only published articles" do
     published = articles(:published_article)
     draft = articles(:draft_article)
-    
+
     published_articles = Article.published
     assert_includes published_articles, published
     assert_not_includes published_articles, draft
@@ -71,7 +71,7 @@ class ArticleTest < ActiveSupport::TestCase
   test "publishable scope should return scheduled articles ready to publish" do
     scheduled = articles(:scheduled_article)
     scheduled.update!(scheduled_at: 1.hour.ago)
-    
+
     publishable = Article.publishable
     assert_includes publishable, scheduled
   end
@@ -79,7 +79,7 @@ class ArticleTest < ActiveSupport::TestCase
   test "publishable scope should not return future scheduled articles" do
     scheduled = articles(:scheduled_article)
     scheduled.update!(scheduled_at: 1.hour.from_now)
-    
+
     publishable = Article.publishable
     assert_not_includes publishable, scheduled
   end
@@ -92,7 +92,7 @@ class ArticleTest < ActiveSupport::TestCase
   test "publish_scheduled should update status to publish" do
     article = articles(:scheduled_article)
     article.update!(scheduled_at: 1.hour.ago)
-    
+
     article.publish_scheduled
     assert article.publish?
     assert_nil article.scheduled_at
@@ -102,7 +102,7 @@ class ArticleTest < ActiveSupport::TestCase
     article = articles(:scheduled_article)
     article.update!(scheduled_at: 1.hour.from_now)
     original_status = article.status
-    
+
     article.publish_scheduled
     assert_equal original_status, article.status
   end
@@ -111,15 +111,15 @@ class ArticleTest < ActiveSupport::TestCase
     article = articles(:published_article)
     tag1 = tags(:ruby)
     tag2 = tags(:rails)
-    article.tags << [tag1, tag2]
-    
+    article.tags << [ tag1, tag2 ]
+
     assert_equal "Ruby, Rails", article.tag_list
   end
 
   test "tag_list= should create tags from comma-separated string" do
     @article.save!
     @article.tag_list = "ruby, rails, javascript"
-    
+
     assert_equal 3, @article.tags.count
     assert @article.tags.pluck(:name).include?("ruby")
     assert @article.tags.pluck(:name).include?("rails")
@@ -130,7 +130,7 @@ class ArticleTest < ActiveSupport::TestCase
     existing_tag = tags(:ruby)
     @article.save!
     @article.tag_list = "ruby, new-tag"
-    
+
     assert_equal 2, @article.tags.count
     assert_includes @article.tags, existing_tag
   end
@@ -171,7 +171,7 @@ class ArticleTest < ActiveSupport::TestCase
     article = articles(:published_article)
     comment = comments(:approved_comment)
     article.comments << comment
-    
+
     assert_difference "Comment.count", -1 do
       article.destroy
     end
@@ -181,7 +181,7 @@ class ArticleTest < ActiveSupport::TestCase
     article = articles(:published_article)
     tag = tags(:ruby)
     article.tags << tag
-    
+
     assert_difference "ArticleTag.count", -1 do
       article.destroy
     end

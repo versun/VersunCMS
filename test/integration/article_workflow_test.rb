@@ -16,31 +16,31 @@ class ArticleWorkflowTest < ActionDispatch::IntegrationTest
         content: "This is test content"
       }
     }
-    
+
     article = Article.find_by(title: "Workflow Test Article")
     assert_not_nil article
     assert article.draft?
-    
+
     # Step 2: Add tags to the article
     post batch_add_tags_admin_articles_path, params: {
-      ids: [article.slug],
+      ids: [ article.slug ],
       tag_names: "ruby, rails"
     }
-    
+
     article.reload
     assert_equal 2, article.tags.count
-    
+
     # Step 3: Publish the article
     patch publish_admin_article_path(article.slug)
-    
+
     article.reload
     assert article.publish?
-    
+
     # Step 4: View the published article
     get article_path(article.slug)
     assert_response :success
     assert_match article.title, response.body
-    
+
     # Step 5: Verify article appears in public index
     get articles_path
     assert_response :success
@@ -58,24 +58,24 @@ class ArticleWorkflowTest < ActionDispatch::IntegrationTest
         content: "Scheduled content"
       }
     }
-    
+
     article = Article.find_by(title: "Scheduled Workflow Article")
     assert_not_nil article
     assert article.schedule?
     assert_not_nil article.scheduled_at
-    
+
     # Verify it doesn't appear in public index yet
     get articles_path
     assert_response :success
     assert_no_match article.title, response.body
-    
+
     # Manually trigger publish (simulating job execution)
     article.update!(scheduled_at: 1.hour.ago)
     article.publish_scheduled
-    
+
     article.reload
     assert article.publish?
-    
+
     # Now it should appear in public index
     get articles_path
     assert_response :success
@@ -84,18 +84,18 @@ class ArticleWorkflowTest < ActionDispatch::IntegrationTest
 
   test "article deletion workflow" do
     article = create_published_article
-    
+
     # Step 1: Move to trash
     delete admin_article_path(article.slug)
-    
+
     article.reload
     assert_equal "trash", article.status
-    
+
     # Step 2: Verify it doesn't appear in public index
     get articles_path
     assert_response :success
     assert_no_match article.title, response.body
-    
+
     # Step 3: Permanently delete
     assert_difference "Article.count", -1 do
       delete admin_article_path(article.slug)
@@ -106,13 +106,13 @@ class ArticleWorkflowTest < ActionDispatch::IntegrationTest
     article1 = create_published_article(title: "Ruby Programming")
     article2 = create_published_article(title: "Rails Framework")
     article3 = create_published_article(title: "JavaScript Basics")
-    
+
     # Search for Ruby-related articles
     get articles_path, params: { q: "Ruby" }
     assert_response :success
     assert_match article1.title, response.body
     assert_no_match article3.title, response.body
-    
+
     # Search for Rails
     get articles_path, params: { q: "Rails" }
     assert_response :success
@@ -122,7 +122,7 @@ class ArticleWorkflowTest < ActionDispatch::IntegrationTest
   test "article with tags workflow" do
     tag1 = tags(:ruby)
     tag2 = tags(:rails)
-    
+
     # Create article with tags
     post admin_articles_path, params: {
       article: {
@@ -132,20 +132,20 @@ class ArticleWorkflowTest < ActionDispatch::IntegrationTest
         tag_list: "ruby, rails"
       }
     }
-    
+
     article = Article.find_by(title: "Tagged Article")
     assert_not_nil article
     assert_equal 2, article.tags.count
     assert_includes article.tags, tag1
     assert_includes article.tags, tag2
-    
+
     # Update tags
     patch admin_article_path(article.slug), params: {
       article: {
         tag_list: "javascript"
       }
     }
-    
+
     article.reload
     assert_equal 1, article.tags.count
     assert_not_includes article.tags, tag1

@@ -36,7 +36,7 @@ class SubscriberTest < ActiveSupport::TestCase
       "user.name@example.co.uk",
       "user+tag@example.com"
     ]
-    
+
     valid_emails.each do |email|
       @subscriber.email = email
       assert @subscriber.valid?, "#{email} should be valid"
@@ -52,7 +52,7 @@ class SubscriberTest < ActiveSupport::TestCase
   test "confirmed scope should return only confirmed subscribers" do
     confirmed = subscribers(:confirmed_subscriber)
     unconfirmed = subscribers(:unconfirmed_subscriber)
-    
+
     confirmed_subscribers = Subscriber.confirmed
     assert_includes confirmed_subscribers, confirmed
     assert_not_includes confirmed_subscribers, unconfirmed
@@ -61,7 +61,7 @@ class SubscriberTest < ActiveSupport::TestCase
   test "active scope should return confirmed and not unsubscribed" do
     active = subscribers(:confirmed_subscriber)
     unsubscribed = subscribers(:unsubscribed_subscriber)
-    
+
     active_subscribers = Subscriber.active
     assert_includes active_subscribers, active
     assert_not_includes active_subscribers, unsubscribed
@@ -90,7 +90,7 @@ class SubscriberTest < ActiveSupport::TestCase
   test "confirm! should set confirmed_at" do
     subscriber = subscribers(:unconfirmed_subscriber)
     assert_nil subscriber.confirmed_at
-    
+
     subscriber.confirm!
     assert_not_nil subscriber.confirmed_at
   end
@@ -98,7 +98,7 @@ class SubscriberTest < ActiveSupport::TestCase
   test "confirm! should not update if already confirmed" do
     subscriber = subscribers(:confirmed_subscriber)
     original_confirmed_at = subscriber.confirmed_at
-    
+
     subscriber.confirm!
     assert_equal original_confirmed_at, subscriber.confirmed_at
   end
@@ -106,7 +106,7 @@ class SubscriberTest < ActiveSupport::TestCase
   test "unsubscribe! should set unsubscribed_at" do
     subscriber = subscribers(:confirmed_subscriber)
     assert_nil subscriber.unsubscribed_at
-    
+
     subscriber.unsubscribe!
     assert_not_nil subscriber.unsubscribed_at
   end
@@ -120,14 +120,14 @@ class SubscriberTest < ActiveSupport::TestCase
     subscriber = subscribers(:confirmed_subscriber)
     tag = tags(:ruby)
     subscriber.tags << tag
-    
+
     assert subscriber.subscribed_to_tag?(tag)
   end
 
   test "subscribed_to_tag? should return false when subscriber does not have tag" do
     subscriber = subscribers(:confirmed_subscriber)
     tag = tags(:ruby)
-    
+
     assert_not subscriber.subscribed_to_tag?(tag)
   end
 
@@ -140,7 +140,7 @@ class SubscriberTest < ActiveSupport::TestCase
     subscriber = subscribers(:confirmed_subscriber)
     tag = tags(:ruby)
     subscriber.tags << tag
-    
+
     assert_not subscriber.subscribed_to_all?
   end
 
@@ -153,7 +153,7 @@ class SubscriberTest < ActiveSupport::TestCase
     subscriber = subscribers(:confirmed_subscriber)
     tag = tags(:ruby)
     subscriber.tags << tag
-    
+
     assert_difference "SubscriberTag.count", -1 do
       subscriber.destroy
     end
@@ -163,7 +163,7 @@ class SubscriberTest < ActiveSupport::TestCase
     subscriber = subscribers(:confirmed_subscriber)
     tag = tags(:ruby)
     subscriber.tags << tag
-    
+
     results = Subscriber.subscribed_to_tag(tag)
     assert_includes results, subscriber
   end
@@ -171,14 +171,14 @@ class SubscriberTest < ActiveSupport::TestCase
   test "subscribed_to_any_tags scope should find subscribers with any of the tags" do
     subscriber1 = subscribers(:confirmed_subscriber)
     subscriber2 = create_subscriber(email: "another@example.com")
-    
+
     tag1 = tags(:ruby)
     tag2 = tags(:rails)
-    
+
     subscriber1.tags << tag1
     subscriber2.tags << tag2
-    
-    results = Subscriber.subscribed_to_any_tags([tag1.id, tag2.id])
+
+    results = Subscriber.subscribed_to_any_tags([ tag1.id, tag2.id ])
     assert_includes results, subscriber1
     assert_includes results, subscriber2
   end
@@ -186,9 +186,9 @@ class SubscriberTest < ActiveSupport::TestCase
   test "subscribed_to_all scope should find subscribers without tags" do
     subscriber_with_tags = subscribers(:confirmed_subscriber)
     subscriber_with_tags.tags << tags(:ruby)
-    
+
     subscriber_without_tags = create_subscriber(email: "no-tags@example.com")
-    
+
     results = Subscriber.subscribed_to_all
     assert_not_includes results, subscriber_with_tags
     assert_includes results, subscriber_without_tags
