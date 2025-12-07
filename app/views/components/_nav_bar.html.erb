@@ -1,3 +1,13 @@
+<%# Search form - minimal style %>
+<div class="navbar-search">
+  <%= form_with url: root_path, method: :get, local: true, class: "search-form" do |form| %>
+    <%= form.text_field :q, 
+        value: params[:q],
+        placeholder: "搜索...", 
+        class: "search-input" %>
+  <% end %>
+</div>
+
 <ul>
     <li>
       <%= link_to "Home", root_path, class: current_page?(root_path) ? "current" : "" %>
