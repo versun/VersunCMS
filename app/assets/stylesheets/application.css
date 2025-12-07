@@ -372,6 +372,36 @@ h2 {
     color: #c04000;
 }
 
+.article-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.article-header h2 {
+    flex: 1;
+    margin: 0;
+}
+
+/* Mobile: Stack title and share button vertically */
+@media (max-width: 768px) {
+    .article-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .share-container {
+        margin-left: 0 !important;
+        margin-top: 8px;
+    }
+    
+    .share-menu {
+        right: auto;
+        left: 0;
+    }
+}
+
 .article-content {
     display: block;
     unicode-bidi: isolate;
@@ -790,4 +820,100 @@ h2 {
 
 [data-theme="dark"] .newsletter-submit-btn-small:hover:not(:disabled) {
     background-color: #ff8c5a;
+}
+
+/* Share Menu Styles */
+.share-container {
+    position: relative;
+    display: inline-block;
+}
+
+.share-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: grey;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.share-button:hover {
+    color: #c04000;
+    background-color: #f5f5f5;
+}
+
+[data-theme="dark"] .share-button:hover {
+    background-color: var(--hover-bg);
+}
+
+.share-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 160px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.share-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    color: #333;
+    text-decoration: none;
+    font-size: 13px;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.share-menu-item:last-child {
+    border-bottom: none;
+}
+
+.share-menu-item:hover {
+    background-color: #f5f5f5;
+    color: #c04000;
+}
+
+.share-menu-item i {
+    width: 16px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Dark Mode - Share Menu */
+[data-theme="dark"] .share-button {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .share-button:hover {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] .share-menu {
+    background-color: #2a2a2a;
+    border-color: var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .share-menu-item {
+    color: var(--text-color);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .share-menu-item:hover {
+    background-color: var(--hover-bg);
+    color: var(--accent-color);
 }
