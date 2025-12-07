@@ -47,15 +47,15 @@ class NativeNewsletterSenderJob < ApplicationJob
 
     # 准备 SMTP 配置
     smtp_config = prepare_smtp_config(newsletter_setting)
-    
+
     relevant_subscribers.each do |subscriber|
       begin
         mail = NewsletterMailer.article_email(article, subscriber, site_info)
         Rails.logger.info "Sending newsletter email to #{subscriber.email} using SMTP: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}"
-        
+
         # 直接在邮件对象上设置 SMTP 配置，确保使用正确的设置
         mail.delivery_method(:smtp, smtp_config)
-        
+
         mail.deliver_now
         success_count += 1
         Rails.logger.info "Successfully sent newsletter email to #{subscriber.email}"
@@ -121,7 +121,7 @@ class NativeNewsletterSenderJob < ApplicationJob
     # 同时设置类级别和实例级别，确保在后台任务中生效
     ActionMailer::Base.delivery_method = :smtp
     ActionMailer::Base.smtp_settings = smtp_settings
-    
+
     # 也设置 Rails 应用配置，确保一致性
     Rails.application.config.action_mailer.delivery_method = :smtp
     Rails.application.config.action_mailer.smtp_settings = smtp_settings
