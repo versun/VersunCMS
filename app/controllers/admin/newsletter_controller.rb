@@ -3,8 +3,8 @@ class Admin::NewsletterController < Admin::BaseController
     @newsletter_setting = NewsletterSetting.instance
     @listmonk = Listmonk.first_or_initialize
 
-    # Fetch lists and templates if configuration exists and is saved in database
-    if @listmonk.persisted? && @listmonk.configured?
+    # Fetch lists and templates only if provider is listmonk and configuration exists
+    if @newsletter_setting.listmonk? && @listmonk.persisted? && @listmonk.configured?
       @lists = @listmonk.fetch_lists
       @templates = @listmonk.fetch_templates
     else

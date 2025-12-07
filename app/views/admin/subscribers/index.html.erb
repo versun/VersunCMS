@@ -55,8 +55,7 @@
           <td><%= subscriber.created_at.strftime("%Y-%m-%d %H:%M") %></td>
           <td>
             <%= link_to "删除", admin_subscriber_path(subscriber), 
-                method: :delete, 
-                data: { turbo_confirm: "确定要删除这个订阅者吗？" },
+                data: { turbo_method: :delete, turbo_confirm: "确定要删除这个订阅者吗？" },
                 class: "btn btn-danger btn-sm" %>
           </td>
         </tr>
