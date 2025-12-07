@@ -41,7 +41,21 @@
         <%= f.check_box :auto_fetch_comments %>
         <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
       </div>
-      <small>Automatically fetch and display comments from Mastodon every day</small>
+      <div class="field">
+        <%= f.label :comment_fetch_schedule, "Comment Fetch Schedule" %>
+        <%= f.select :comment_fetch_schedule, 
+            options_for_select([
+              ['Disabled', ''],
+              ['Daily at 12:00 AM', 'daily'],
+              ['Weekly on Monday at 12:00 AM', 'weekly'],
+              ['Monthly on 1st at 12:00 AM', 'monthly']
+            ], @mastodon.comment_fetch_schedule),
+            {},
+            { class: "form-select" } %>
+        <small>
+          Select the frequency for automatically fetching comments. All fetches run at 12:00 AM (midnight).
+        </small>
+      </div>
 
       <div class="form-actions">
         <%= f.submit "Save", class: 'btn btn-primary' %>
@@ -148,7 +162,21 @@
         <%= f.check_box :auto_fetch_comments %>
         <%= f.label :auto_fetch_comments, "Auto-fetch Comments" %>
       </div>
-      <small>Automatically fetch and display comments from Bluesky every day</small>
+      <div class="field">
+        <%= f.label :comment_fetch_schedule, "Comment Fetch Schedule" %>
+        <%= f.select :comment_fetch_schedule, 
+            options_for_select([
+              ['Disabled', ''],
+              ['Daily at 12:00 AM', 'daily'],
+              ['Weekly on Monday at 12:00 AM', 'weekly'],
+              ['Monthly on 1st at 12:00 AM', 'monthly']
+            ], @bluesky.comment_fetch_schedule),
+            {},
+            { class: "form-select" } %>
+        <small>
+          Select the frequency for automatically fetching comments. All fetches run at 12:00 AM (midnight).
+        </small>
+      </div>
 
       <div class="form-actions">
         <%= f.submit "Save", class: 'btn btn-primary' %>

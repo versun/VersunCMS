@@ -51,13 +51,18 @@
 </div>
 
 <div class="field">
-  <%= form.label :github_backup_cron, "Backup Schedule (Cron Format)" %>
-  <%= form.text_field :github_backup_cron, placeholder: "0 2 * * * (Daily at 2:00 AM)" %>
+  <%= form.label :github_backup_schedule, "Backup Schedule" %>
+  <%= form.select :github_backup_schedule, 
+      options_for_select([
+        ['Disabled', ''],
+        ['Daily at 12:00 AM', 'daily'],
+        ['Weekly on Monday at 12:00 AM', 'weekly'],
+        ['Monthly on 1st at 12:00 AM', 'monthly']
+      ], @setting.github_backup_schedule),
+      {},
+      { class: "form-select" } %>
   <small>
-    Optional. Use cron format: 
-    <code>0 2 * * *</code> for daily at 2AM, 
-    <code>0 0 * * 0</code> for weekly on Sunday.
-    Leave empty to disable automatic backups.
+    Select the frequency for automatic backups. All backups run at 12:00 AM (midnight).
   </small>
 </div>
 

@@ -36,7 +36,7 @@ class Setting < ApplicationRecord
 
   def github_backup_settings_changed?
     saved_change_to_github_backup_enabled? ||
-      saved_change_to_github_backup_cron? ||
+      saved_change_to_github_backup_schedule? ||
       saved_change_to_github_repo_url? ||
       saved_change_to_github_token?
   end

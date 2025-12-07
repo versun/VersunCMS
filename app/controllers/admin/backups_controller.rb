@@ -54,7 +54,7 @@ class Admin::BackupsController < Admin::BaseController
       :github_repo_url,
       :github_token,
       :github_backup_branch,
-      :github_backup_cron,
+      :github_backup_schedule,
       :git_user_name,
       :git_user_email
     )

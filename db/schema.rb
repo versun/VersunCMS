@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_05_061101) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_06_202045) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -108,6 +108,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_05_061101) do
     t.boolean "auto_fetch_comments", default: false, null: false
     t.string "client_key"
     t.string "client_secret"
+    t.string "comment_fetch_schedule"
     t.datetime "created_at", null: false
     t.boolean "enabled", default: false, null: false
     t.string "platform", null: false
@@ -183,8 +184,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_05_061101) do
     t.string "git_user_email"
     t.string "git_user_name"
     t.string "github_backup_branch", default: "main"
-    t.string "github_backup_cron"
     t.boolean "github_backup_enabled", default: false
+    t.string "github_backup_schedule"
     t.string "github_repo_url"
     t.string "github_token"
     t.text "head_code"

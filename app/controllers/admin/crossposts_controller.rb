@@ -82,7 +82,7 @@ class Admin::CrosspostsController < Admin::BaseController
 
   def crosspost_params
     params.expect(crosspost: [
-      :platform, :server_url, :enabled, :access_token, :access_token_secret, :client_id, :client_secret, :client_key, :api_key, :api_key_secret, :app_password, :username, :auto_fetch_comments ]
+      :platform, :server_url, :enabled, :access_token, :access_token_secret, :client_id, :client_secret, :client_key, :api_key, :api_key_secret, :app_password, :username, :auto_fetch_comments, :comment_fetch_schedule ]
     )
   end
 end
