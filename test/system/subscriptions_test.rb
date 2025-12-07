@@ -39,4 +39,3 @@ class SubscriptionsTest < ApplicationSystemTestCase
     assert subscriber.unsubscribed?
   end
 end
-

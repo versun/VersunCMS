@@ -84,4 +84,3 @@ class SubscriptionWorkflowTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 end
-

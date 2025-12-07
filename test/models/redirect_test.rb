@@ -94,4 +94,3 @@ class RedirectTest < ActiveSupport::TestCase
     assert_includes @redirect.errors[:regex].first, "is not a valid regular expression"
   end
 end
-

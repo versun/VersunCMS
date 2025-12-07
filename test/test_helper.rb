@@ -90,4 +90,3 @@ class ActionDispatch::IntegrationTest
     send(method, path, params: params)
   end
 end
-

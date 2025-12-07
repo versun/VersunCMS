@@ -74,4 +74,3 @@ class PageTest < ActiveSupport::TestCase
     assert @page.valid?
   end
 end
-

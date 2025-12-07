@@ -151,4 +151,3 @@ class ArticleWorkflowTest < ActionDispatch::IntegrationTest
     assert_not_includes article.tags, tag1
   end
 end
-

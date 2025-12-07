@@ -154,4 +154,3 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
     skip "Requires social media service mocking"
   end
 end
-

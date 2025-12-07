@@ -79,4 +79,3 @@ class ArticlesTest < ApplicationSystemTestCase
     assert_equal "trash", @article.status
   end
 end
-

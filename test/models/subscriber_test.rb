@@ -194,4 +194,3 @@ class SubscriberTest < ActiveSupport::TestCase
     assert_includes results, subscriber_without_tags
   end
 end
-

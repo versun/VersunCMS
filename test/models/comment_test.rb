@@ -190,4 +190,3 @@ class CommentTest < ActiveSupport::TestCase
     end
   end
 end
-

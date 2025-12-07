@@ -11,4 +11,3 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     click_button "Sign in"
   end
 end
-

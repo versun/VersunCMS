@@ -4,7 +4,7 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
   def perform
     # Check if any platform has scheduled comment fetching enabled
     enabled_platforms = Crosspost.where(enabled: true)
-                                 .where.not(comment_fetch_schedule: [nil, ''])
+                                 .where.not(comment_fetch_schedule: [ nil, "" ])
                                  .where(auto_fetch_comments: true)
 
     return if enabled_platforms.empty?
@@ -19,7 +19,7 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
   def self.update_schedule
     # Check if any crosspost has comment fetching enabled with a schedule
     enabled_platforms = Crosspost.where(enabled: true)
-                                 .where.not(comment_fetch_schedule: [nil, ''])
+                                 .where.not(comment_fetch_schedule: [ nil, "" ])
                                  .where(auto_fetch_comments: true)
 
     # Remove existing scheduled job if any
@@ -35,12 +35,12 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
 
         # Convert schedule option to Solid Queue natural language syntax
         schedule_string = case schedule_option
-        when 'daily'
-          'every day at midnight'  # Daily at midnight
-        when 'weekly'
-          'every Monday at midnight'  # Weekly on Monday at midnight
-        when 'monthly'
-          'every month on the 1st at midnight'  # Monthly on 1st at midnight
+        when "daily"
+          "every day at midnight"  # Daily at midnight
+        when "weekly"
+          "every Monday at midnight"  # Weekly on Monday at midnight
+        when "monthly"
+          "every month on the 1st at midnight"  # Monthly on 1st at midnight
         else
           Rails.logger.error "Invalid schedule option for comment fetch: #{schedule_option}"
           return
@@ -88,5 +88,3 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
     Rails.logger.error "Failed to remove comment fetch schedule: #{e.message}"
   end
 end
-
-

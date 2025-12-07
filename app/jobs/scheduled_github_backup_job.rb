@@ -32,12 +32,12 @@ class ScheduledGithubBackupJob < ApplicationJob
       begin
         # Convert schedule option to Solid Queue natural language syntax
         schedule_string = case setting.github_backup_schedule
-        when 'daily'
-          'every day at midnight'  # Daily at midnight
-        when 'weekly'
-          'every Monday at midnight'  # Weekly on Monday at midnight
-        when 'monthly'
-          'every month on the 1st at midnight'  # Monthly on 1st at midnight
+        when "daily"
+          "every day at midnight"  # Daily at midnight
+        when "weekly"
+          "every Monday at midnight"  # Weekly on Monday at midnight
+        when "monthly"
+          "every month on the 1st at midnight"  # Monthly on 1st at midnight
         else
           Rails.logger.error "Invalid schedule option for GitHub backup: #{setting.github_backup_schedule}"
           return
