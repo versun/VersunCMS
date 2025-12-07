@@ -49,3 +49,4 @@ RAILS_ENV=development bin/rails db:migrate
 - Schema文件应该从开发环境生成，而不是从测试环境
 - 测试数据库是临时性的，不应该影响开发环境的schema文件
 - 如果需要在测试中修改schema，应该使用迁移文件，而不是直接编辑schema文件
+

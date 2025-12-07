@@ -7,3 +7,4 @@ default:
   setup_completed: true
   created_at: <%= 1.week.ago %>
   updated_at: <%= 1.week.ago %>
+

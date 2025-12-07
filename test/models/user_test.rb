@@ -70,3 +70,4 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 end
+

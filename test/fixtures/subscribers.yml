@@ -21,3 +21,4 @@ unsubscribed_subscriber:
   unsubscribed_at: <%= 1.day.ago %>
   created_at: <%= 3.days.ago %>
   updated_at: <%= 1.day.ago %>
+

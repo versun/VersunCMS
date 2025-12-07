@@ -123,3 +123,4 @@ class TagTest < ActiveSupport::TestCase
     end
   end
 end
+

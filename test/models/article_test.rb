@@ -187,3 +187,4 @@ class ArticleTest < ActiveSupport::TestCase
     end
   end
 end
+
