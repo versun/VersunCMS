@@ -5,6 +5,7 @@ class ImportZip
   require "nokogiri"
   require "open-uri"
   require "securerandom"
+  require "stringio"
 
   attr_reader :error_message, :import_dir, :zip_path
 
@@ -554,33 +555,35 @@ class ImportZip
         next
       end
 
-      static_file = StaticFile.create!(
+      # 先检查文件是否存在，避免创建没有文件的记录
+      static_files_dir = File.join(base_dir, "attachments", "static_files")
+      file_path = File.join(static_files_dir, "#{row['id']}_#{row['blob_filename']}")
+
+      unless File.exist?(file_path) && safe_file_path?(file_path)
+        Rails.logger.warn "Static file not found: #{file_path} for id #{row['id']}, blob_filename: #{row['blob_filename']}"
+        skipped_count += 1
+        next
+      end
+
+      # 创建记录并同时附加文件，避免验证错误
+      static_file = StaticFile.new(
         filename: row["filename"],
         description: row["description"],
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       )
 
-      # 导入静态文件的实际文件内容，直接使用 blob_filename
-      static_files_dir = File.join(base_dir, "attachments", "static_files")
-      file_path = File.join(static_files_dir, "#{row['id']}_#{row['blob_filename']}")
+      # 读取文件内容到内存，避免文件流关闭问题
+      file_content = File.binread(file_path)
+      static_file.file.attach(
+        io: StringIO.new(file_content),
+        filename: row["filename"],
+        content_type: detect_content_type(file_path)
+      )
 
-      if File.exist?(file_path) && safe_file_path?(file_path)
-        File.open(file_path) do |file|
-          static_file.file.attach(
-            io: file,
-            filename: row["filename"],
-            content_type: detect_content_type(file_path)
-          )
-        end
-        Rails.logger.info "Imported static file: #{row['filename']} from #{row['blob_filename']}"
-        imported_count += 1
-      else
-        Rails.logger.warn "Static file not found: #{file_path} for id #{row['id']}, blob_filename: #{row['blob_filename']}"
-        # 如果文件未找到，删除刚创建的记录，避免验证错误
-        static_file.destroy
-        skipped_count += 1
-      end
+      static_file.save!
+      Rails.logger.info "Imported static file: #{row['filename']} from #{row['blob_filename']}"
+      imported_count += 1
     end
     Rails.logger.info "Static_files import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
