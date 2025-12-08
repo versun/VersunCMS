@@ -564,7 +564,7 @@ class ImportZip
       # 导入静态文件的实际文件内容，直接使用 blob_filename
       static_files_dir = File.join(base_dir, "attachments", "static_files")
       file_path = File.join(static_files_dir, "#{row['id']}_#{row['blob_filename']}")
-      
+
       if File.exist?(file_path) && safe_file_path?(file_path)
         File.open(file_path) do |file|
           static_file.file.attach(
@@ -581,7 +581,6 @@ class ImportZip
         static_file.destroy
         skipped_count += 1
       end
-
     end
     Rails.logger.info "Static_files import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
