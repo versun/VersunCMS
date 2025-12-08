@@ -7,7 +7,7 @@ class PasswordsController < ApplicationController
 
   def create
     if user = User.find_by(user_name: params[:user_name])
-      PasswordsMailer.reset(user).deliver_later
+      PasswordResetJob.perform_later(user.id)
     end
 
     redirect_to new_session_path, notice: "Password reset instructions sent (if user with that username exists)."

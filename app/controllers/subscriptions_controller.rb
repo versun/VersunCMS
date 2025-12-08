@@ -39,7 +39,7 @@ class SubscriptionsController < ApplicationController
         @subscriber.tags = []
       end
 
-      NewsletterMailer.confirmation_email(@subscriber, CacheableSettings.site_info).deliver_later
+      NewsletterConfirmationJob.perform_later(@subscriber.id)
 
       respond_to do |format|
         format.html do

@@ -34,9 +34,12 @@ class NewsletterMailer < ApplicationMailer
       host: site_info[:url]&.gsub(/^https?:\/\//, "") || "example.com"
     )
 
+    newsletter_setting = NewsletterSetting.instance
+    from_email = newsletter_setting.from_email || "noreply@example.com"
+
     mail(
       to: @subscriber.email,
-      from: NewsletterSetting.instance.from_email || "noreply@example.com",
+      from: from_email,
       subject: "请确认您的订阅 | #{@site_info[:title]}"
     )
   end
