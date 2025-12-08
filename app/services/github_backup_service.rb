@@ -30,6 +30,19 @@ class GithubBackupService
       # Export static files
       export_static_files
 
+      # Export other data to JSON/CSV
+      export_tags
+      export_comments
+      export_redirects
+      export_settings
+      export_crossposts
+      export_listmonks
+      export_newsletter_settings
+      export_subscribers
+      export_social_media_posts
+      export_article_tags
+      export_subscriber_tags
+
       # Commit and push changes
       commit_and_push
 
@@ -139,6 +152,11 @@ class GithubBackupService
 
     if article.scheduled_at.present?
       frontmatter["scheduled_at"] = article.scheduled_at.iso8601
+    end
+
+    # Add tags
+    if article.tags.any?
+      frontmatter["tags"] = article.tags.map(&:slug)
     end
 
     # Convert content to markdown
@@ -489,6 +507,329 @@ class GithubBackupService
       Rails.logger.error "Failed to find blob for signed_id #{signed_id}: #{e.message}"
       nil
     end
+  end
+
+  def export_tags
+    Rails.logger.info "Exporting tags..."
+
+    tags_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(tags_dir)
+
+    tags_data = []
+    Tag.order(:id).find_each do |tag|
+      tags_data << {
+        id: tag.id,
+        name: tag.name,
+        slug: tag.slug,
+        created_at: tag.created_at.iso8601,
+        updated_at: tag.updated_at.iso8601
+      }
+    end
+
+    tags_filepath = File.join(tags_dir, "tags.json")
+    File.write(tags_filepath, JSON.pretty_generate(tags_data))
+
+    Rails.logger.info "Exported #{tags_data.count} tags"
+  end
+
+  def export_comments
+    Rails.logger.info "Exporting comments..."
+
+    comments_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(comments_dir)
+
+    comments_data = []
+    Comment.order(:id).find_each do |comment|
+      comments_data << {
+        id: comment.id,
+        article_id: comment.article_id,
+        article_slug: comment.article&.slug,
+        parent_id: comment.parent_id,
+        author_name: comment.author_name,
+        author_url: comment.author_url,
+        author_username: comment.author_username,
+        author_avatar_url: comment.author_avatar_url,
+        content: comment.content,
+        platform: comment.platform,
+        external_id: comment.external_id,
+        status: comment.status,
+        published_at: comment.published_at&.iso8601,
+        url: comment.url,
+        created_at: comment.created_at.iso8601,
+        updated_at: comment.updated_at.iso8601
+      }
+    end
+
+    comments_filepath = File.join(comments_dir, "comments.json")
+    File.write(comments_filepath, JSON.pretty_generate(comments_data))
+
+    Rails.logger.info "Exported #{comments_data.count} comments"
+  end
+
+  def export_redirects
+    Rails.logger.info "Exporting redirects..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    redirects_data = []
+    Redirect.order(:id).find_each do |redirect|
+      redirects_data << {
+        id: redirect.id,
+        regex: redirect.regex,
+        replacement: redirect.replacement,
+        enabled: redirect.enabled,
+        permanent: redirect.permanent,
+        created_at: redirect.created_at.iso8601,
+        updated_at: redirect.updated_at.iso8601
+      }
+    end
+
+    redirects_filepath = File.join(data_dir, "redirects.json")
+    File.write(redirects_filepath, JSON.pretty_generate(redirects_data))
+
+    Rails.logger.info "Exported #{redirects_data.count} redirects"
+  end
+
+  def export_settings
+    Rails.logger.info "Exporting settings..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    settings_data = []
+    Setting.order(:id).find_each do |setting|
+      # Export footer content as HTML
+      footer_html = setting.footer.present? ? setting.footer.to_s : nil
+      
+      settings_data << {
+        id: setting.id,
+        title: setting.title,
+        description: setting.description,
+        author: setting.author,
+        url: setting.url,
+        time_zone: setting.time_zone,
+        head_code: setting.head_code,
+        custom_css: setting.custom_css,
+        social_links: setting.social_links,
+        static_files: setting.static_files,
+        tool_code: setting.tool_code,
+        giscus: setting.giscus,
+        footer: footer_html,
+        github_backup_enabled: setting.github_backup_enabled,
+        github_repo_url: setting.github_repo_url,
+        github_backup_branch: setting.github_backup_branch,
+        git_user_name: setting.git_user_name,
+        git_user_email: setting.git_user_email,
+        created_at: setting.created_at.iso8601,
+        updated_at: setting.updated_at.iso8601
+      }
+    end
+
+    settings_filepath = File.join(data_dir, "settings.json")
+    File.write(settings_filepath, JSON.pretty_generate(settings_data))
+
+    Rails.logger.info "Exported #{settings_data.count} settings"
+  end
+
+  def export_crossposts
+    Rails.logger.info "Exporting crossposts..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    crossposts_data = []
+    Crosspost.order(:id).find_each do |crosspost|
+      crossposts_data << {
+        id: crosspost.id,
+        platform: crosspost.platform,
+        server_url: crosspost.server_url,
+        client_key: crosspost.client_key,
+        client_secret: crosspost.client_secret,
+        access_token: crosspost.access_token,
+        access_token_secret: crosspost.access_token_secret,
+        api_key: crosspost.api_key,
+        api_key_secret: crosspost.api_key_secret,
+        username: crosspost.username,
+        app_password: crosspost.app_password,
+        enabled: crosspost.enabled,
+        auto_fetch_comments: crosspost.auto_fetch_comments,
+        comment_fetch_schedule: crosspost.comment_fetch_schedule,
+        settings: crosspost.settings,
+        created_at: crosspost.created_at.iso8601,
+        updated_at: crosspost.updated_at.iso8601
+      }
+    end
+
+    crossposts_filepath = File.join(data_dir, "crossposts.json")
+    File.write(crossposts_filepath, JSON.pretty_generate(crossposts_data))
+
+    Rails.logger.info "Exported #{crossposts_data.count} crossposts"
+  end
+
+  def export_newsletter_settings
+    Rails.logger.info "Exporting newsletter_settings..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    newsletter_settings_data = []
+    NewsletterSetting.order(:id).find_each do |setting|
+      # Export footer content as HTML
+      footer_html = setting.footer.present? ? setting.footer.to_s : nil
+      
+      newsletter_settings_data << {
+        id: setting.id,
+        provider: setting.provider,
+        enabled: setting.enabled,
+        smtp_address: setting.smtp_address,
+        smtp_port: setting.smtp_port,
+        smtp_user_name: setting.smtp_user_name,
+        smtp_password: setting.smtp_password,
+        smtp_domain: setting.smtp_domain,
+        smtp_authentication: setting.smtp_authentication,
+        smtp_enable_starttls: setting.smtp_enable_starttls,
+        from_email: setting.from_email,
+        footer: footer_html,
+        created_at: setting.created_at.iso8601,
+        updated_at: setting.updated_at.iso8601
+      }
+    end
+
+    newsletter_settings_filepath = File.join(data_dir, "newsletter_settings.json")
+    File.write(newsletter_settings_filepath, JSON.pretty_generate(newsletter_settings_data))
+
+    Rails.logger.info "Exported #{newsletter_settings_data.count} newsletter_settings"
+  end
+
+  def export_subscribers
+    Rails.logger.info "Exporting subscribers..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    subscribers_data = []
+    Subscriber.order(:id).find_each do |subscriber|
+      subscribers_data << {
+        id: subscriber.id,
+        email: subscriber.email,
+        confirmation_token: subscriber.confirmation_token,
+        confirmed_at: subscriber.confirmed_at&.iso8601,
+        unsubscribe_token: subscriber.unsubscribe_token,
+        unsubscribed_at: subscriber.unsubscribed_at&.iso8601,
+        created_at: subscriber.created_at.iso8601,
+        updated_at: subscriber.updated_at.iso8601
+      }
+    end
+
+    subscribers_filepath = File.join(data_dir, "subscribers.json")
+    File.write(subscribers_filepath, JSON.pretty_generate(subscribers_data))
+
+    Rails.logger.info "Exported #{subscribers_data.count} subscribers"
+  end
+
+  def export_article_tags
+    Rails.logger.info "Exporting article_tags..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    article_tags_data = []
+    ArticleTag.order(:id).find_each do |article_tag|
+      article_tags_data << {
+        id: article_tag.id,
+        article_id: article_tag.article_id,
+        article_slug: article_tag.article&.slug,
+        tag_id: article_tag.tag_id,
+        tag_name: article_tag.tag&.name,
+        tag_slug: article_tag.tag&.slug,
+        created_at: article_tag.created_at.iso8601,
+        updated_at: article_tag.updated_at.iso8601
+      }
+    end
+
+    article_tags_filepath = File.join(data_dir, "article_tags.json")
+    File.write(article_tags_filepath, JSON.pretty_generate(article_tags_data))
+
+    Rails.logger.info "Exported #{article_tags_data.count} article_tags"
+  end
+
+  def export_subscriber_tags
+    Rails.logger.info "Exporting subscriber_tags..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    subscriber_tags_data = []
+    SubscriberTag.order(:id).find_each do |subscriber_tag|
+      subscriber_tags_data << {
+        id: subscriber_tag.id,
+        subscriber_id: subscriber_tag.subscriber_id,
+        subscriber_email: subscriber_tag.subscriber&.email,
+        tag_id: subscriber_tag.tag_id,
+        tag_name: subscriber_tag.tag&.name,
+        tag_slug: subscriber_tag.tag&.slug,
+        created_at: subscriber_tag.created_at.iso8601,
+        updated_at: subscriber_tag.updated_at.iso8601
+      }
+    end
+
+    subscriber_tags_filepath = File.join(data_dir, "subscriber_tags.json")
+    File.write(subscriber_tags_filepath, JSON.pretty_generate(subscriber_tags_data))
+
+    Rails.logger.info "Exported #{subscriber_tags_data.count} subscriber_tags"
+  end
+
+  def export_listmonks
+    Rails.logger.info "Exporting listmonks..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    listmonks_data = []
+    Listmonk.order(:id).find_each do |listmonk|
+      listmonks_data << {
+        id: listmonk.id,
+        url: listmonk.url,
+        username: listmonk.username,
+        api_key: listmonk.api_key,
+        list_id: listmonk.list_id,
+        template_id: listmonk.template_id,
+        enabled: listmonk.enabled,
+        created_at: listmonk.created_at.iso8601,
+        updated_at: listmonk.updated_at.iso8601
+      }
+    end
+
+    listmonks_filepath = File.join(data_dir, "listmonks.json")
+    File.write(listmonks_filepath, JSON.pretty_generate(listmonks_data))
+
+    Rails.logger.info "Exported #{listmonks_data.count} listmonks"
+  end
+
+  def export_social_media_posts
+    Rails.logger.info "Exporting social_media_posts..."
+
+    data_dir = File.join(@temp_dir, "data")
+    FileUtils.mkdir_p(data_dir)
+
+    social_media_posts_data = []
+    SocialMediaPost.order(:id).find_each do |post|
+      social_media_posts_data << {
+        id: post.id,
+        article_id: post.article_id,
+        article_slug: post.article&.slug,
+        platform: post.platform,
+        url: post.url,
+        created_at: post.created_at.iso8601,
+        updated_at: post.updated_at.iso8601
+      }
+    end
+
+    social_media_posts_filepath = File.join(data_dir, "social_media_posts.json")
+    File.write(social_media_posts_filepath, JSON.pretty_generate(social_media_posts_data))
+
+    Rails.logger.info "Exported #{social_media_posts_data.count} social_media_posts"
   end
 
   def cleanup

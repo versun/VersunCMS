@@ -23,12 +23,20 @@ class ImportZip
       description: "Start ZIP import from: #{@zip_path}"
     )
     extract_zip_file
+    import_tags
     import_articles
+    import_article_tags
     import_crossposts
     import_listmonks
     import_pages
     import_settings
     import_social_media_posts
+    import_comments
+    import_static_files
+    import_redirects
+    import_newsletter_settings
+    import_subscribers
+    import_subscriber_tags
 
     ActivityLog.create!(
       action: "completed",
@@ -85,6 +93,31 @@ class ImportZip
     Dir.glob(File.join(@import_dir, "*", "*.csv")).first&.then { |path| File.dirname(path) } || @import_dir
   end
 
+  def import_tags
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "tags.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing tags from: #{csv_path}"
+    imported_count = 0
+    skipped_count = 0
+    CSV.foreach(csv_path, headers: true) do |row|
+      if Tag.exists?(slug: row["slug"])
+        Rails.logger.info "Tag with slug '#{row['slug']}' already exists, skipping..."
+        skipped_count += 1
+        next
+      end
+      Tag.create!(
+        name: row["name"],
+        slug: row["slug"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+      imported_count += 1
+    end
+    Rails.logger.info "Tags import completed: #{imported_count} imported, #{skipped_count} skipped"
+  end
+
   def import_articles
     base_dir = find_csv_base_dir
     csv_path = File.join(base_dir, "articles.csv")
@@ -116,6 +149,63 @@ class ImportZip
       imported_count += 1
     end
     Rails.logger.info "Articles import completed: #{imported_count} imported, #{skipped_count} skipped"
+  end
+
+  def import_article_tags
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "article_tags.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing article_tags from: #{csv_path}"
+    imported_count = 0
+    skipped_count = 0
+    CSV.foreach(csv_path, headers: true) do |row|
+      # 使用 article_slug 查找 article
+      article_slug = row["article_slug"]
+      unless article_slug.present?
+        Rails.logger.warn "article_slug not provided, skipping article_tag..."
+        skipped_count += 1
+        next
+      end
+
+      article = Article.find_by(slug: article_slug)
+      unless article
+        Rails.logger.info "Article with slug '#{article_slug}' does not exist, skipping article_tag..."
+        skipped_count += 1
+        next
+      end
+
+      # 使用 tag_slug 查找 tag
+      tag_slug = row["tag_slug"]
+      unless tag_slug.present?
+        Rails.logger.warn "tag_slug not provided, skipping article_tag..."
+        skipped_count += 1
+        next
+      end
+
+      tag = Tag.find_by(slug: tag_slug)
+      unless tag
+        Rails.logger.info "Tag with slug '#{tag_slug}' does not exist, skipping article_tag..."
+        skipped_count += 1
+        next
+      end
+
+      # 检查是否已存在相同的关联
+      if ArticleTag.exists?(article_id: article.id, tag_id: tag.id)
+        Rails.logger.info "ArticleTag for article_id '#{article.id}' and tag_id '#{tag.id}' already exists, skipping..."
+        skipped_count += 1
+        next
+      end
+
+      ArticleTag.create!(
+        article_id: article.id,
+        tag_id: tag.id,
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+      imported_count += 1
+    end
+    Rails.logger.info "Article_tags import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
 
   def import_crossposts
@@ -313,6 +403,391 @@ class ImportZip
       imported_count += 1
     end
     Rails.logger.info "Social_media_posts import completed: #{imported_count} imported, #{skipped_count} skipped"
+  end
+
+  def import_comments
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "comments.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing comments from: #{csv_path}"
+    imported_count = 0
+    skipped_count = 0
+    
+    # 使用 ID 映射来跟踪导入的评论（原始ID -> 新ID）
+    comment_id_map = {}
+    
+    # 第一遍：导入所有评论（先不设置 parent_id）
+    CSV.foreach(csv_path, headers: true) do |row|
+      # 使用 article_slug 查找 article
+      article_slug = row["article_slug"]
+      unless article_slug.present?
+        Rails.logger.warn "article_slug not provided, skipping comment..."
+        skipped_count += 1
+        next
+      end
+
+      article = Article.find_by(slug: article_slug)
+      unless article
+        Rails.logger.info "Article with slug '#{article_slug}' does not exist, skipping comment..."
+        skipped_count += 1
+        next
+      end
+
+      # 检查是否已存在相同的记录
+      existing_comment = nil
+      
+      # 对于外部评论，使用 article_id, platform, external_id 作为唯一标识
+      if row["platform"].present? && row["external_id"].present?
+        existing_comment = Comment.find_by(article_id: article.id, platform: row["platform"], external_id: row["external_id"])
+        if existing_comment
+          Rails.logger.info "Comment for article_id '#{article.id}', platform '#{row['platform']}', external_id '#{row['external_id']}' already exists, skipping..."
+          skipped_count += 1
+          # 仍然记录到映射中，以便后续处理 parent_id
+          comment_id_map[row["id"].to_i] = existing_comment.id if row["id"].present?
+          next
+        end
+      else
+        # 对于本地评论，使用 article_id + author_name + content + published_at/created_at 作为唯一标识
+        # 由于时间戳可能有微小差异，我们使用时间窗口（±5秒）来匹配
+        published_at = row["published_at"].present? ? Time.parse(row["published_at"]) : nil
+        created_at = row["created_at"].present? ? Time.parse(row["created_at"]) : nil
+        
+        # 构建查询条件
+        query = Comment.where(
+          article_id: article.id,
+          platform: nil,
+          author_name: row["author_name"],
+          content: row["content"]
+        )
+        
+        # 使用时间窗口匹配（±5秒）
+        if published_at
+          time_window = 5.seconds
+          existing_comment = query.where(
+            "published_at BETWEEN ? AND ?",
+            published_at - time_window,
+            published_at + time_window
+          ).first
+        elsif created_at
+          time_window = 5.seconds
+          existing_comment = query.where(
+            "created_at BETWEEN ? AND ?",
+            created_at - time_window,
+            created_at + time_window
+          ).first
+        end
+        
+        if existing_comment
+          Rails.logger.info "Local comment for article_id '#{article.id}', author '#{row['author_name']}' already exists, skipping..."
+          skipped_count += 1
+          # 仍然记录到映射中，以便后续处理 parent_id
+          comment_id_map[row["id"].to_i] = existing_comment.id if row["id"].present?
+          next
+        end
+      end
+
+      comment = Comment.create!(
+        article_id: article.id,
+        parent_id: nil, # 先不设置 parent_id
+        author_name: row["author_name"],
+        author_url: row["author_url"],
+        author_username: row["author_username"],
+        author_avatar_url: row["author_avatar_url"],
+        content: row["content"],
+        platform: row["platform"],
+        external_id: row["external_id"],
+        status: row["status"] || "pending",
+        published_at: row["published_at"],
+        url: row["url"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+      
+      # 记录 ID 映射
+      comment_id_map[row["id"].to_i] = comment.id if row["id"].present?
+      imported_count += 1
+    end
+    
+    # 第二遍：更新 parent_id
+    CSV.foreach(csv_path, headers: true) do |row|
+      next unless row["parent_id"].present?
+      
+      original_id = row["id"].to_i
+      original_parent_id = row["parent_id"].to_i
+      
+      # 查找新导入的评论ID
+      new_comment_id = comment_id_map[original_id]
+      new_parent_id = comment_id_map[original_parent_id]
+      
+      if new_comment_id && new_parent_id
+        comment = Comment.find_by(id: new_comment_id)
+        if comment && comment.parent_id.nil?
+          comment.update(parent_id: new_parent_id)
+          Rails.logger.info "Updated parent_id for comment #{new_comment_id}"
+        end
+      end
+    end
+    
+    Rails.logger.info "Comments import completed: #{imported_count} imported, #{skipped_count} skipped"
+  end
+
+  def import_static_files
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "static_files.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing static_files from: #{csv_path}"
+    imported_count = 0
+    skipped_count = 0
+    CSV.foreach(csv_path, headers: true) do |row|
+      if StaticFile.exists?(filename: row["filename"])
+        Rails.logger.info "StaticFile with filename '#{row['filename']}' already exists, skipping..."
+        skipped_count += 1
+        next
+      end
+
+      static_file = StaticFile.create!(
+        filename: row["filename"],
+        description: row["description"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+
+      # 导入静态文件的实际文件内容
+      # 优先使用 blob_filename（如果存在），否则回退到 filename（向后兼容）
+      actual_filename = row["blob_filename"].presence || row["filename"]
+      file_path = File.join(base_dir, "attachments", "static_files", "#{row['id']}_#{actual_filename}")
+      if File.exist?(file_path) && safe_file_path?(file_path)
+        File.open(file_path) do |file|
+          static_file.file.attach(
+            io: file,
+            filename: row["filename"],
+            content_type: detect_content_type(file_path)
+          )
+        end
+        Rails.logger.info "Imported static file: #{row['filename']}"
+      else
+        Rails.logger.warn "Static file not found: #{file_path}"
+      end
+
+      imported_count += 1
+    end
+    Rails.logger.info "Static_files import completed: #{imported_count} imported, #{skipped_count} skipped"
+  end
+
+  def import_redirects
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "redirects.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing redirects from: #{csv_path}"
+    imported_count = 0
+    skipped_count = 0
+    CSV.foreach(csv_path, headers: true) do |row|
+      # 检查是否已存在相同的 regex
+      if Redirect.exists?(regex: row["regex"])
+        Rails.logger.info "Redirect with regex '#{row['regex']}' already exists, skipping..."
+        skipped_count += 1
+        next
+      end
+
+      Redirect.create!(
+        regex: row["regex"],
+        replacement: row["replacement"],
+        enabled: row["enabled"] != "false",
+        permanent: row["permanent"] == "true",
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+      imported_count += 1
+    end
+    Rails.logger.info "Redirects import completed: #{imported_count} imported, #{skipped_count} skipped"
+  end
+
+  def import_newsletter_settings
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "newsletter_settings.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing newsletter_settings from: #{csv_path}"
+    imported_count = 0
+    # 只允许有一个 NewsletterSetting
+    existing_setting = NewsletterSetting.first
+    if existing_setting
+      csv_data = CSV.read(csv_path, headers: true).first
+      return unless csv_data
+      
+      # 处理 footer 内容
+      footer_content = csv_data["footer"].presence || ""
+      processed_footer = ""
+      if footer_content.present?
+        processed_footer = process_newsletter_setting_footer_content(footer_content, existing_setting.id, "newsletter_setting")
+        processed_footer = fix_content_sgid_references(processed_footer)
+      end
+      
+      existing_setting.update!(
+        provider: csv_data["provider"] || "native",
+        enabled: csv_data["enabled"] != "false",
+        smtp_address: csv_data["smtp_address"],
+        smtp_port: csv_data["smtp_port"],
+        smtp_user_name: csv_data["smtp_user_name"],
+        smtp_password: csv_data["smtp_password"],
+        smtp_domain: csv_data["smtp_domain"],
+        smtp_authentication: csv_data["smtp_authentication"] || "plain",
+        smtp_enable_starttls: csv_data["smtp_enable_starttls"] != "false",
+        from_email: csv_data["from_email"],
+        footer: processed_footer.present? ? processed_footer : nil,
+        created_at: csv_data["created_at"],
+        updated_at: csv_data["updated_at"]
+      )
+      imported_count += 1
+    else
+      CSV.foreach(csv_path, headers: true) do |row|
+        # 处理 footer 内容
+        footer_content = row["footer"].presence || ""
+        processed_footer = ""
+        if footer_content.present?
+          # 对于新创建的记录，先创建再处理 footer
+          newsletter_setting = NewsletterSetting.create!(
+            provider: row["provider"] || "native",
+            enabled: row["enabled"] != "false",
+            smtp_address: row["smtp_address"],
+            smtp_port: row["smtp_port"],
+            smtp_user_name: row["smtp_user_name"],
+            smtp_password: row["smtp_password"],
+            smtp_domain: row["smtp_domain"],
+            smtp_authentication: row["smtp_authentication"] || "plain",
+            smtp_enable_starttls: row["smtp_enable_starttls"] != "false",
+            from_email: row["from_email"],
+            created_at: row["created_at"],
+            updated_at: row["updated_at"]
+          )
+          
+          if footer_content.present?
+            processed_footer = process_newsletter_setting_footer_content(footer_content, newsletter_setting.id, "newsletter_setting")
+            processed_footer = fix_content_sgid_references(processed_footer)
+            newsletter_setting.update!(footer: processed_footer)
+          end
+        else
+          NewsletterSetting.create!(
+            provider: row["provider"] || "native",
+            enabled: row["enabled"] != "false",
+            smtp_address: row["smtp_address"],
+            smtp_port: row["smtp_port"],
+            smtp_user_name: row["smtp_user_name"],
+            smtp_password: row["smtp_password"],
+            smtp_domain: row["smtp_domain"],
+            smtp_authentication: row["smtp_authentication"] || "plain",
+            smtp_enable_starttls: row["smtp_enable_starttls"] != "false",
+            from_email: row["from_email"],
+            created_at: row["created_at"],
+            updated_at: row["updated_at"]
+          )
+        end
+        imported_count += 1
+        break # 只允许有一个 NewsletterSetting，处理完第一行后退出循环
+      end
+    end
+    Rails.logger.info "Newsletter_settings import completed: #{imported_count} imported"
+  end
+
+  def process_newsletter_setting_footer_content(content, record_id = nil, record_type = nil)
+    return content if content.blank?
+    record_id ||= "newsletter_setting"
+    record_type ||= "newsletter_setting"
+    Rails.logger.info "process_newsletter_setting_footer_content..."
+    doc = Nokogiri::HTML.fragment(content)
+    doc.css("action-text-attachment").each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
+    doc.css("figure[data-trix-attachment]").each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
+    doc.css("img").each { |img| safe_process { process_imported_image_element(img, record_id, record_type) } }
+    doc.to_html
+  end
+
+  def import_subscribers
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "subscribers.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing subscribers from: #{csv_path}"
+    imported_count = 0
+    skipped_count = 0
+    CSV.foreach(csv_path, headers: true) do |row|
+      if Subscriber.exists?(email: row["email"])
+        Rails.logger.info "Subscriber with email '#{row['email']}' already exists, skipping..."
+        skipped_count += 1
+        next
+      end
+
+      Subscriber.create!(
+        email: row["email"],
+        confirmation_token: row["confirmation_token"],
+        confirmed_at: row["confirmed_at"],
+        unsubscribe_token: row["unsubscribe_token"],
+        unsubscribed_at: row["unsubscribed_at"],
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+      imported_count += 1
+    end
+    Rails.logger.info "Subscribers import completed: #{imported_count} imported, #{skipped_count} skipped"
+  end
+
+  def import_subscriber_tags
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "subscriber_tags.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.logger.info "Importing subscriber_tags from: #{csv_path}"
+    imported_count = 0
+    skipped_count = 0
+    CSV.foreach(csv_path, headers: true) do |row|
+      # 使用 subscriber_email 查找 subscriber
+      subscriber_email = row["subscriber_email"]
+      unless subscriber_email.present?
+        Rails.logger.warn "subscriber_email not provided, skipping subscriber_tag..."
+        skipped_count += 1
+        next
+      end
+
+      subscriber = Subscriber.find_by(email: subscriber_email)
+      unless subscriber
+        Rails.logger.info "Subscriber with email '#{subscriber_email}' does not exist, skipping subscriber_tag..."
+        skipped_count += 1
+        next
+      end
+
+      # 使用 tag_slug 查找 tag
+      tag_slug = row["tag_slug"]
+      unless tag_slug.present?
+        Rails.logger.warn "tag_slug not provided, skipping subscriber_tag..."
+        skipped_count += 1
+        next
+      end
+
+      tag = Tag.find_by(slug: tag_slug)
+      unless tag
+        Rails.logger.info "Tag with slug '#{tag_slug}' does not exist, skipping subscriber_tag..."
+        skipped_count += 1
+        next
+      end
+
+      # 检查是否已存在相同的关联
+      if SubscriberTag.exists?(subscriber_id: subscriber.id, tag_id: tag.id)
+        Rails.logger.info "SubscriberTag for subscriber_id '#{subscriber.id}' and tag_id '#{tag.id}' already exists, skipping..."
+        skipped_count += 1
+        next
+      end
+
+      SubscriberTag.create!(
+        subscriber_id: subscriber.id,
+        tag_id: tag.id,
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+      imported_count += 1
+    end
+    Rails.logger.info "Subscriber_tags import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
 
   # ----- 内容和附件处理通用工具方法 -----

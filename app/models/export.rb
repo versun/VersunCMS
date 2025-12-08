@@ -45,6 +45,14 @@ class Export
       export_pages
       export_settings
       export_social_media_posts
+      export_tags
+      export_comments
+      export_static_files
+      export_redirects
+      export_newsletter_settings
+      export_subscribers
+      export_article_tags
+      export_subscriber_tags
       # export_users
 
       # 创建ZIP文件
@@ -449,6 +457,229 @@ class Export
     end
 
     Rails.logger.info "Exported #{SocialMediaPost.count} social_media_posts"
+  end
+
+  def export_tags
+    Rails.logger.info "Exporting tags..."
+
+    CSV.open(File.join(@export_dir, "tags.csv"), "w", write_headers: true, headers: %w[id name slug created_at updated_at]) do |csv|
+      Tag.order(:id).find_each do |tag|
+        csv << [
+          tag.id,
+          tag.name,
+          tag.slug,
+          tag.created_at,
+          tag.updated_at
+        ]
+      end
+    end
+
+    Rails.logger.info "Exported #{Tag.count} tags"
+  end
+
+  def export_comments
+    Rails.logger.info "Exporting comments..."
+
+    CSV.open(File.join(@export_dir, "comments.csv"), "w", write_headers: true, headers: %w[id article_id article_slug parent_id author_name author_url author_username author_avatar_url content platform external_id status published_at url created_at updated_at]) do |csv|
+      Comment.order(:id).find_each do |comment|
+        csv << [
+          comment.id,
+          comment.article_id,
+          comment.article&.slug,
+          comment.parent_id,
+          comment.author_name,
+          comment.author_url,
+          comment.author_username,
+          comment.author_avatar_url,
+          comment.content,
+          comment.platform,
+          comment.external_id,
+          comment.status,
+          comment.published_at,
+          comment.url,
+          comment.created_at,
+          comment.updated_at
+        ]
+      end
+    end
+
+    Rails.logger.info "Exported #{Comment.count} comments"
+  end
+
+  def export_static_files
+    Rails.logger.info "Exporting static_files..."
+
+    CSV.open(File.join(@export_dir, "static_files.csv"), "w", write_headers: true, headers: %w[id filename blob_filename description created_at updated_at]) do |csv|
+      StaticFile.order(:id).find_each do |static_file|
+        blob_filename = nil
+        if static_file.file.attached?
+          blob_filename = static_file.file.blob.filename.to_s
+        end
+
+        csv << [
+          static_file.id,
+          static_file.filename,
+          blob_filename,
+          static_file.description,
+          static_file.created_at,
+          static_file.updated_at
+        ]
+
+        # 导出静态文件的实际文件内容
+        if static_file.file.attached?
+          begin
+            blob = static_file.file.blob
+            file_path = File.join(@attachments_dir, "static_files", "#{static_file.id}_#{blob.filename}")
+            FileUtils.mkdir_p(File.dirname(file_path))
+            File.open(file_path, "wb") do |f|
+              f.write(blob.download)
+            end
+            Rails.logger.info "Exported static file: #{blob.filename}"
+          rescue => e
+            Rails.logger.error "Error exporting static file #{static_file.id}: #{e.message}"
+          end
+        end
+      end
+    end
+
+    Rails.logger.info "Exported #{StaticFile.count} static_files"
+  end
+
+  def export_redirects
+    Rails.logger.info "Exporting redirects..."
+
+    CSV.open(File.join(@export_dir, "redirects.csv"), "w", write_headers: true, headers: %w[id regex replacement enabled permanent created_at updated_at]) do |csv|
+      Redirect.order(:id).find_each do |redirect|
+        csv << [
+          redirect.id,
+          redirect.regex,
+          redirect.replacement,
+          redirect.enabled,
+          redirect.permanent,
+          redirect.created_at,
+          redirect.updated_at
+        ]
+      end
+    end
+
+    Rails.logger.info "Exported #{Redirect.count} redirects"
+  end
+
+  def export_newsletter_settings
+    Rails.logger.info "Exporting newsletter_settings..."
+
+    CSV.open(File.join(@export_dir, "newsletter_settings.csv"), "w", write_headers: true, headers: %w[id provider enabled smtp_address smtp_port smtp_user_name smtp_password smtp_domain smtp_authentication smtp_enable_starttls from_email footer created_at updated_at]) do |csv|
+      NewsletterSetting.order(:id).find_each do |setting|
+        # 处理footer内容（如果有富文本内容的话）
+        footer_content = setting.footer.present? ? process_newsletter_setting_footer(setting) : ""
+
+        csv << [
+          setting.id,
+          setting.provider,
+          setting.enabled,
+          setting.smtp_address,
+          setting.smtp_port,
+          setting.smtp_user_name,
+          setting.smtp_password,
+          setting.smtp_domain,
+          setting.smtp_authentication,
+          setting.smtp_enable_starttls,
+          setting.from_email,
+          footer_content,
+          setting.created_at,
+          setting.updated_at
+        ]
+      end
+    end
+
+    Rails.logger.info "Exported #{NewsletterSetting.count} newsletter_settings"
+  end
+
+  def process_newsletter_setting_footer(setting)
+    return "" unless setting.footer.present?
+
+    footer_html = setting.footer.to_trix_html
+    return footer_html if footer_html.blank?
+
+    doc = Nokogiri::HTML.fragment(footer_html)
+
+    # 处理附件
+    doc.css("action-text-attachment").each do |attachment|
+      process_attachment_element(attachment, setting.id, "newsletter_setting")
+    end
+
+    doc.css("figure[data-trix-attachment]").each do |figure|
+      process_figure_element(figure, setting.id, "newsletter_setting")
+    end
+
+    doc.css("img").each do |img|
+      process_image_element(img, setting.id, "newsletter_setting")
+    end
+
+    doc.to_html
+  end
+
+  def export_subscribers
+    Rails.logger.info "Exporting subscribers..."
+
+    CSV.open(File.join(@export_dir, "subscribers.csv"), "w", write_headers: true, headers: %w[id email confirmation_token confirmed_at unsubscribe_token unsubscribed_at created_at updated_at]) do |csv|
+      Subscriber.order(:id).find_each do |subscriber|
+        csv << [
+          subscriber.id,
+          subscriber.email,
+          subscriber.confirmation_token,
+          subscriber.confirmed_at,
+          subscriber.unsubscribe_token,
+          subscriber.unsubscribed_at,
+          subscriber.created_at,
+          subscriber.updated_at
+        ]
+      end
+    end
+
+    Rails.logger.info "Exported #{Subscriber.count} subscribers"
+  end
+
+  def export_article_tags
+    Rails.logger.info "Exporting article_tags..."
+
+    CSV.open(File.join(@export_dir, "article_tags.csv"), "w", write_headers: true, headers: %w[id article_id article_slug tag_id tag_name tag_slug created_at updated_at]) do |csv|
+      ArticleTag.order(:id).find_each do |article_tag|
+        csv << [
+          article_tag.id,
+          article_tag.article_id,
+          article_tag.article&.slug,
+          article_tag.tag_id,
+          article_tag.tag&.name,
+          article_tag.tag&.slug,
+          article_tag.created_at,
+          article_tag.updated_at
+        ]
+      end
+    end
+
+    Rails.logger.info "Exported #{ArticleTag.count} article_tags"
+  end
+
+  def export_subscriber_tags
+    Rails.logger.info "Exporting subscriber_tags..."
+
+    CSV.open(File.join(@export_dir, "subscriber_tags.csv"), "w", write_headers: true, headers: %w[id subscriber_id subscriber_email tag_id tag_name tag_slug created_at updated_at]) do |csv|
+      SubscriberTag.order(:id).find_each do |subscriber_tag|
+        csv << [
+          subscriber_tag.id,
+          subscriber_tag.subscriber_id,
+          subscriber_tag.subscriber&.email,
+          subscriber_tag.tag_id,
+          subscriber_tag.tag&.name,
+          subscriber_tag.tag&.slug,
+          subscriber_tag.created_at,
+          subscriber_tag.updated_at
+        ]
+      end
+    end
+
+    Rails.logger.info "Exported #{SubscriberTag.count} subscriber_tags"
   end
 
   def export_users
