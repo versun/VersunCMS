@@ -732,4 +732,73 @@ class Export
     # 清理临时目录（可选）
     FileUtils.rm_rf(@export_dir)
   end
+
+  # 清理旧的导出和导入文件
+  # @param days [Integer] 保留最近多少天的文件，默认7天
+  # @return [Hash] 返回清理统计信息
+  def self.cleanup_old_exports(days: 7)
+    exports_dir = Rails.root.join("tmp", "exports")
+    uploads_dir = Rails.root.join("tmp", "uploads")
+
+    deleted_count = 0
+    error_count = 0
+    cutoff_time = Time.current - days.days
+
+    begin
+      # 清理导出zip文件
+      if Dir.exist?(exports_dir)
+        zip_files = Dir.glob(File.join(exports_dir, "export_*.zip"))
+        zip_files.each do |zip_file|
+          begin
+            file_mtime = File.mtime(zip_file)
+            if file_mtime < cutoff_time
+              File.delete(zip_file)
+              deleted_count += 1
+              Rails.logger.info "Deleted old export file: #{File.basename(zip_file)} (age: #{(Time.current - file_mtime).to_i / 86400} days)"
+            end
+          rescue => e
+            error_count += 1
+            Rails.logger.error "Error deleting export file #{zip_file}: #{e.message}"
+          end
+        end
+      end
+
+      # 清理导入zip文件
+      if Dir.exist?(uploads_dir)
+        import_files = Dir.glob(File.join(uploads_dir, "import_*.zip"))
+        import_files.each do |import_file|
+          begin
+            file_mtime = File.mtime(import_file)
+            if file_mtime < cutoff_time
+              File.delete(import_file)
+              deleted_count += 1
+              Rails.logger.info "Deleted old import file: #{File.basename(import_file)} (age: #{(Time.current - file_mtime).to_i / 86400} days)"
+            end
+          rescue => e
+            error_count += 1
+            Rails.logger.error "Error deleting import file #{import_file}: #{e.message}"
+          end
+        end
+      end
+
+      message = "Cleaned up #{deleted_count} old export/import file(s) older than #{days} days"
+      Rails.logger.info message
+
+      {
+        deleted: deleted_count,
+        errors: error_count,
+        message: message
+      }
+    rescue => e
+      error_message = "Error during export/import cleanup: #{e.message}"
+      Rails.logger.error error_message
+      Rails.logger.error e.backtrace.join("\n")
+
+      {
+        deleted: deleted_count,
+        errors: error_count + 1,
+        message: error_message
+      }
+    end
+  end
 end
