@@ -47,7 +47,7 @@ class NativeNewsletterSenderJob < ApplicationJob
 
     # 准备 SMTP 配置
     smtp_config = prepare_smtp_config(newsletter_setting)
-    
+
     # 验证 SMTP 配置
     unless smtp_config[:address].present?
       Rails.logger.error "SMTP configuration is missing address. Cannot send emails."
@@ -59,28 +59,28 @@ class NativeNewsletterSenderJob < ApplicationJob
       )
       return
     end
-    
+
     relevant_subscribers.each do |subscriber|
       begin
         # 在每次发送前重新配置 ActionMailer，确保使用最新的 SMTP 配置
         configure_action_mailer(newsletter_setting)
-        
+
         mail = NewsletterMailer.article_email(article, subscriber, site_info)
         Rails.logger.info "Sending newsletter email to #{subscriber.email} using SMTP: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}"
-        
+
         # 使用 deliver_with 方法确保使用正确的 SMTP 配置
         # 这是最可靠的方法，因为它会创建一个新的 delivery method 实例
         mail.delivery_method(:smtp, smtp_config)
-        
+
         # 验证配置是否正确应用
         if mail.delivery_method != :smtp
           Rails.logger.error "Failed to set delivery method to SMTP. Current method: #{mail.delivery_method.inspect}"
           raise "Failed to configure SMTP delivery method"
         end
-        
+
         # 记录实际使用的配置（不包含密码）
         Rails.logger.debug "Using SMTP settings: #{smtp_config.except(:password).inspect}"
-        
+
         mail.deliver_now
         success_count += 1
         Rails.logger.info "Successfully sent newsletter email to #{subscriber.email}"

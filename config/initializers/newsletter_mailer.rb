@@ -21,7 +21,7 @@ Rails.application.config.after_initialize do
 
         # 设置默认的 from 地址
         ActionMailer::Base.default from: newsletter_setting.from_email
-        
+
         Rails.logger.info "Newsletter mailer configured: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}"
       else
         # 即使没有配置 newsletter，也设置一个默认的 delivery_method 避免回退到 localhost:25

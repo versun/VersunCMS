@@ -60,7 +60,7 @@ Rails.application.configure do
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
-  
+
   # Set default delivery method to prevent fallback to localhost:25
   # The actual SMTP settings will be configured dynamically by NewsletterSetting
   config.action_mailer.delivery_method = :smtp
