@@ -7,9 +7,9 @@ class CleanOldExportsJob < ApplicationJob
   def perform(options = {})
     days = if options.is_a?(Hash)
              options[:days] || options["days"] || 7
-           else
+    else
              7
-           end
+    end
     Rails.logger.info "Starting cleanup of old export/import files (keeping files newer than #{days} days)..."
 
     result = Export.cleanup_old_exports(days: days)
