@@ -511,10 +511,13 @@ class Export
 
     CSV.open(File.join(@export_dir, "static_files.csv"), "w", write_headers: true, headers: %w[id filename blob_filename description created_at updated_at]) do |csv|
       StaticFile.order(:id).find_each do |static_file|
-        blob_filename = nil
-        if static_file.file.attached?
-          blob_filename = static_file.file.blob.filename.to_s
+        unless static_file.file.attached?
+          Rails.logger.warn "StaticFile #{static_file.id} has no attached file, skipping..."
+          next
         end
+
+        blob = static_file.file.blob
+        blob_filename = blob.filename.to_s
 
         csv << [
           static_file.id,
@@ -525,19 +528,16 @@ class Export
           static_file.updated_at
         ]
 
-        # 导出静态文件的实际文件内容
-        if static_file.file.attached?
-          begin
-            blob = static_file.file.blob
-            file_path = File.join(@attachments_dir, "static_files", "#{static_file.id}_#{blob.filename}")
-            FileUtils.mkdir_p(File.dirname(file_path))
-            File.open(file_path, "wb") do |f|
-              f.write(blob.download)
-            end
-            Rails.logger.info "Exported static file: #{blob.filename}"
-          rescue => e
-            Rails.logger.error "Error exporting static file #{static_file.id}: #{e.message}"
+        # 导出静态文件的实际文件内容，使用 blob_filename
+        begin
+          file_path = File.join(@attachments_dir, "static_files", "#{static_file.id}_#{blob_filename}")
+          FileUtils.mkdir_p(File.dirname(file_path))
+          File.open(file_path, "wb") do |f|
+            f.write(blob.download)
           end
+          Rails.logger.info "Exported static file: #{blob_filename}"
+        rescue => e
+          Rails.logger.error "Error exporting static file #{static_file.id}: #{e.message}"
         end
       end
     end

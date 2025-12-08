@@ -547,6 +547,13 @@ class ImportZip
         next
       end
 
+      # 必须要有 blob_filename 才能导入
+      unless row["blob_filename"].present?
+        Rails.logger.warn "Static file row #{row['id']} has no blob_filename, skipping..."
+        skipped_count += 1
+        next
+      end
+
       static_file = StaticFile.create!(
         filename: row["filename"],
         description: row["description"],
@@ -554,10 +561,10 @@ class ImportZip
         updated_at: row["updated_at"]
       )
 
-      # 导入静态文件的实际文件内容
-      # 优先使用 blob_filename（如果存在），否则回退到 filename（向后兼容）
-      actual_filename = row["blob_filename"].presence || row["filename"]
-      file_path = File.join(base_dir, "attachments", "static_files", "#{row['id']}_#{actual_filename}")
+      # 导入静态文件的实际文件内容，直接使用 blob_filename
+      static_files_dir = File.join(base_dir, "attachments", "static_files")
+      file_path = File.join(static_files_dir, "#{row['id']}_#{row['blob_filename']}")
+      
       if File.exist?(file_path) && safe_file_path?(file_path)
         File.open(file_path) do |file|
           static_file.file.attach(
@@ -566,12 +573,15 @@ class ImportZip
             content_type: detect_content_type(file_path)
           )
         end
-        Rails.logger.info "Imported static file: #{row['filename']}"
+        Rails.logger.info "Imported static file: #{row['filename']} from #{row['blob_filename']}"
+        imported_count += 1
       else
-        Rails.logger.warn "Static file not found: #{file_path}"
+        Rails.logger.warn "Static file not found: #{file_path} for id #{row['id']}, blob_filename: #{row['blob_filename']}"
+        # 如果文件未找到，删除刚创建的记录，避免验证错误
+        static_file.destroy
+        skipped_count += 1
       end
 
-      imported_count += 1
     end
     Rails.logger.info "Static_files import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
