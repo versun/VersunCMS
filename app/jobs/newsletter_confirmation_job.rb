@@ -14,7 +14,7 @@ class NewsletterConfirmationJob < ApplicationJob
     end
 
     mail = NewsletterMailer.confirmation_email(subscriber, site_info)
-    
+
     # 应用 SMTP 配置到邮件对象
     apply_smtp_config_to_mail(mail, newsletter_setting)
 
