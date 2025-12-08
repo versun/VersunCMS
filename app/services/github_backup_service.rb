@@ -601,7 +601,7 @@ class GithubBackupService
     Setting.order(:id).find_each do |setting|
       # Export footer content as HTML
       footer_html = setting.footer.present? ? setting.footer.to_s : nil
-      
+
       settings_data << {
         id: setting.id,
         title: setting.title,
@@ -677,7 +677,7 @@ class GithubBackupService
     NewsletterSetting.order(:id).find_each do |setting|
       # Export footer content as HTML
       footer_html = setting.footer.present? ? setting.footer.to_s : nil
-      
+
       newsletter_settings_data << {
         id: setting.id,
         provider: setting.provider,

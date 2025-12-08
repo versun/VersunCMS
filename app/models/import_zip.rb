@@ -413,10 +413,10 @@ class ImportZip
     Rails.logger.info "Importing comments from: #{csv_path}"
     imported_count = 0
     skipped_count = 0
-    
+
     # 使用 ID 映射来跟踪导入的评论（原始ID -> 新ID）
     comment_id_map = {}
-    
+
     # 第一遍：导入所有评论（先不设置 parent_id）
     CSV.foreach(csv_path, headers: true) do |row|
       # 使用 article_slug 查找 article
@@ -436,7 +436,7 @@ class ImportZip
 
       # 检查是否已存在相同的记录
       existing_comment = nil
-      
+
       # 对于外部评论，使用 article_id, platform, external_id 作为唯一标识
       if row["platform"].present? && row["external_id"].present?
         existing_comment = Comment.find_by(article_id: article.id, platform: row["platform"], external_id: row["external_id"])
@@ -452,7 +452,7 @@ class ImportZip
         # 由于时间戳可能有微小差异，我们使用时间窗口（±5秒）来匹配
         published_at = row["published_at"].present? ? Time.parse(row["published_at"]) : nil
         created_at = row["created_at"].present? ? Time.parse(row["created_at"]) : nil
-        
+
         # 构建查询条件
         query = Comment.where(
           article_id: article.id,
@@ -460,7 +460,7 @@ class ImportZip
           author_name: row["author_name"],
           content: row["content"]
         )
-        
+
         # 使用时间窗口匹配（±5秒）
         if published_at
           time_window = 5.seconds
@@ -477,7 +477,7 @@ class ImportZip
             created_at + time_window
           ).first
         end
-        
+
         if existing_comment
           Rails.logger.info "Local comment for article_id '#{article.id}', author '#{row['author_name']}' already exists, skipping..."
           skipped_count += 1
@@ -503,23 +503,23 @@ class ImportZip
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       )
-      
+
       # 记录 ID 映射
       comment_id_map[row["id"].to_i] = comment.id if row["id"].present?
       imported_count += 1
     end
-    
+
     # 第二遍：更新 parent_id
     CSV.foreach(csv_path, headers: true) do |row|
       next unless row["parent_id"].present?
-      
+
       original_id = row["id"].to_i
       original_parent_id = row["parent_id"].to_i
-      
+
       # 查找新导入的评论ID
       new_comment_id = comment_id_map[original_id]
       new_parent_id = comment_id_map[original_parent_id]
-      
+
       if new_comment_id && new_parent_id
         comment = Comment.find_by(id: new_comment_id)
         if comment && comment.parent_id.nil?
@@ -528,7 +528,7 @@ class ImportZip
         end
       end
     end
-    
+
     Rails.logger.info "Comments import completed: #{imported_count} imported, #{skipped_count} skipped"
   end
 
@@ -617,7 +617,7 @@ class ImportZip
     if existing_setting
       csv_data = CSV.read(csv_path, headers: true).first
       return unless csv_data
-      
+
       # 处理 footer 内容
       footer_content = csv_data["footer"].presence || ""
       processed_footer = ""
@@ -625,7 +625,7 @@ class ImportZip
         processed_footer = process_newsletter_setting_footer_content(footer_content, existing_setting.id, "newsletter_setting")
         processed_footer = fix_content_sgid_references(processed_footer)
       end
-      
+
       existing_setting.update!(
         provider: csv_data["provider"] || "native",
         enabled: csv_data["enabled"] != "false",
@@ -663,7 +663,7 @@ class ImportZip
             created_at: row["created_at"],
             updated_at: row["updated_at"]
           )
-          
+
           if footer_content.present?
             processed_footer = process_newsletter_setting_footer_content(footer_content, newsletter_setting.id, "newsletter_setting")
             processed_footer = fix_content_sgid_references(processed_footer)
