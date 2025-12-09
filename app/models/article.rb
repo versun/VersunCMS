@@ -107,6 +107,50 @@ class Article < ApplicationRecord
     end
   end
 
+  # SEO Meta 字段的默认值方法
+  def seo_meta_title
+    meta_title.presence || title
+  end
+
+  def seo_meta_description
+    if meta_description.present?
+      meta_description
+    else
+      # 使用文章开头的纯文本，截取前160个字符
+      text = plain_text_content
+      if text.present?
+        # 移除多余的空白字符
+        text = text.squish
+        # 截取前160个字符，如果超过则在单词边界截断
+        if text.length > 160
+          text = text[0..156] + "..."
+        end
+        text
+      else
+        description
+      end
+    end
+  end
+
+  def seo_meta_image
+    if meta_image.present?
+      meta_image
+    else
+      # 尝试从文章内容中获取第一张图片
+      image_attachment = first_image_attachment
+      if image_attachment
+        if image_attachment.is_a?(ActiveStorage::Blob)
+          # 返回相对路径，在视图中转换为绝对路径
+          Rails.application.routes.url_helpers.rails_blob_path(image_attachment, only_path: true)
+        elsif image_attachment.class.name == "ActionText::Attachables::RemoteImage"
+          image_attachment.try(:url)
+        end
+      else
+        nil
+      end
+    end
+  end
+
   private
 
   def generate_slug

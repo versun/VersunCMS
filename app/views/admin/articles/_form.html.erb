@@ -42,6 +42,29 @@
   </div>
 
   <div class="form-section compact">
+    <h3>SEO Meta Tags</h3>
+    <small style="color: #666; margin-bottom: 1rem; display: block;">用于社交平台分享和搜索引擎优化。如果留空，将使用文章标题和文章开头作为默认值。</small>
+    
+    <div class="field">
+      <%= form.label :meta_title, "Meta Title" %>
+      <%= form.text_field :meta_title, placeholder: "留空则使用文章标题" %>
+      <small style="color: #666;">用于社交分享和搜索引擎显示的标题</small>
+    </div>
+
+    <div class="field">
+      <%= form.label :meta_description, "Meta Description" %>
+      <%= form.text_area :meta_description, rows: 3, placeholder: "留空则使用文章开头" %>
+      <small style="color: #666;">用于社交分享和搜索引擎显示的描述（建议160字符以内）</small>
+    </div>
+
+    <div class="field">
+      <%= form.label :meta_image, "Meta Image URL" %>
+      <%= form.text_field :meta_image, placeholder: "留空则使用文章中的第一张图片" %>
+      <small style="color: #666;">用于社交分享的图片URL（建议1200x630像素）</small>
+    </div>
+  </div>
+
+  <div class="form-section compact">
     <h3>Content</h3>
     
     <div class="field">
