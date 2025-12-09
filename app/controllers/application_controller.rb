@@ -42,11 +42,15 @@ class ApplicationController < ActionController::Base
   def process_redirects
     return if request.path.start_with?("/admin") # Skip redirects for admin pages
 
-    Redirect.enabled.find_each do |redirect|
+    # Use all redirects and filter by enabled? method to handle string/boolean values
+    Redirect.all.find_each do |redirect|
+      next unless redirect.enabled? # Use the method instead of scope for better compatibility
+      
       if redirect.match?(request.path)
         target_url = redirect.apply_to(request.path)
         next unless target_url
 
+        Rails.logger.info "Redirect: #{request.path} -> #{target_url} (#{redirect.permanent? ? '301' : '302'})"
         status = redirect.permanent? ? :moved_permanently : :found
         redirect_to target_url, status: status
         return
