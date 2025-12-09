@@ -9,8 +9,12 @@
     site_url = site_settings[:url].presence || request.base_url
     site_url = site_url.chomp("/")
     site_url = "https://#{site_url}" unless site_url.match?(%r{^https?://})
-    article_route_prefix = Rails.application.config.x.article_route_prefix || 'articles'
-    article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}"
+    article_route_prefix = Rails.application.config.x.article_route_prefix 
+    if article_route_prefix.present?
+      article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}"
+    else
+      article_full_url = "#{site_url}/#{@article.slug}"
+    end
   %>
   <div class="article-header" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem;">
     <h2 style="flex: 1; margin: 0;"><%= @article.title %></h2>
@@ -75,7 +79,11 @@
   <% end %>
   </small>
   <div class="article-content">
-    <%= @article.content %>
+    <% if @article.html? %>
+      <%= raw @article.rendered_content %>
+    <% else %>
+      <%= @article.rendered_content %>
+    <% end %>
   </div>
 </article>
 

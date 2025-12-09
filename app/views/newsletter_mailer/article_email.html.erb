@@ -43,7 +43,11 @@
     <% end %>
 
     <div class="article-content">
-      <%= @article.content.to_s.html_safe %>
+      <% if @article.html? %>
+        <%= raw @article.rendered_content %>
+      <% else %>
+        <%= @article.rendered_content.to_s.html_safe %>
+      <% end %>
     </div>
 
     <p>

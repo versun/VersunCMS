@@ -41,7 +41,7 @@ module Integrations
       return unless @settings&.enabled?
 
       client = create_client
-      tweet = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description, max_length: 250, count_non_ascii_double: true)
+      tweet = build_content(article.slug, article.title, article.plain_text_content, article.description, max_length: 250, count_non_ascii_double: true)
 
       begin
         user = client.get("users/me")

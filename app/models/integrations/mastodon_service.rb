@@ -35,7 +35,7 @@ module Integrations
 
     def post(article)
       return unless @settings&.enabled?
-      status_text = build_content(article.slug, article.title, article.content.body.to_plain_text, article.description, max_length: 500)
+      status_text = build_content(article.slug, article.title, article.plain_text_content, article.description, max_length: 500)
 
       # 获取文章第一张图片
       first_image = article.first_image_attachment

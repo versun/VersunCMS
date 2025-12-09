@@ -53,7 +53,11 @@ namespace :export do
 
     CSV.open(File.join(export_dir, "articles.csv"), "w", write_headers: true, headers: %w[id title slug description content status scheduled_at crosspost_mastodon crosspost_twitter crosspost_bluesky send_newsletter created_at updated_at]) do |csv|
       Article.find_each do |article|
-        content = article.content&.to_trix_html || ""
+        content = if article.html?
+          article.html_content || ""
+        else
+          article.content&.to_trix_html || ""
+        end
 
         # 处理附件
         processed_content = process_article_content(content, article.id, attachments_dir)

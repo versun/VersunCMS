@@ -116,9 +116,14 @@ class Export
   end
 
   def process_article_content(article)
-    return "" unless article.content.present?
-
-    content_html = article.content.to_trix_html
+    # 根据 content_type 获取内容
+    if article.html?
+      content_html = article.html_content || ""
+    else
+      return "" unless article.content.present?
+      content_html = article.content.to_trix_html
+    end
+    
     return content_html if content_html.blank?
 
     doc = Nokogiri::HTML.fragment(content_html)

@@ -161,7 +161,11 @@ class WordpressExport
       add_text_node(item, "description", article.description || "")
 
       # 内容
-      content = article.content.present? ? article.content.to_trix_html : ""
+      if article.html?
+        content = article.html_content || ""
+      else
+        content = article.content.present? ? article.content.to_trix_html : ""
+      end
       add_cdata_node(item, "content:encoded", process_content_for_wordpress(content, article))
 
       # excerpt

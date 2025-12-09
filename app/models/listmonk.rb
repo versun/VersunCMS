@@ -88,7 +88,7 @@ class Listmonk < ApplicationRecord
         type: "regular",
         content_type: "html",
         messenger: "email",
-        body: article.content.to_s,
+        body: article.html? ? (article.html_content || "") : article.content.to_s,
         template_id: template_id,
         send_later: false
       }.to_json

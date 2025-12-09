@@ -161,7 +161,10 @@ class GithubBackupService
 
     # Convert content to markdown
     markdown_content = ""
-    if article.content.present?
+    if article.html?
+      html_content = article.html_content || ""
+      markdown_content = html_to_markdown(html_content, attachment_url_map)
+    elsif article.content.present?
       html_content = article.content.to_s
       markdown_content = html_to_markdown(html_content, attachment_url_map)
     end
@@ -277,43 +280,47 @@ class GithubBackupService
 
   # Export article attachments and return URL mapping
   def export_article_attachments(article)
-    return {} unless article.content.present?
+    # 对于 HTML 类型，只处理 HTML 中的图片；对于富文本类型，处理 ActionText 附件
+    return {} if article.html? && article.html_content.blank?
+    return {} if article.rich_text? && article.content.blank?
 
     url_map = {}
     attachments_dir = File.join(@temp_dir, "attachments", "article_#{article.id}")
 
     begin
-      # Get all attachments from ActionText content
-      article.content.body.attachments.each do |attachment|
-        next unless attachment.attachable.is_a?(ActiveStorage::Blob)
+      # Get all attachments from ActionText content (only for rich_text type)
+      if article.rich_text? && article.content.present?
+        article.content.body.attachments.each do |attachment|
+          next unless attachment.attachable.is_a?(ActiveStorage::Blob)
 
-        blob = attachment.attachable
-        next unless blob.persisted?
+          blob = attachment.attachable
+          next unless blob.persisted?
 
-        # Create directory if needed
-        FileUtils.mkdir_p(attachments_dir) unless Dir.exist?(attachments_dir)
+          # Create directory if needed
+          FileUtils.mkdir_p(attachments_dir) unless Dir.exist?(attachments_dir)
 
-        # Get original filename or generate one
-        filename = blob.filename.to_s
-        filepath = File.join(attachments_dir, filename)
+          # Get original filename or generate one
+          filename = blob.filename.to_s
+          filepath = File.join(attachments_dir, filename)
 
-        # Download and save the file
-        File.open(filepath, "wb") do |file|
-          blob.download { |chunk| file.write(chunk) }
+          # Download and save the file
+          File.open(filepath, "wb") do |file|
+            blob.download { |chunk| file.write(chunk) }
+          end
+
+          # Store URL mapping for later replacement
+          # Map blob URL to relative path from articles/ directory
+          blob_url = Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: true)
+          relative_path = "../attachments/article_#{article.id}/#{filename}"
+          url_map[blob_url] = relative_path
+
+          Rails.logger.info "Exported attachment: #{filename} for article #{article.id}"
         end
-
-        # Store URL mapping for later replacement
-        # Map blob URL to relative path from articles/ directory
-        blob_url = Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: true)
-        relative_path = "../attachments/article_#{article.id}/#{filename}"
-        url_map[blob_url] = relative_path
-
-        Rails.logger.info "Exported attachment: #{filename} for article #{article.id}"
       end
 
       # Also extract images from HTML content (img tags)
-      html_content = article.content.to_s
-      extract_images_from_html(html_content, attachments_dir, url_map, "article_#{article.id}")
+      html_content = article.html? ? (article.html_content || "") : (article.content.present? ? article.content.to_s : "")
+      extract_images_from_html(html_content, attachments_dir, url_map, "article_#{article.id}") if html_content.present?
     rescue => e
       Rails.logger.error "Failed to export attachments for article #{article.id}: #{e.message}"
     end

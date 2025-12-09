@@ -12,10 +12,13 @@ class Article < ApplicationRecord
   accepts_nested_attributes_for :social_media_posts, allow_destroy: true
 
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]
+  enum :content_type, { rich_text: "rich_text", html: "html" }, default: "rich_text"
 
   before_validation :generate_slug
   validates :slug, presence: true, uniqueness: true
   validates :scheduled_at, presence: true, if: :schedule?
+  validates :html_content, presence: true, if: -> { html? }
+  validate :rich_text_content_presence
 
   scope :published, -> { where(status: :publish) }
   scope :by_status, ->(status) { where(status: status) }
@@ -84,6 +87,24 @@ class Article < ApplicationRecord
 
   def tag_list=(names)
     self.tags = Tag.find_or_create_by_names(names)
+  end
+
+  # 根据content_type返回相应的内容
+  def rendered_content
+    if html?
+      html_content
+    else
+      content
+    end
+  end
+
+  # 获取内容的纯文本版本（用于社交媒体等）
+  def plain_text_content
+    if html?
+      ActionView::Base.full_sanitizer.sanitize(html_content || "")
+    else
+      content.present? ? content.to_plain_text : ""
+    end
   end
 
   private
@@ -207,6 +228,15 @@ class Article < ApplicationRecord
   def cleanup_empty_social_media_posts
     social_media_posts.each do |post|
       post.mark_for_destruction if post.url.blank?
+    end
+  end
+
+  def rich_text_content_presence
+    if rich_text?
+      text = content.present? ? content.to_plain_text.to_s.strip : ""
+      if text.blank?
+        errors.add(:content, "can't be blank")
+      end
     end
   end
 end

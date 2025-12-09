@@ -34,7 +34,11 @@
             <% else %>
               <%= link_to article_path(article), class: "post-content-link" do %>
                 <div class="post-content">
-                  <%= raw article.content %>
+                  <% if article.html? %>
+                    <%= raw article.rendered_content %>
+                  <% else %>
+                    <%= article.rendered_content %>
+                  <% end %>
                 </div>
               <% end %>
             <% end %>
