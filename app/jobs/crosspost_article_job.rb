@@ -1,6 +1,14 @@
 class CrosspostArticleJob < ApplicationJob
   queue_as :default
 
+  # 重试机制：对于 Internet Archive 的速率限制错误，使用指数退避重试
+  retry_on StandardError, wait: :exponentially_longer, attempts: 5 do |job, error|
+    # 对于 Internet Archive 的速率限制，使用更长的等待时间
+    if job.arguments[1] == "internet_archive" && error.message.include?("rate limit")
+      Rails.logger.warn "Internet Archive rate limit hit, will retry with exponential backoff"
+    end
+  end
+
   def perform(article_id, platform)
     article = Article.find_by(id: article_id)
     return unless article

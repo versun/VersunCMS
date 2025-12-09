@@ -162,6 +162,7 @@ class Admin::ArticlesController < Admin::BaseController
 
     count = 0
     errors = []
+    internet_archive_delay = 0
 
     ids.each do |id|
       article = Article.find_by(slug: id)
@@ -178,9 +179,17 @@ class Admin::ArticlesController < Admin::BaseController
           crosspost = Crosspost.find_by(platform: platform)
           next unless crosspost&.enabled?
 
-          # 直接触发crosspost job
-          CrosspostArticleJob.perform_later(article.id, platform)
-          jobs_queued = true
+          # 对于 Internet Archive，添加延迟以避免并发请求导致速率限制
+          if platform == "internet_archive"
+            # 每篇文章延迟 5 秒，避免触发速率限制
+            CrosspostArticleJob.set(wait: internet_archive_delay.seconds).perform_later(article.id, platform)
+            internet_archive_delay += 5
+            jobs_queued = true
+          else
+            # 其他平台立即执行
+            CrosspostArticleJob.perform_later(article.id, platform)
+            jobs_queued = true
+          end
         end
         count += 1 if jobs_queued
       rescue => e
