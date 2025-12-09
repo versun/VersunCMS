@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_06_202045) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_09_004503) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -146,7 +146,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_06_202045) do
   end
 
   create_table "pages", force: :cascade do |t|
+    t.string "content_type", default: "rich_text", null: false
     t.datetime "created_at", null: false
+    t.text "html_content"
     t.integer "page_order", default: 0, null: false
     t.string "redirect_url"
     t.string "slug"

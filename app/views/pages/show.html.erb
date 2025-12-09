@@ -3,7 +3,11 @@
 <% end %>
 <article>
   <div class="article-content">
-    <%= @page.content %>
+    <% if @page.html? %>
+      <%= raw @page.html_content %>
+    <% else %>
+      <%= @page.content %>
+    <% end %>
   </div>
 </article>
 <hr>
