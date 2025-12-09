@@ -1,7 +1,7 @@
 class Page < ApplicationRecord
   has_rich_text :content
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]
-  enum :content_type, { rich_text: 'rich_text', html: 'html' }, default: 'rich_text'
+  enum :content_type, { rich_text: "rich_text", html: "html" }, default: "rich_text"
 
   validates :title, presence: true
   validates :slug, presence: true, uniqueness: true
