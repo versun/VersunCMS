@@ -437,6 +437,64 @@ textarea.description-compact {
     border-top: 1px solid var(--border);
 }
 
+/* Article Form Two-Column Layout */
+.article-form-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.article-form-content-column {
+    flex: 1;
+    min-width: 0;
+}
+
+.article-form-sidebar-column {
+    width: 320px;
+    flex-shrink: 0;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.article-form-sidebar-column::-webkit-scrollbar {
+    width: 8px;
+}
+
+.article-form-sidebar-column::-webkit-scrollbar-track {
+    background: var(--bg-hover);
+    border-radius: 4px;
+}
+
+.article-form-sidebar-column::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.article-form-sidebar-column::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
+}
+
+/* Lexxy Editor Resizable */
+lexxy-editor {
+    min-height: 400px;
+    max-height: none;
+    resize: vertical;
+    overflow: auto;
+    display: block;
+}
+
+/* Ensure the editor container inside allows proper sizing */
+lexxy-editor .lexxy-editor-container,
+lexxy-editor .lexxy-editor-root {
+    min-height: 400px;
+}
+
+/* Make sure the field wrapper doesn't interfere with resizing */
+.field lexxy-editor {
+    width: 100%;
+}
+
 /* Info Text */
 .info-text {
     font-size: 11px;
@@ -897,6 +955,19 @@ a:hover {
     .form-grid-2,
     .form-grid-3 {
         grid-template-columns: 1fr;
+    }
+
+    /* Article form layout mobile */
+    .article-form-layout {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .article-form-sidebar-column {
+        width: 100%;
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
     }
 
     /* Button adjustments */

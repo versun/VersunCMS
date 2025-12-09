@@ -10,204 +10,200 @@
     </div>
   <% end %>
 
-  <div class="form-section compact">
-    <div class="form-grid form-grid-2">
-      <div class="field">
-        <%= form.label :title %>
-        <%= form.text_field :title %>
-      </div>
-      <div class="field">
-        <%= form.label :slug %>
-        <%= form.text_field :slug %>
-      </div>
-    </div>
+  <div class="article-form-layout">
+    <!-- 左侧栏：内容字段 -->
+    <div class="article-form-content-column">
+      <div class="form-section compact">
+        <h3>Content</h3>
+        
+        <div class="field">
+          <%= form.select :content_type, 
+              options_for_select([
+                ['Rich Text', 'rich_text'],
+                ['HTML Code', 'html']
+              ], form.object.content_type || 'rich_text'),
+              {},
+              { id: 'content_type_select', required: true } %>
+        </div>
 
-    <div class="form-grid form-grid-2">
-      <div class="field">
-        <%= form.label :created_at, "Created At" %>
-        <%= form.datetime_field :created_at %>
-      </div>
-      <div class="field">
-        <%= form.label :tag_list, "Tags" %>
-        <%= form.text_field :tag_list, placeholder: "ruby, rails, web development" %>
-      </div>
-    </div>
-  </div>
+        <div class="field" id="rich_text_field" style="display: <%= form.object.html? ? 'none' : 'block' %>">
+          <%= form.rich_text_area :content %>
+        </div>
 
-  <div class="form-section compact">
-    <div class="field">
-      <%= form.label :description %>
-      <%= form.text_area :description, rows: 1, class: "description-compact" %>
-    </div>
-  </div>
-
-  <div class="form-section compact">
-    <h3>SEO Meta Tags</h3>
-    <small style="color: #666; margin-bottom: 1rem; display: block;">用于社交平台分享和搜索引擎优化。如果留空，将使用文章标题和文章开头作为默认值。</small>
-    
-    <div class="field">
-      <%= form.label :meta_title, "Meta Title" %>
-      <%= form.text_field :meta_title, placeholder: "留空则使用文章标题" %>
-      <small style="color: #666;">用于社交分享和搜索引擎显示的标题</small>
-    </div>
-
-    <div class="field">
-      <%= form.label :meta_description, "Meta Description" %>
-      <%= form.text_area :meta_description, rows: 3, placeholder: "留空则使用文章开头" %>
-      <small style="color: #666;">用于社交分享和搜索引擎显示的描述（建议160字符以内）</small>
-    </div>
-
-    <div class="field">
-      <%= form.label :meta_image, "Meta Image URL" %>
-      <%= form.text_field :meta_image, placeholder: "留空则使用文章中的第一张图片" %>
-      <small style="color: #666;">用于社交分享的图片URL（建议1200x630像素）</small>
-    </div>
-  </div>
-
-  <div class="form-section compact">
-    <h3>Content</h3>
-    
-    <div class="field">
-      <%= form.label :content_type, "Content Type" %>
-      <%= form.select :content_type, 
-          options_for_select([
-            ['Rich Text', 'rich_text'],
-            ['HTML Code', 'html']
-          ], form.object.content_type || 'rich_text'),
-          {},
-          { id: 'content_type_select', required: true } %>
-      <small>Choose between Rich Text Editor or Raw HTML Code</small>
-    </div>
-
-    <div class="field" id="rich_text_field" style="display: <%= form.object.html? ? 'none' : 'block' %>">
-      <%= form.label :content, "Rich Text Content" %>
-      <%= form.rich_text_area :content %>
-    </div>
-
-    <div class="field" id="html_content_field" style="display: <%= form.object.html? ? 'block' : 'none' %>">
-      <%= form.label :html_content, "HTML Code" %>
-      <%= form.text_area :html_content, 
-          rows: 15,
-          placeholder: "Enter your HTML code here...",
-          class: "code-editor" %>
-      <small>Raw HTML code will be rendered directly</small>
-    </div>
-  </div>
-
-  <div class="form-section compact">
-    <div class="form-grid form-grid-2">
-      <div class="field">
-        <%= form.label :status %>
-        <%= form.select :status, Article.statuses.keys, 
-            { prompt: 'Choose a status', selected: @article.status.presence || 'draft' }, 
-            { id: 'status_select', required: true } %>
-      </div>
-      <div class="field" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
-        <%= form.label :scheduled_at, "Schedule For" %>
-        <%= form.datetime_field :scheduled_at, value: @article.scheduled_at&.in_time_zone %>
+        <div class="field" id="html_content_field" style="display: <%= form.object.html? ? 'block' : 'none' %>">
+          <%= form.text_area :html_content, 
+              rows: 15,
+              placeholder: "Enter your HTML code here...",
+              class: "code-editor" %>
+          <small>Raw HTML code will be rendered directly</small>
+        </div>
       </div>
     </div>
-    <small id="scheduled_at_hint" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">Current: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %></small>
 
-    <div class="field">
-      <%= form.label :comment, style: "display: inline-block; font-weight: bold;" do %>
-        <%= form.check_box :comment, style: "margin-right: 0.5rem;" %>
-        Enable Comments
-      <% end %>
-    </div>
-  </div>
-
-  <div class="form-section compact">
-    <div class="checkbox-group">
-      <% newsletter_setting = NewsletterSetting.instance %>
-      <% newsletter_enabled = newsletter_setting.enabled? %>
-      <div class="field checkbox">
-        <%= form.check_box :send_newsletter, disabled: !newsletter_enabled %>
-        <%= form.label :send_newsletter, "Send Newsletter" %>
-        <% unless newsletter_enabled %>
-          <span class="info-text">(not enabled)</span>
-        <% end %>
+    <!-- 右侧栏：其他所有字段（可滚动） -->
+    <div class="article-form-sidebar-column">
+      <div class="form-section compact">
+        <div class="field">
+          <%= form.label :title %>
+          <%= form.text_field :title %>
+        </div>
+        <div class="field">
+          <%= form.label :slug %>
+          <%= form.text_field :slug %>
+        </div>
+        <div class="field">
+          <%= form.label :created_at, "Created At" %>
+          <%= form.datetime_field :created_at %>
+        </div>
+        <div class="field">
+          <%= form.label :tag_list, "Tags" %>
+          <%= form.text_field :tag_list, placeholder: "ruby, rails, web development" %>
+        </div>
       </div>
 
-      <% mastodon_enabled = Crosspost.find_by(platform: 'mastodon')&.enabled? %>
-      <div class="field checkbox">
-        <%= form.check_box :crosspost_mastodon, disabled: !mastodon_enabled %>
-        <%= form.label :crosspost_mastodon, "Mastodon" %>
-        <% unless mastodon_enabled %>
-          <span class="info-text">(off)</span>
-        <% end %>
+      <div class="form-section compact">
+        <div class="field">
+          <%= form.label :description %>
+          <%= form.text_area :description, rows: 1, class: "description-compact" %>
+        </div>
       </div>
-      <% if mastodon_enabled %>
-        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
-          <% if post_form.object.platform == 'mastodon' %>
-            <div class="field compact">
-              <%= post_form.label :url, "Mastodon URL", class: "sr-only" %>
-              <%= post_form.text_field :url, placeholder: "Post URL" %>
-              <%= post_form.hidden_field :platform, value: "mastodon" %>
-            </div>
+
+      <div class="form-section compact">
+        <h3>SEO Meta Tags</h3>
+        
+        <div class="field">
+          <%= form.label :meta_title, "Meta Title" %>
+          <%= form.text_field :meta_title, placeholder: "留空则使用文章标题" %>
+          <small style="color: #666;">用于社交分享和搜索引擎显示的标题</small>
+        </div>
+
+        <div class="field">
+          <%= form.label :meta_description, "Meta Description" %>
+          <%= form.text_area :meta_description, rows: 3, placeholder: "留空则使用文章开头" %>
+          <small style="color: #666;">用于社交分享和搜索引擎显示的描述（建议160字符以内）</small>
+        </div>
+
+        <div class="field">
+          <%= form.label :meta_image, "Meta Image URL" %>
+          <%= form.text_field :meta_image, placeholder: "留空则使用文章中的第一张图片" %>
+          <small style="color: #666;">用于社交分享的图片URL（建议1200x630像素）</small>
+        </div>
+      </div>
+
+      <div class="form-section compact">
+        <div class="field">
+          <%= form.label :status %>
+          <%= form.select :status, Article.statuses.keys, 
+              { prompt: 'Choose a status', selected: @article.status.presence || 'draft' }, 
+              { id: 'status_select', required: true } %>
+        </div>
+        <div class="field" id="scheduled_at" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">
+          <%= form.label :scheduled_at, "Schedule For" %>
+          <%= form.datetime_field :scheduled_at, value: @article.scheduled_at&.in_time_zone %>
+        </div>
+        <small id="scheduled_at_hint" style="display: <%= form.object.schedule? ? 'block' : 'none' %>">Current: <%= Time.current.strftime("%Y/%m/%d %I:%M %p %Z") %></small>
+
+        <div class="field">
+          <%= form.label :comment, style: "display: inline-block; font-weight: bold;" do %>
+            <%= form.check_box :comment, style: "margin-right: 0.5rem;" %>
+            Enable Comments
           <% end %>
-        <% end %>
-      <% end %>
-
-      <% twitter_enabled = Crosspost.find_by(platform: 'twitter')&.enabled? %>
-      <div class="field checkbox">
-        <%= form.check_box :crosspost_twitter, disabled: !twitter_enabled %>
-        <%= form.label :crosspost_twitter, "Twitter" %>
-        <% unless twitter_enabled %>
-          <span class="info-text">(off)</span>
-        <% end %>
+        </div>
       </div>
-      <% if twitter_enabled %>
-        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
-          <% if post_form.object.platform == 'twitter' %>
-            <div class="field compact">
-              <%= post_form.label :url, "Twitter URL", class: "sr-only" %>
-              <%= post_form.text_field :url, placeholder: "Post URL" %>
-              <%= post_form.hidden_field :platform, value: "twitter" %>
-            </div>
-          <% end %>
-        <% end %>
-      <% end %>
 
-      <% bluesky_enabled = Crosspost.find_by(platform: 'bluesky')&.enabled? %>
-      <div class="field checkbox">
-        <%= form.check_box :crosspost_bluesky, disabled: !bluesky_enabled %>
-        <%= form.label :crosspost_bluesky, "Bluesky" %>
-        <% unless bluesky_enabled %>
-          <span class="info-text">(off)</span>
-        <% end %>
-      </div>
-      <% if bluesky_enabled %>
-        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
-          <% if post_form.object.platform == 'bluesky' %>
-            <div class="field compact">
-              <%= post_form.label :url, "Bluesky URL", class: "sr-only" %>
-              <%= post_form.text_field :url, placeholder: "Post URL" %>
-              <%= post_form.hidden_field :platform, value: "bluesky" %>
-            </div>
-          <% end %>
-        <% end %>
-      <% end %>
+      <div class="form-section compact">
+        <div class="checkbox-group">
+          <% newsletter_setting = NewsletterSetting.instance %>
+          <% newsletter_enabled = newsletter_setting.enabled? %>
+          <div class="field checkbox">
+            <%= form.check_box :send_newsletter, disabled: !newsletter_enabled %>
+            <%= form.label :send_newsletter, "Send Newsletter" %>
+            <% unless newsletter_enabled %>
+              <span class="info-text">(not enabled)</span>
+            <% end %>
+          </div>
 
-      <% internet_archive_enabled = Crosspost.find_by(platform: 'internet_archive')&.enabled? %>
-      <div class="field checkbox">
-        <%= form.check_box :crosspost_internet_archive, disabled: !internet_archive_enabled %>
-        <%= form.label :crosspost_internet_archive, "Internet Archive" %>
-        <% unless internet_archive_enabled %>
-          <span class="info-text">(off)</span>
-        <% end %>
-      </div>
-      <% if internet_archive_enabled %>
-        <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'internet_archive') do |post_form| %>
-          <% if post_form.object.platform == 'internet_archive' %>
-            <div class="field compact">
-              <%= post_form.label :url, "Archive URL", class: "sr-only" %>
-              <%= post_form.text_field :url, placeholder: "Archive URL" %>
-              <%= post_form.hidden_field :platform, value: "internet_archive" %>
-            </div>
+          <% mastodon_enabled = Crosspost.find_by(platform: 'mastodon')&.enabled? %>
+          <div class="field checkbox">
+            <%= form.check_box :crosspost_mastodon, disabled: !mastodon_enabled %>
+            <%= form.label :crosspost_mastodon, "Mastodon" %>
+            <% unless mastodon_enabled %>
+              <span class="info-text">(off)</span>
+            <% end %>
+          </div>
+          <% if mastodon_enabled %>
+            <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'mastodon') do |post_form| %>
+              <% if post_form.object.platform == 'mastodon' %>
+                <div class="field compact">
+                  <%= post_form.label :url, "Mastodon URL", class: "sr-only" %>
+                  <%= post_form.text_field :url, placeholder: "Post URL" %>
+                  <%= post_form.hidden_field :platform, value: "mastodon" %>
+                </div>
+              <% end %>
+            <% end %>
           <% end %>
-        <% end %>
-      <% end %>
+
+          <% twitter_enabled = Crosspost.find_by(platform: 'twitter')&.enabled? %>
+          <div class="field checkbox">
+            <%= form.check_box :crosspost_twitter, disabled: !twitter_enabled %>
+            <%= form.label :crosspost_twitter, "Twitter" %>
+            <% unless twitter_enabled %>
+              <span class="info-text">(off)</span>
+            <% end %>
+          </div>
+          <% if twitter_enabled %>
+            <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'twitter') do |post_form| %>
+              <% if post_form.object.platform == 'twitter' %>
+                <div class="field compact">
+                  <%= post_form.label :url, "Twitter URL", class: "sr-only" %>
+                  <%= post_form.text_field :url, placeholder: "Post URL" %>
+                  <%= post_form.hidden_field :platform, value: "twitter" %>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
+
+          <% bluesky_enabled = Crosspost.find_by(platform: 'bluesky')&.enabled? %>
+          <div class="field checkbox">
+            <%= form.check_box :crosspost_bluesky, disabled: !bluesky_enabled %>
+            <%= form.label :crosspost_bluesky, "Bluesky" %>
+            <% unless bluesky_enabled %>
+              <span class="info-text">(off)</span>
+            <% end %>
+          </div>
+          <% if bluesky_enabled %>
+            <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'bluesky') do |post_form| %>
+              <% if post_form.object.platform == 'bluesky' %>
+                <div class="field compact">
+                  <%= post_form.label :url, "Bluesky URL", class: "sr-only" %>
+                  <%= post_form.text_field :url, placeholder: "Post URL" %>
+                  <%= post_form.hidden_field :platform, value: "bluesky" %>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
+
+          <% internet_archive_enabled = Crosspost.find_by(platform: 'internet_archive')&.enabled? %>
+          <div class="field checkbox">
+            <%= form.check_box :crosspost_internet_archive, disabled: !internet_archive_enabled %>
+            <%= form.label :crosspost_internet_archive, "Internet Archive" %>
+            <% unless internet_archive_enabled %>
+              <span class="info-text">(off)</span>
+            <% end %>
+          </div>
+          <% if internet_archive_enabled %>
+            <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'internet_archive') do |post_form| %>
+              <% if post_form.object.platform == 'internet_archive' %>
+                <div class="field compact">
+                  <%= post_form.label :url, "Archive URL", class: "sr-only" %>
+                  <%= post_form.text_field :url, placeholder: "Archive URL" %>
+                  <%= post_form.hidden_field :platform, value: "internet_archive" %>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
     </div>
   </div>
 
