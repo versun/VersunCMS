@@ -3,7 +3,7 @@ class Redirect < ApplicationRecord
   validates :replacement, presence: true
   validate :validate_regex_pattern
 
-  scope :enabled, -> { 
+  scope :enabled, -> {
     # Handle both boolean and string/integer values for SQLite compatibility
     where("enabled = ? OR enabled = ? OR enabled = ?", true, 1, "1")
   }

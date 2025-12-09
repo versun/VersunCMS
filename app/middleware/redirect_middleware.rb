@@ -17,7 +17,7 @@ class RedirectMiddleware
       if target_url
         Rails.logger.info "Redirect: #{path} -> #{target_url} (#{redirect.permanent? ? '301' : '302'})"
         status = redirect.permanent? ? 301 : 302
-        return [status, { "Location" => target_url, "Content-Type" => "text/html" }, []]
+        return [ status, { "Location" => target_url, "Content-Type" => "text/html" }, [] ]
       end
     end
 

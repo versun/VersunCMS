@@ -37,5 +37,4 @@ class ApplicationController < ActionController::Base
       redirect_to setup_path unless request.path == setup_path
     end
   end
-
 end
