@@ -441,7 +441,7 @@ textarea.description-compact {
 .article-form-layout {
     display: flex;
     gap: 1.5rem;
-    align-items: flex-start;
+    align-items: stretch;
 }
 
 .article-form-content-column {
@@ -452,8 +452,6 @@ textarea.description-compact {
 .article-form-sidebar-column {
     width: 320px;
     flex-shrink: 0;
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
     padding-right: 0.5rem;
 }
 
