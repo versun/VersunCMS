@@ -79,7 +79,7 @@
   </div>
 </article>
 
-
+<% if @article.comment? %>
 <div id="comments-section">
   <% # Prepare all comments from all sources - only top level comments %>
   <% all_comments = [] %>
@@ -108,6 +108,7 @@
   <div class="giscus"></div>
   <%= raw site_settings[:giscus] %>
 </div>
+<% end %>
 
 <script>
   function showReplyForm(commentId) {

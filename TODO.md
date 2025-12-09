@@ -2,7 +2,7 @@
 - [x] 首次安装设置指南
 - [x] github backup图片没有备份到github上
 - [x] 点Submit Comment后应该弹唱对话框，提示用户，感谢评论，Your comment will be reviewed before being published.
-- [ ] 评论功能可关闭
+- [x] 评论功能可关闭
 - [x] 添加twitter的评论获取功能，只能手动获取
 - [x] Post list管理页面的action 添加评论获取功能
 - [ ] Site setting页面添加站点icon上传，自动重命名并上传到static file中
@@ -15,7 +15,7 @@
 - [ ] 自定义专属于RSS的Footer： 感谢您让 RSS 继续存活下去。你太棒了。
 - [ ] 添加“状态/微博/随笔/碎碎念？”实时更新？Live
 - [ ] 备份方式更新:增量备份和完整备份
-- [ ] Newsletter功能：只有简单的订阅和发送功能，每个tag除了rss也支持newsletterter订阅；如果要模版跟踪等高级功能，则使用listmonk
+- [x] Newsletter功能：只有简单的订阅和发送功能，每个tag除了rss也支持newsletterter订阅；如果要模版跟踪等高级功能，则使用listmonk
 - [ ] 多站点多用户
 - [ ] 文章多修订历史功能
 - [x] 暗黑模式
