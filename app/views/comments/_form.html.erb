@@ -7,7 +7,19 @@
     </div>
   <% end %>
   
-  <%= form_with(model: comment, url: comments_path(article_id: @article.slug)) do |f| %>
+  <% 
+    # Determine the form URL based on whether we have @page or @article
+    if defined?(@page) && @page.present?
+      form_url = comments_path(page_id: @page.slug)
+    elsif defined?(@article) && @article.present?
+      form_url = comments_path(article_id: @article.slug)
+    elsif defined?(@commentable)
+      form_url = @commentable.is_a?(Page) ? comments_path(page_id: @commentable.slug) : comments_path(article_id: @commentable.slug)
+    else
+      form_url = comments_path(article_id: '')
+    end
+  %>
+  <%= form_with(model: comment, url: form_url) do |f| %>
     <%= f.hidden_field :parent_id, value: parent_id if parent_id %>
     
     <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">

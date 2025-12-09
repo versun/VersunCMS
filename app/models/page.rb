@@ -1,5 +1,6 @@
 class Page < ApplicationRecord
   has_rich_text :content
+  has_many :comments, as: :commentable, dependent: :destroy
   enum :status, [ :draft, :publish, :schedule, :trash, :shared ]
   enum :content_type, { rich_text: "rich_text", html: "html" }, default: "rich_text"
 

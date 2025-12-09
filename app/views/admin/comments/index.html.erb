@@ -41,7 +41,7 @@
             <th class="col-actions-compact">Actions</th>
             <th class="col-compact">Status</th>
             <th class="col-content">Content</th>
-            <th class="col-title">Article</th>
+            <th class="col-title">Article/Page</th>
             <th class="col-title">Author</th>
             <th class="col-date-compact">Date</th>
           </tr>
@@ -91,8 +91,14 @@
                   <small><%= comment.content.truncate(100) %></small>
                 </td>
                 <td class="col-title">
-                  <% if comment.article %>
-                    <%= link_to comment.article.title.truncate(50), article_path(comment.article), class: "title-link", target: "_blank" %>
+                  <% if comment.commentable %>
+                    <% if comment.commentable.is_a?(Article) %>
+                      <%= link_to comment.commentable.title.truncate(50), article_path(comment.commentable), class: "title-link", target: "_blank" %>
+                    <% elsif comment.commentable.is_a?(Page) %>
+                      <%= link_to comment.commentable.title.truncate(50), page_path(comment.commentable), class: "title-link", target: "_blank" %>
+                    <% else %>
+                      <%= comment.commentable.title.truncate(50) %>
+                    <% end %>
                   <% else %>
                     <small class="text-muted">—</small>
                   <% end %>

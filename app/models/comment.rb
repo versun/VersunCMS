@@ -1,23 +1,26 @@
 class Comment < ApplicationRecord
-  belongs_to :article
+  belongs_to :commentable, polymorphic: true
+  # Keep belongs_to :article for backward compatibility
+  belongs_to :article, optional: true
   belongs_to :parent, class_name: "Comment", optional: true
   has_many :replies, class_name: "Comment", foreign_key: "parent_id", dependent: :destroy
 
   # Validations for all comments
   validates :author_name, presence: true
   validates :content, presence: true
-  validates :article_id, presence: true
+  validates :commentable_id, presence: true
+  validates :commentable_type, presence: true
 
   # Validations for external comments
   validates :platform, presence: true, if: :external_comment?
   validates :external_id, presence: true, if: :external_comment?
-  validates :external_id, uniqueness: { scope: [ :article_id, :platform ] }, if: :external_comment?
+  validates :external_id, uniqueness: { scope: [ :commentable_type, :commentable_id, :platform ] }, if: :external_comment?
 
   # Optional URL validation for native comments
   validates :author_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
 
-  # Validate that parent comment belongs to the same article
-  validate :parent_belongs_to_same_article, if: :parent_id?
+  # Validate that parent comment belongs to the same commentable
+  validate :parent_belongs_to_same_commentable, if: :parent_id?
 
   # Scopes
   enum :status, { pending: 0, approved: 1, rejected: 2 }, default: :pending
@@ -36,7 +39,7 @@ class Comment < ApplicationRecord
     platform.present? || external_id.present?
   end
 
-  def parent_belongs_to_same_article
+  def parent_belongs_to_same_commentable
     return unless parent_id?
 
     # Check if parent exists
@@ -46,9 +49,9 @@ class Comment < ApplicationRecord
       return
     end
 
-    # Check if parent belongs to the same article
-    if parent_record.article_id != article_id
-      errors.add(:parent_id, "must belong to the same article")
+    # Check if parent belongs to the same commentable
+    if parent_record.commentable_type != commentable_type || parent_record.commentable_id != commentable_id
+      errors.add(:parent_id, "must belong to the same #{commentable_type}")
     end
   end
 end

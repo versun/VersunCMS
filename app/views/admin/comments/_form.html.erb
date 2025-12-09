@@ -1,8 +1,18 @@
 <%= form_with(model: [:admin, @comment], local: true) do |f| %>
   <div style="margin-bottom: 1rem;">
-    <%= f.label :article_id, "Article", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
+    <%= f.label :commentable, "Article/Page", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
     <p style="margin: 0; padding: 0.5rem; background: #f5f5f5; border-radius: 4px;">
-      <%= @comment.article&.title || "Unknown" %>
+      <% if @comment.commentable %>
+        <% if @comment.commentable.is_a?(Article) %>
+          Article: <%= @comment.commentable.title %>
+        <% elsif @comment.commentable.is_a?(Page) %>
+          Page: <%= @comment.commentable.title %>
+        <% else %>
+          <%= @comment.commentable.title %>
+        <% end %>
+      <% else %>
+        Unknown
+      <% end %>
     </p>
   </div>
 
