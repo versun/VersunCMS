@@ -6,6 +6,9 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Require custom middleware
+require_relative "../app/middleware/redirect_middleware"
+
 module VersunCms
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -20,6 +23,11 @@ module VersunCms
 
     config.mission_control.jobs.base_controller_class = "AdminController"
     config.mission_control.jobs.http_basic_auth_enabled = false
+    
+    # Add redirect middleware early in the stack to handle redirects before routing
+    # This ensures redirects work even for unmatched routes (404s)
+    config.middleware.insert_after ActionDispatch::Static, RedirectMiddleware
+    
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

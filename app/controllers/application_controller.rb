@@ -2,7 +2,6 @@ class ApplicationController < ActionController::Base
   include CacheableSettings
   before_action :set_time_zone
   before_action :redirect_to_setup_if_needed
-  before_action :process_redirects
 
   include Authentication
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
@@ -39,22 +38,4 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def process_redirects
-    return if request.path.start_with?("/admin") # Skip redirects for admin pages
-
-    # Use all redirects and filter by enabled? method to handle string/boolean values
-    Redirect.all.find_each do |redirect|
-      next unless redirect.enabled? # Use the method instead of scope for better compatibility
-      
-      if redirect.match?(request.path)
-        target_url = redirect.apply_to(request.path)
-        next unless target_url
-
-        Rails.logger.info "Redirect: #{request.path} -> #{target_url} (#{redirect.permanent? ? '301' : '302'})"
-        status = redirect.permanent? ? :moved_permanently : :found
-        redirect_to target_url, status: status
-        return
-      end
-    end
-  end
 end
