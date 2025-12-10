@@ -69,47 +69,48 @@
       article_full_url = "#{site_url}/#{@article.slug}"
     end
   %>
-  <div class="article-header" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem;">
+  <div class="article-header" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.25rem;">
     <h2 style="flex: 1; margin: 0;"><%= @article.title %></h2>
-    <span class="share-container" style="position: relative; display: inline-block; margin-left: 12px; flex-shrink: 0;">
-      <button class="share-button" onclick="toggleShareMenu(event)" title="分享文章" style="background: none; border: none; cursor: pointer; padding: 4px; color: grey; border-radius: 4px; transition: all 0.2s;">
-        <i class="fas fa-share-alt" style="font-size: 14px;"></i>
+  </div>
+  <small style="color:grey; display: block; margin-bottom: 1.5rem;">
+    <span class="share-container" style="position: relative; display: inline-block; margin-right: 12px;">
+      <button class="share-button" onclick="toggleShareMenu(event)" title="分享文章" style="background: none; border: none; cursor: pointer; padding: 4px; color: grey; border-radius: 4px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
+      <span>Share</span>  
+      <i class="fas fa-share-alt" style="font-size: 14px;"></i>
       </button>
-      <div id="share-menu" class="share-menu" style="display: none;">
+      <div id="share-menu-<%= @article.id %>" class="share-menu" style="display: none;">
         <a href="#" onclick="copyArticleLink(event, '<%= article_full_url %>')" class="share-menu-item">
           <i class="fas fa-link"></i> Copy Link
         </a>
-        <a href="https://twitter.com/intent/tweet?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://twitter.com/intent/tweet?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-square-x-twitter"></i> Twitter
         </a>
-        <a href="https://mastodon.social/share?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://mastodon.social/share?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-mastodon"></i> Mastodon
         </a>
-        <a href="https://bsky.app/intent/compose?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://bsky.app/intent/compose?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-square-bluesky"></i> Bluesky
         </a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-facebook"></i> Facebook
         </a>
-        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-linkedin"></i> LinkedIn
         </a>
-        <a href="https://www.reddit.com/submit?url=<%= URI.encode_www_form_component(article_full_url) %>&title=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://www.reddit.com/submit?url=<%= URI.encode_www_form_component(article_full_url) %>&title=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-reddit"></i> Reddit
         </a>
-        <a href="https://wa.me/?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://wa.me/?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-whatsapp"></i> WhatsApp
         </a>
-        <a href="https://t.me/share/url?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="https://t.me/share/url?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fab fa-telegram"></i> Telegram
         </a>
-        <a href="mailto:?subject=<%= URI.encode_www_form_component(@article.title) %>&body=<%= URI.encode_www_form_component("#{@article.title}\n\n#{article_full_url}") %>" class="share-menu-item" onclick="closeShareMenu()">
+        <a href="mailto:?subject=<%= URI.encode_www_form_component(@article.title) %>&body=<%= URI.encode_www_form_component("#{@article.title}\n\n#{article_full_url}") %>" class="share-menu-item" onclick="closeShareMenu(event)">
           <i class="fas fa-envelope"></i> Email
         </a>
       </div>
     </span>
-  </div>
-  <small style="color:grey">
   <% if @article.social_media_posts.any? %>
       <span class="social-label">Also posted to:</span>
       <% @article.social_media_posts.each do |post| %>
@@ -201,12 +202,13 @@
   function toggleShareMenu(event) {
     event.stopPropagation();
     
-    // 直接显示社交平台分享菜单
-    showShareMenu();
-  }
-  
-  function showShareMenu() {
-    const menu = document.getElementById('share-menu');
+    // 通过事件目标找到对应的分享容器和菜单
+    const button = event.currentTarget || event.target.closest('.share-button');
+    const shareContainer = button.closest('.share-container');
+    const menu = shareContainer.querySelector('.share-menu');
+    
+    if (!menu) return;
+    
     const isVisible = menu.style.display === 'block';
     
     // 关闭所有其他分享菜单
@@ -229,16 +231,38 @@
     }
   }
 
-  function closeShareMenu() {
-    const menu = document.getElementById('share-menu');
-    menu.style.display = 'none';
+  function closeShareMenu(event) {
+    let menu;
+    
+    if (event) {
+      // 通过事件目标找到对应的菜单
+      const menuItem = event.currentTarget || event.target.closest('.share-menu-item');
+      if (menuItem) {
+        const shareContainer = menuItem.closest('.share-container');
+        menu = shareContainer ? shareContainer.querySelector('.share-menu') : null;
+      }
+    }
+    
+    // 如果没有找到菜单，关闭所有菜单
+    if (!menu) {
+      document.querySelectorAll('.share-menu').forEach(m => {
+        m.style.display = 'none';
+      });
+    } else {
+      menu.style.display = 'none';
+    }
+    
     document.removeEventListener('click', closeShareMenuOnOutsideClick);
   }
 
   function closeShareMenuOnOutsideClick(event) {
     const shareContainer = event.target.closest('.share-container');
     if (!shareContainer) {
-      closeShareMenu();
+      // 关闭所有分享菜单
+      document.querySelectorAll('.share-menu').forEach(m => {
+        m.style.display = 'none';
+      });
+      document.removeEventListener('click', closeShareMenuOnOutsideClick);
     }
   }
 
@@ -258,8 +282,16 @@
       fallbackCopyTextToClipboard(url, event.target);
     }
     
-    // 关闭菜单
-    closeShareMenu();
+    // 关闭菜单 - 通过事件目标找到对应的菜单
+    const menuItem = event.target.closest('.share-menu-item');
+    if (menuItem) {
+      const shareContainer = menuItem.closest('.share-container');
+      const menu = shareContainer ? shareContainer.querySelector('.share-menu') : null;
+      if (menu) {
+        menu.style.display = 'none';
+      }
+    }
+    document.removeEventListener('click', closeShareMenuOnOutsideClick);
   }
 
   function fallbackCopyTextToClipboard(text, target) {
