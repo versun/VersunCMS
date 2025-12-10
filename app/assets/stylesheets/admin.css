@@ -428,6 +428,17 @@ textarea.description-compact {
     margin: 0;
 }
 
+/* Crosspost field with inline URL input */
+.field.checkbox.crosspost-field {
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+}
+
+.field.checkbox.crosspost-field .crosspost-url-input {
+    width: 200px;
+    flex-shrink: 0;
+}
+
 /* Form Actions */
 .form-actions {
     display: flex;
