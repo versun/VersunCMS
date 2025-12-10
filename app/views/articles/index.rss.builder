@@ -11,11 +11,11 @@ xml.rss version: "2.0",
       xml.item do
         xml.title article.title.presence || article.created_at.strftime("%Y-%m-%d")
         xml.description article.description
-        <% if article.html? %>
-        xml.tag!("content:encoded") { xml.cdata! (article.html_content || "") }
-        <% else %>
-        xml.tag!("content:encoded") { xml.cdata! article.content.to_s }
-        <% end %>
+        if article.html?
+          xml.tag!("content:encoded") { xml.cdata! (article.html_content || "") }
+        else
+          xml.tag!("content:encoded") { xml.cdata! article.content.to_s }
+        end
         xml.pubDate article.created_at.rfc822
         xml.link [ site_settings[:url], Rails.application.config.x.article_route_prefix, article.slug ].reject(&:blank?).join("/")
         xml.guid [ site_settings[:url], Rails.application.config.x.article_route_prefix, article.slug ].reject(&:blank?).join("/")
