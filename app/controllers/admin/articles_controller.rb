@@ -11,7 +11,7 @@ class Admin::ArticlesController < Admin::BaseController
   end
 
   def new
-    @article = Article.new
+    @article = Article.new(comment: true)
   end
 
   def edit

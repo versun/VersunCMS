@@ -11,7 +11,7 @@ class Admin::PagesController < Admin::BaseController
   end
 
   def new
-    @page = Page.new
+    @page = Page.new(comment: true)
   end
 
   def edit

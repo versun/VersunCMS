@@ -105,7 +105,7 @@
 
         <div class="field">
           <%= form.label :comment, style: "display: inline-block; font-weight: bold;" do %>
-            <%= form.check_box :comment, style: "margin-right: 0.5rem;" %>
+            <%= form.check_box :comment, { checked: (@article.new_record? ? true : @article.comment) }, style: "margin-right: 0.5rem;" %>
             Enable Comments
           <% end %>
         </div>

@@ -14,7 +14,7 @@ class PagesController < ApplicationController
 
   # GET /Pages/new
   def new
-    @page = Page.new
+    @page = Page.new(comment: true)
     max_order = Page.all.maximum(:page_order) || 0
     @page.page_order = max_order + 1
   end
