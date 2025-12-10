@@ -39,8 +39,19 @@ class ArticlesController < ApplicationController
   # GET /1 or /1.json
   def show
     if @article.nil? || (!%w[publish shared].include?(@article.status) && !authenticated?)
+      # 404 页面设置较短的缓存时间
+      headers["Cache-Control"] = "public, max-age=300" # 5 分钟
       render file: Rails.public_path.join("404.html"), status: :not_found, layout: false
       nil
+    else
+      # 已发布的文章设置较长的缓存时间
+      if %w[publish shared].include?(@article.status)
+        # 公开文章：缓存 1 小时
+        headers["Cache-Control"] = "public, max-age=3600, s-maxage=3600"
+      else
+        # 需要认证的文章：不缓存或短缓存
+        headers["Cache-Control"] = "private, no-cache" if authenticated?
+      end
     end
   end
 

@@ -7,8 +7,19 @@ class PagesController < ApplicationController
   # GET /1
   def show
     if @page.nil? || (!%w[publish shared].include?(@page.status) && !authenticated?)
+      # 404 页面设置较短的缓存时间
+      headers["Cache-Control"] = "public, max-age=300" # 5 分钟
       render file: Rails.public_path.join("404.html"), status: :not_found, layout: false
       nil
+    else
+      # 已发布的页面设置 1 天缓存
+      if %w[publish shared].include?(@page.status)
+        # 公开页面：缓存 1 天
+        headers["Cache-Control"] = "public, max-age=86400, s-maxage=86400"
+      else
+        # 需要认证的页面：不缓存或短缓存
+        headers["Cache-Control"] = "private, no-cache" if authenticated?
+      end
     end
   end
 
