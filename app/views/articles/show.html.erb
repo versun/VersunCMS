@@ -72,10 +72,29 @@
   <div class="article-header" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.25rem;">
     <h2 style="flex: 1; margin: 0;"><%= @article.title %></h2>
   </div>
-  <small style="color:grey; display: block; margin-bottom: 1.5rem;">
-    <span class="share-container" style="position: relative; display: inline-block; margin-right: 12px;">
-      <button class="share-button" onclick="toggleShareMenu(event)" title="分享文章" style="background: none; border: none; cursor: pointer; padding: 4px; color: grey; border-radius: 4px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
-      <span>Share</span>  
+  <small style="color:grey; display: block; margin-bottom: 1rem;">
+  <% if @article.social_media_posts.any? %>
+      <span class="social-label">also posted on:</span>
+      <% @article.social_media_posts.each do |post| %>
+        <% if post.url.present? %>
+          <% 
+            # 从 settings 中获取对应平台的图标信息
+            platform_config = site_settings[:social_links]&.dig(post.platform)
+            icon_class = platform_config&.dig('icon') || Crosspost::PLATFORM_ICONS[post.platform]
+            display_name = platform_config&.dig('name') || post.platform.titleize
+          %>
+          <a href="<%= post.url %>" target="_blank" rel="noopener noreferrer" class="social-icon-link" title="<%= display_name %>">
+            <% if icon_class.present? %>
+              <i class="<%= icon_class %>" style="font-size: 16px;"></i>
+            <% else %>
+              <span style="font-size: 14px;"><%= display_name %></span>
+            <% end %>
+          </a>
+        <% end %>
+      <% end %>
+      <span class="share-container" style="position: relative; display: inline-block;">
+      <button class="share-button" onclick="toggleShareMenu(event)" title="Share Article" style="background: none; border: none; cursor: pointer; padding: 4px; color: grey; border-radius: 4px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
+      <span>| share</span>  
       <i class="fas fa-share-alt" style="font-size: 14px;"></i>
       </button>
       <div id="share-menu-<%= @article.id %>" class="share-menu" style="display: none;">
@@ -111,26 +130,7 @@
         </a>
       </div>
     </span>
-  <% if @article.social_media_posts.any? %>
-      <span class="social-label">Also posted to:</span>
-      <% @article.social_media_posts.each do |post| %>
-        <% if post.url.present? %>
-          <% 
-            # 从 settings 中获取对应平台的图标信息
-            platform_config = site_settings[:social_links]&.dig(post.platform)
-            icon_class = platform_config&.dig('icon') || Crosspost::PLATFORM_ICONS[post.platform]
-            display_name = platform_config&.dig('name') || post.platform.titleize
-          %>
-          <a href="<%= post.url %>" target="_blank" rel="noopener noreferrer" class="social-icon-link" title="<%= display_name %>">
-            <% if icon_class.present? %>
-              <i class="<%= icon_class %>" style="font-size: 16px;"></i>
-            <% else %>
-              <span style="font-size: 14px;"><%= display_name %></span>
-            <% end %>
-          </a>
-        <% end %>
       <% end %>
-  <% end %>
   </small>
   <div class="article-content">
     <% if @article.html? %>
