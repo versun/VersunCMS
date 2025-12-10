@@ -635,7 +635,64 @@ h2 {
 }
 
 [data-theme="dark"] .post-content {
-    color: var(--text-secondary);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-content p {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-content li {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-content a {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] .post-content a:hover {
+    color: #ff8c5a;
+}
+
+[data-theme="dark"] .post-content code {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .post-content pre {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .post-content pre code {
+    background-color: transparent;
+    border: none;
+}
+
+[data-theme="dark"] .post-content blockquote {
+    border-left-color: var(--accent-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-content table {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-content table th,
+[data-theme="dark"] .post-content table td {
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .post-content h1,
+[data-theme="dark"] .post-content h2,
+[data-theme="dark"] .post-content h3,
+[data-theme="dark"] .post-content h4,
+[data-theme="dark"] .post-content h5,
+[data-theme="dark"] .post-content h6 {
+    color: var(--text-color);
 }
 
 [data-theme="dark"] .tag {
