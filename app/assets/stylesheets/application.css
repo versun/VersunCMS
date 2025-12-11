@@ -590,6 +590,21 @@ h2 {
     color: var(--text-color);
 }
 
+/* 确保所有文本元素在暗黑模式下都是亮色（继承body的颜色） */
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] div,
+[data-theme="dark"] li,
+[data-theme="dark"] td,
+[data-theme="dark"] th,
+[data-theme="dark"] label,
+[data-theme="dark"] strong,
+[data-theme="dark"] em,
+[data-theme="dark"] b,
+[data-theme="dark"] i {
+    color: inherit;
+}
+
 /* Dark Mode - Navbar Search */
 [data-theme="dark"] .search-input {
     background-color: #2a2a2a;
@@ -707,8 +722,16 @@ h2 {
 }
 
 [data-theme="dark"] .article h1,
+[data-theme="dark"] h1,
 [data-theme="dark"] h2 {
     color: var(--accent-color);
+}
+
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+    color: var(--text-color);
 }
 
 /* Dark Mode - Article Content */
@@ -800,6 +823,12 @@ h2 {
 [data-theme="dark"] .pagination .current {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
+    color: white;
+}
+
+[data-theme="dark"] .pagination .disabled {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
 }
 
 [data-theme="dark"] .article-list.timeline::before {
@@ -815,8 +844,32 @@ h2 {
     color: var(--accent-color);
 }
 
-[data-theme="dark"] footer small {
+[data-theme="dark"] footer {
+    color: var(--text-secondary);
+}
+
+/* 覆盖footer内的内联样式和所有文本元素 */
+[data-theme="dark"] footer small,
+[data-theme="dark"] footer p,
+[data-theme="dark"] footer span,
+[data-theme="dark"] footer div {
     color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .sidebar-header h1 {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .sidebar-header h1 a {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .sidebar-header h1 a:hover {
+    color: var(--accent-color);
+}
+
+[data-theme="dark"] .sidebar-header .site-description {
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .theme-toggle-btn {
