@@ -92,45 +92,46 @@
           </a>
         <% end %>
       <% end %>
-      <span class="share-container" style="position: relative; display: inline-block;">
-      <button class="share-button" onclick="toggleShareMenu(event)" title="Share Article" style="background: none; border: none; cursor: pointer; padding: 4px; color: grey; border-radius: 4px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
-      <span>| share</span>  
-      <i class="fas fa-share-alt" style="font-size: 14px;"></i>
+      <span>|</span>
+  <% end %>
+    <span class="share-container" data-controller="share" data-share-url-value="<%= article_full_url %>" style="position: relative; display: inline-block;">
+      <button class="share-button" data-action="click->share#toggle" title="Share Article" style="background: none; border: none; cursor: pointer; padding: 4px; color: grey; border-radius: 4px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
+        <span>share</span>
+        <i class="fas fa-share-alt" style="font-size: 14px;"></i>
       </button>
-      <div id="share-menu-<%= @article.id %>" class="share-menu" style="display: none;">
-        <a href="#" onclick="copyArticleLink(event, '<%= article_full_url %>')" class="share-menu-item">
+      <div id="share-menu-<%= @article.id %>" class="share-menu" data-share-target="menu" style="display: none;">
+        <a href="#" data-action="click->share#copy" class="share-menu-item">
           <i class="fas fa-link"></i> Copy Link
         </a>
-        <a href="https://twitter.com/intent/tweet?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://twitter.com/intent/tweet?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-square-x-twitter"></i> Twitter
         </a>
-        <a href="https://mastodon.social/share?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://mastodon.social/share?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-mastodon"></i> Mastodon
         </a>
-        <a href="https://bsky.app/intent/compose?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://bsky.app/intent/compose?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-square-bluesky"></i> Bluesky
         </a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-facebook"></i> Facebook
         </a>
-        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-linkedin"></i> LinkedIn
         </a>
-        <a href="https://www.reddit.com/submit?url=<%= URI.encode_www_form_component(article_full_url) %>&title=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://www.reddit.com/submit?url=<%= URI.encode_www_form_component(article_full_url) %>&title=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-reddit"></i> Reddit
         </a>
-        <a href="https://wa.me/?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://wa.me/?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-whatsapp"></i> WhatsApp
         </a>
-        <a href="https://t.me/share/url?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="https://t.me/share/url?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item" data-action="click->share#close">
           <i class="fab fa-telegram"></i> Telegram
         </a>
-        <a href="mailto:?subject=<%= URI.encode_www_form_component(@article.title) %>&body=<%= URI.encode_www_form_component("#{@article.title}\n\n#{article_full_url}") %>" class="share-menu-item" onclick="closeShareMenu(event)">
+        <a href="mailto:?subject=<%= URI.encode_www_form_component(@article.title) %>&body=<%= URI.encode_www_form_component("#{@article.title}\n\n#{article_full_url}") %>" class="share-menu-item" data-action="click->share#close">
           <i class="fas fa-envelope"></i> Email
         </a>
       </div>
     </span>
-      <% end %>
   </small>
   <div class="article-content">
     <% if @article.html? %>
@@ -197,136 +198,6 @@
         form.reset();
       }
     }
-  }
-
-  function toggleShareMenu(event) {
-    event.stopPropagation();
-    
-    // 通过事件目标找到对应的分享容器和菜单
-    const button = event.currentTarget || event.target.closest('.share-button');
-    const shareContainer = button.closest('.share-container');
-    const menu = shareContainer.querySelector('.share-menu');
-    
-    if (!menu) return;
-    
-    const isVisible = menu.style.display === 'block';
-    
-    // 关闭所有其他分享菜单
-    document.querySelectorAll('.share-menu').forEach(m => {
-      if (m !== menu) {
-        m.style.display = 'none';
-      }
-    });
-    
-    menu.style.display = isVisible ? 'none' : 'block';
-    
-    // 如果菜单显示，添加点击外部关闭的监听器
-    if (!isVisible) {
-      setTimeout(() => {
-        document.addEventListener('click', closeShareMenuOnOutsideClick);
-      }, 0);
-    } else {
-      // 如果菜单隐藏，移除监听器
-      document.removeEventListener('click', closeShareMenuOnOutsideClick);
-    }
-  }
-
-  function closeShareMenu(event) {
-    let menu;
-    
-    if (event) {
-      // 通过事件目标找到对应的菜单
-      const menuItem = event.currentTarget || event.target.closest('.share-menu-item');
-      if (menuItem) {
-        const shareContainer = menuItem.closest('.share-container');
-        menu = shareContainer ? shareContainer.querySelector('.share-menu') : null;
-      }
-    }
-    
-    // 如果没有找到菜单，关闭所有菜单
-    if (!menu) {
-      document.querySelectorAll('.share-menu').forEach(m => {
-        m.style.display = 'none';
-      });
-    } else {
-      menu.style.display = 'none';
-    }
-    
-    document.removeEventListener('click', closeShareMenuOnOutsideClick);
-  }
-
-  function closeShareMenuOnOutsideClick(event) {
-    const shareContainer = event.target.closest('.share-container');
-    if (!shareContainer) {
-      // 关闭所有分享菜单
-      document.querySelectorAll('.share-menu').forEach(m => {
-        m.style.display = 'none';
-      });
-      document.removeEventListener('click', closeShareMenuOnOutsideClick);
-    }
-  }
-
-  function copyArticleLink(event, url) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // 使用 Clipboard API
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(() => {
-        showCopySuccess(event.target);
-      }).catch(err => {
-        console.error('复制失败:', err);
-        fallbackCopyTextToClipboard(url, event.target);
-      });
-    } else {
-      fallbackCopyTextToClipboard(url, event.target);
-    }
-    
-    // 关闭菜单 - 通过事件目标找到对应的菜单
-    const menuItem = event.target.closest('.share-menu-item');
-    if (menuItem) {
-      const shareContainer = menuItem.closest('.share-container');
-      const menu = shareContainer ? shareContainer.querySelector('.share-menu') : null;
-      if (menu) {
-        menu.style.display = 'none';
-      }
-    }
-    document.removeEventListener('click', closeShareMenuOnOutsideClick);
-  }
-
-  function fallbackCopyTextToClipboard(text, target) {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";
-    textArea.style.left = "-999999px";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        showCopySuccess(target);
-      } else {
-        alert('复制失败，请手动复制: ' + text);
-      }
-    } catch (err) {
-      console.error('Fallback: 复制失败', err);
-      alert('复制失败，请手动复制: ' + text);
-    }
-    
-    document.body.removeChild(textArea);
-  }
-
-  function showCopySuccess(target) {
-    const originalText = target.innerHTML;
-    target.innerHTML = '<i class="fas fa-check"></i> 已复制';
-    target.style.color = '#4caf50';
-    
-    setTimeout(() => {
-      target.innerHTML = originalText;
-      target.style.color = '';
-    }, 2000);
   }
 </script>
 <% end %>
