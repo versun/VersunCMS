@@ -155,7 +155,8 @@
                   </div>
                 </td>
                 <td class="col-title">
-                  <%= link_to post.title.presence || post.slug, edit_admin_article_path(post), class: "title-link" %>
+                  <% display_title = post.title.presence || (post.plain_text_content.present? ? truncate(post.plain_text_content, length: 20) : post.slug) %>
+                  <%= link_to display_title, edit_admin_article_path(post), class: "title-link" %>
                 </td>
                 <td class="col-status">
                   <span class="status-badge status-<%= post.status %>">
