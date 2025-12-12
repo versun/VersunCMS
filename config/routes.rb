@@ -107,6 +107,11 @@ Rails.application.routes.draw do
   # Static files public access
   get "/static/*filename", to: "static_files#show", as: :static_file, format: false
 
+  # API endpoints
+  namespace :api do
+    get "twitter/oembed", to: "twitter#oembed"
+  end
+
   # Health check and feeds
   get "up" => "rails/health#show", as: :rails_health_check
   get "/rss" => redirect("/feed")

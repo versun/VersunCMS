@@ -34,11 +34,7 @@
             <% else %>
               <%= link_to article_path(article), class: "post-content-link" do %>
                 <div class="post-content">
-                  <% if article.html? %>
-                    <%= raw article.rendered_content %>
-                  <% else %>
-                    <%= article.rendered_content %>
-                  <% end %>
+                  <%= render_article_content_with_social_cards(article) %>
                 </div>
               <% end %>
             <% end %>
