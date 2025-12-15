@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_09_100761) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_15_051058) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -120,6 +120,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_09_100761) do
     t.string "comment_fetch_schedule"
     t.datetime "created_at", null: false
     t.boolean "enabled", default: false, null: false
+    t.integer "max_characters"
     t.string "platform", null: false
     t.string "server_url"
     t.text "settings"

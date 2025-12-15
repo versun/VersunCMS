@@ -46,6 +46,27 @@ class Crosspost < ApplicationRecord
     enabled == true
   end
 
+  # 获取平台默认的最大字符数
+  def default_max_characters
+    case platform
+    when "mastodon"
+      500
+    when "twitter"
+      250
+    when "bluesky"
+      300
+    when "internet_archive"
+      nil # Internet Archive 不需要字符限制
+    else
+      300
+    end
+  end
+
+  # 获取有效的最大字符数（如果未设置则使用默认值）
+  def effective_max_characters
+    max_characters || default_max_characters
+  end
+
   private
 
   def comment_fetch_settings_changed?
