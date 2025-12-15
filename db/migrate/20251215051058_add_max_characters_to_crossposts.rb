@@ -1,7 +1,7 @@
 class AddMaxCharactersToCrossposts < ActiveRecord::Migration[8.1]
   def change
     add_column :crossposts, :max_characters, :integer
-    
+
     # 为现有记录设置默认值
     reversible do |dir|
       dir.up do

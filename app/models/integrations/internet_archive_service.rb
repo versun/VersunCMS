@@ -108,7 +108,7 @@ module Integrations
               description: "Internet Archive rate limit exceeded, retrying in #{wait_time} seconds (attempt #{retry_count + 1}/#{max_retries})"
             )
             sleep(wait_time)
-            return save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
+            save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
           else
             Rails.logger.error "Internet Archive rate limit exceeded after #{max_retries} retries"
             ActivityLog.create!(
@@ -130,7 +130,7 @@ module Integrations
           wait_time = calculate_backoff_time(retry_count + 1)
           Rails.logger.warn "Internet Archive error, retrying in #{wait_time} seconds (attempt #{retry_count + 1}/#{max_retries}): #{e.message}"
           sleep(wait_time)
-          return save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
+          save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
         else
           Rails.logger.error "Error saving to Wayback Machine: #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
@@ -143,7 +143,7 @@ module Integrations
     # 计算指数退避时间（秒）
     def calculate_backoff_time(retry_count)
       # 指数退避：2^retry_count 秒，最大 60 秒
-      [2 ** retry_count, 60].min
+      [ 2 ** retry_count, 60 ].min
     end
 
     # 检查 URL 是否已被存档，并返回存档 URL

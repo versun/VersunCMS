@@ -123,7 +123,7 @@ class Export
       return "" unless article.content.present?
       content_html = article.content.to_trix_html
     end
-    
+
     return content_html if content_html.blank?
 
     doc = Nokogiri::HTML.fragment(content_html)
