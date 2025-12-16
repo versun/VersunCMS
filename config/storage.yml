@@ -32,9 +32,11 @@ s3:
 local_mirror_to_s3:
   service: Mirror
   primary: local
-  mirrors: [ s3 ]
+  mirrors:
+    - s3
 
 s3_mirror_to_local:
   service: Mirror
   primary: s3
-  mirrors: [ local ]
+  mirrors:
+    - local
