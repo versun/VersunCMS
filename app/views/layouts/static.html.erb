@@ -15,9 +15,18 @@
     <link rel="apple-touch-icon" href="/static/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed.xml">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <%# Speed up third-party stylesheet fetch (avoid blocking render) %>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    </noscript>
 
     <%# Use Rails asset helpers for correct paths %>
+    <%# Preload critical CSS to reduce render-blocking time %>
+    <link rel="preload" as="style" href="<%= asset_path('lexxy.css') %>" fetchpriority="high">
+    <link rel="preload" as="style" href="<%= asset_path('application.css') %>" fetchpriority="high">
     <%= stylesheet_link_tag "lexxy" %>
     <%= stylesheet_link_tag "application" %>
 
