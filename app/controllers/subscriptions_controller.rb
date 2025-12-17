@@ -3,6 +3,11 @@ class SubscriptionsController < ApplicationController
   # Skip CSRF protection for subscriptions from static pages
   skip_forgery_protection only: [ :create ]
 
+  def index
+    @subscriber = Subscriber.new
+    render :index
+  end
+
   def create
     email = params.dig(:subscription, :email) || params[:email]
 

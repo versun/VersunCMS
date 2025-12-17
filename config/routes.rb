@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   resource :setup, only: [ :show, :create ], controller: "setup"
 
   # Newsletter subscriptions
-  resources :subscriptions, only: [ :create ]
+  resources :subscriptions, only: [ :index, :create ]
   get "/confirm", to: "subscriptions#confirm", as: :confirm_subscription
   get "/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe
 
