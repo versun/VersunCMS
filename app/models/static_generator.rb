@@ -8,18 +8,19 @@ class StaticGenerator
   PER_PAGE = 20
 
   GITHUB_OUTPUT_DIR = Rails.root.join("tmp", "static_output")
+  PUBLIC_DIR = Rails.root.join("public")
 
   def output_dir
     @output_dir ||= begin
       settings = Setting.first_or_create
       case settings.static_generation_destination
       when 'local'
-        settings.local_generation_path.present? ? Pathname.new(settings.local_generation_path) : Rails.root.join("public")
+        settings.local_generation_path.present? ? Pathname.new(settings.local_generation_path) : PUBLIC_DIR
       when 'github'
         # GitHub mode: always generate to tmp directory to avoid polluting public/
         GITHUB_OUTPUT_DIR
       else
-        Rails.root.join("public")
+        PUBLIC_DIR
       end
     end
   end
@@ -78,6 +79,7 @@ class StaticGenerator
 
     # Clean old generated files before generating new ones
     clean_generated_files
+    ensure_assets_available!
 
     export_all_images
     generate_index_pages
@@ -287,6 +289,9 @@ class StaticGenerator
       "uploads"
     ]
 
+    # If output is NOT public/, we need to manage assets inside output_dir too
+    dirs_to_clean << "assets" unless output_dir.to_s == PUBLIC_DIR.to_s
+
     # Add article route prefix directory if configured
     dirs_to_clean << @article_route_prefix if @article_route_prefix.present?
 
@@ -339,6 +344,19 @@ class StaticGenerator
   end
 
   private
+
+  def ensure_assets_available!
+    return if output_dir.to_s == PUBLIC_DIR.to_s
+
+    source_assets_dir = PUBLIC_DIR.join("assets")
+    return unless Dir.exist?(source_assets_dir)
+
+    dest_assets_dir = output_dir.join("assets")
+    FileUtils.rm_rf(dest_assets_dir) if Dir.exist?(dest_assets_dir)
+    FileUtils.mkdir_p(output_dir)
+    FileUtils.cp_r(source_assets_dir, dest_assets_dir)
+    Rails.logger.info "[StaticGenerator] Copied assets to #{dest_assets_dir}"
+  end
 
   def render_static_partial(partial, assigns = {})
     # Disable template annotations for cleaner output
