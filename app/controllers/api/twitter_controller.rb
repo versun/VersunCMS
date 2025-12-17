@@ -6,6 +6,15 @@ module Api
     # 允许未认证访问（因为推文是公开内容）
     allow_unauthenticated_access
 
+    # Allow cross-origin requests from static pages
+    skip_forgery_protection only: [ :oembed, :options ]
+    before_action :set_cors_headers
+
+    # Handle CORS preflight requests
+    def options
+      head :ok
+    end
+
     def oembed
       tweet_url = params[:url]
 
@@ -25,6 +34,15 @@ module Api
     end
 
     private
+
+    def set_cors_headers
+      # Allow static sites (e.g. GitHub Pages) to call this API.
+      # If you want to lock this down later, replace '*' with your static site origin.
+      headers["Access-Control-Allow-Origin"] = "*"
+      headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+      headers["Access-Control-Allow-Headers"] = "Content-Type, Accept"
+      headers["Access-Control-Max-Age"] = "86400" # 24 hours
+    end
 
     def fetch_twitter_oembed_content(tweet_url)
       return nil if tweet_url.blank?

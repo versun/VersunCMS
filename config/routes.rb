@@ -116,6 +116,7 @@ Rails.application.routes.draw do
   # API endpoints
   namespace :api do
     get "twitter/oembed", to: "twitter#oembed"
+    match "twitter/oembed", to: "twitter#options", via: :options
   end
 
   # Health check and feeds
