@@ -1,5 +1,7 @@
 class SubscriptionsController < ApplicationController
   include CacheableSettings
+  # Skip CSRF protection for subscriptions from static pages
+  skip_forgery_protection only: [ :create ]
 
   def create
     email = params.dig(:subscription, :email) || params[:email]
@@ -41,6 +43,13 @@ class SubscriptionsController < ApplicationController
 
       NewsletterConfirmationJob.perform_later(@subscriber.id)
 
+      ActivityLog.create!(
+        action: "created",
+        target: "subscription",
+        level: :info,
+        description: "创建订阅: #{email}"
+      )
+
       respond_to do |format|
         format.html do
           flash[:notice] = "订阅成功！请检查您的邮箱并点击确认链接。"
@@ -49,6 +58,12 @@ class SubscriptionsController < ApplicationController
         format.json { render json: { success: true, message: "订阅成功！请检查您的邮箱并点击确认链接。" } }
       end
     else
+      ActivityLog.create!(
+        action: "failed",
+        target: "subscription",
+        level: :error,
+        description: "创建订阅失败: #{email} - #{@subscriber.errors.full_messages.join(', ')}"
+      )
       respond_to do |format|
         format.html do
           flash[:alert] = @subscriber.errors.full_messages.join(", ")
@@ -69,6 +84,12 @@ class SubscriptionsController < ApplicationController
         @message = "您的邮箱已经确认过了。"
       else
         @subscriber.confirm!
+        ActivityLog.create!(
+          action: "confirmed",
+          target: "subscription",
+          level: :info,
+          description: "确认订阅: #{@subscriber.email}"
+        )
         @success = true
         @message = "订阅确认成功！"
       end
@@ -82,7 +103,14 @@ class SubscriptionsController < ApplicationController
     @success = false
 
     if @subscriber
+      email = @subscriber.email
       @subscriber.unsubscribe!
+      ActivityLog.create!(
+        action: "unsubscribed",
+        target: "subscription",
+        level: :info,
+        description: "取消订阅: #{email}"
+      )
       @success = true
     end
 

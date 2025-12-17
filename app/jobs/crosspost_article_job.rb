@@ -42,5 +42,33 @@ class CrosspostArticleJob < ApplicationJob
     social_media_posts.each do |platform, url|
       article.social_media_posts.find_or_initialize_by(platform: platform).update!(url: url)
     end
+
+    # Log successful crosspost
+    if social_media_posts.any?
+      ActivityLog.create!(
+        action: "completed",
+        target: "crosspost",
+        level: :info,
+        description: "跨平台发布成功: #{article.title} (#{social_media_posts.keys.join(', ')})"
+      )
+    end
+
+    # Schedule static page regeneration after successful crosspost (2 min delay)
+    # Only if auto-regenerate is enabled for crosspost updates
+    if social_media_posts.any? && Setting.first_or_create.auto_regenerate_enabled?("crosspost_update")
+      GenerateStaticFilesJob.schedule_debounced(
+        type: "article",
+        id: article_id,
+        delay: 2.minutes
+      )
+    end
+  rescue => e
+    ActivityLog.create!(
+      action: "failed",
+      target: "crosspost",
+      level: :error,
+      description: "跨平台发布失败: #{article.title} (#{platform}) - #{e.message}"
+    )
+    raise
   end
 end

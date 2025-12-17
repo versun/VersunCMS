@@ -59,17 +59,36 @@ class Admin::SubscribersController < Admin::BaseController
     end
 
     if success_count > 0
+      ActivityLog.create!(
+        action: error_count > 0 ? "warning" : "created",
+        target: "subscriber",
+        level: error_count > 0 ? :warn : :info,
+        description: "批量创建订阅者: 成功#{success_count}个#{error_count > 0 ? ", 失败#{error_count}个" : ''}"
+      )
       notice = "成功添加 #{success_count} 个订阅者。"
       notice += " #{error_count} 个失败。" if error_count > 0
       redirect_to admin_subscribers_path, notice: notice
     else
+      ActivityLog.create!(
+        action: "failed",
+        target: "subscriber",
+        level: :error,
+        description: "批量创建订阅者失败: #{errors.join('; ')}"
+      )
       redirect_to admin_subscribers_path, alert: "添加失败: #{errors.join('; ')}"
     end
   end
 
   def destroy
     @subscriber = Subscriber.find(params[:id])
+    email = @subscriber.email
     @subscriber.destroy
+    ActivityLog.create!(
+      action: "deleted",
+      target: "subscriber",
+      level: :info,
+      description: "删除订阅者: #{email}"
+    )
     redirect_to admin_subscribers_path, notice: "订阅者已删除。"
   end
 end

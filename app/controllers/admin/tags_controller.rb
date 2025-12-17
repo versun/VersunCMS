@@ -13,8 +13,20 @@ class Admin::TagsController < Admin::BaseController
     @tag = Tag.new(tag_params)
 
     if @tag.save
+      ActivityLog.create!(
+        action: "created",
+        target: "tag",
+        level: :info,
+        description: "创建标签: #{@tag.name}"
+      )
       redirect_to admin_tags_path, notice: "Tag was successfully created."
     else
+      ActivityLog.create!(
+        action: "failed",
+        target: "tag",
+        level: :error,
+        description: "创建标签失败: #{@tag.errors.full_messages.join(', ')}"
+      )
       render :new
     end
   end
@@ -24,19 +36,38 @@ class Admin::TagsController < Admin::BaseController
 
   def update
     if @tag.update(tag_params)
+      ActivityLog.create!(
+        action: "updated",
+        target: "tag",
+        level: :info,
+        description: "更新标签: #{@tag.name}"
+      )
       redirect_to admin_tags_path, notice: "Tag was successfully updated."
     else
+      ActivityLog.create!(
+        action: "failed",
+        target: "tag",
+        level: :error,
+        description: "更新标签失败: #{@tag.name} - #{@tag.errors.full_messages.join(', ')}"
+      )
       render :edit
     end
   end
 
   def destroy
+    tag_name = @tag.name
     # Remove tag from all associated articles before deleting
     @tag.articles.each do |article|
       article.tags.delete(@tag)
     end
 
     @tag.destroy
+    ActivityLog.create!(
+      action: "deleted",
+      target: "tag",
+      level: :info,
+      description: "删除标签: #{tag_name}"
+    )
     redirect_to admin_tags_path, status: :see_other, notice: "Tag was successfully deleted."
   end
 
