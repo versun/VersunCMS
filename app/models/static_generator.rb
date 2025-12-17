@@ -36,6 +36,8 @@ class StaticGenerator
   # Shared list of deployable items (used by GithubDeployService)
   DEPLOY_ITEMS = %w[
     index.html
+    search.html
+    search.json
     feed.xml
     sitemap.xml
     robots.txt
@@ -83,6 +85,7 @@ class StaticGenerator
 
     export_all_images
     generate_index_pages
+    generate_search_files
     generate_all_articles
     generate_all_pages
     generate_tags_index
@@ -92,6 +95,13 @@ class StaticGenerator
     copy_user_static_files
 
     Rails.logger.info "[StaticGenerator] Static generation complete!"
+  end
+
+  # Generate static search page + index JSON (for fully static hosting)
+  def generate_search_files
+    generate_search_index
+    generate_search_page
+    Rails.logger.info "[StaticGenerator] Generated search files"
   end
 
   # Copy user uploaded static files from storage/static to public/static
@@ -278,6 +288,8 @@ class StaticGenerator
 
     files_to_clean = [
       "index.html",
+      "search.html",
+      "search.json",
       "feed.xml",
       "sitemap.xml"
     ]
@@ -344,6 +356,34 @@ class StaticGenerator
   end
 
   private
+
+  def generate_search_index
+    articles = Article.published.includes(:rich_text_content, :tags).order(created_at: :desc)
+
+    items = articles.map do |article|
+      url = if @article_route_prefix.present?
+        "/#{@article_route_prefix}/#{article.slug}.html"
+      else
+        "/#{article.slug}.html"
+      end
+
+      {
+        title: article.title.to_s,
+        url: url,
+        description: article.description.to_s,
+        tags: article.tags.map(&:name),
+        created_at: article.created_at&.iso8601,
+        content: article.plain_text_content.to_s.squish[0, 1500]
+      }
+    end
+
+    write_file("search.json", JSON.pretty_generate(items))
+  end
+
+  def generate_search_page
+    html = render_static_partial("search/static", {})
+    write_file("search.html", html)
+  end
 
   def ensure_assets_available!
     return if output_dir.to_s == PUBLIC_DIR.to_s
