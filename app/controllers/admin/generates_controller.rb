@@ -11,11 +11,18 @@ class Admin::GeneratesController < Admin::BaseController
     params_hash[:auto_regenerate_triggers] ||= []
     
     if @setting.update(params_hash)
+      description = "更新生成设置"
+      if params_hash[:static_generation_destination] == 'local' && params_hash[:local_generation_path].present?
+        description += " - 本地路径: #{params_hash[:local_generation_path]}"
+      elsif params_hash[:static_generation_destination] == 'github'
+        description += " - GitHub 仓库: #{params_hash[:github_repo_url]}"
+      end
+      
       ActivityLog.create!(
         action: "updated",
         target: "setting",
         level: :info,
-        description: "更新生成设置"
+        description: description
       )
       redirect_to edit_admin_generate_path, notice: "生成设置已成功更新。"
     else
@@ -32,6 +39,6 @@ class Admin::GeneratesController < Admin::BaseController
   private
 
   def generate_params
-    params.require(:setting).permit(:static_generation_destination, :github_repo_url, :github_token, :github_backup_branch, auto_regenerate_triggers: [])
+    params.require(:setting).permit(:static_generation_destination, :local_generation_path, :github_repo_url, :github_token, :github_backup_branch, auto_regenerate_triggers: [])
   end
 end

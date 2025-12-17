@@ -70,6 +70,7 @@ Rails.application.routes.draw do
 
     # System management
     resource :setting, only: [ :edit, :update ]
+    resource :generate, only: [ :edit, :update ], controller: "generates"
     resources :static_files, only: [ :index, :create, :destroy ]
     resources :redirects
 
@@ -96,12 +97,18 @@ Rails.application.routes.draw do
     # Activity logs
     resources :activities, only: [ :index ]
 
+    # Static site generation
+    post "generate_static", to: "static_generation#create", as: :generate_static
+
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end
 
   # Public comment submission
   resources :comments, only: [ :create ]
+  
+  # Handle CORS preflight requests for comments
+  match '/comments', to: 'comments#options', via: :options
 
   # Static files public access
   get "/static/*filename", to: "static_files#show", as: :static_file, format: false

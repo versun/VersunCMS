@@ -255,7 +255,32 @@ footer {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0.75rem;
+}
+
+.footer-content {
+    width: 100%;
+}
+
+.footer-text {
+    color: #666;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    display: block;
+}
+
+.footer-text p {
+    margin: 0;
+    color: inherit;
+}
+
+.footer-text a {
+    color: #666;
+    text-decoration: underline;
+}
+
+.footer-text a:hover {
+    color: #c04000;
 }
 
 /* Article List - Timeline Style */
@@ -1167,12 +1192,21 @@ h2 {
     color: var(--text-secondary);
 }
 
-/* 覆盖footer内的内联样式和所有文本元素 */
-[data-theme="dark"] footer small,
-[data-theme="dark"] footer p,
-[data-theme="dark"] footer span,
-[data-theme="dark"] footer div {
+/* Footer text styles for dark theme */
+[data-theme="dark"] .footer-text {
     color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .footer-text p {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .footer-text a {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .footer-text a:hover {
+    color: var(--accent-color);
 }
 
 [data-theme="dark"] .sidebar-header h1 {

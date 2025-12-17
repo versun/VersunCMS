@@ -4,6 +4,9 @@ class StaticFile < ApplicationRecord
   validates :file, presence: true
   validate :file_must_be_attached
 
+  after_create :trigger_static_generation_on_create, if: :should_regenerate_on_create?
+  after_update :trigger_static_generation_on_update, if: :should_regenerate_on_update?
+
   # 获取文件的公开访问路径
   def public_path
     "/static/#{filename}" if filename.present?
@@ -37,5 +40,28 @@ class StaticFile < ApplicationRecord
 
   def file_must_be_attached
     errors.add(:file, "must be attached") unless file.attached?
+  end
+
+  def should_regenerate_on_create?
+    # Only regenerate if auto-regenerate is enabled for static file uploads
+    Setting.first_or_create.auto_regenerate_enabled?("static_file_upload")
+  end
+
+  def should_regenerate_on_update?
+    # Only regenerate if auto-regenerate is enabled for static file uploads
+    return false unless Setting.first_or_create.auto_regenerate_enabled?("static_file_upload")
+    
+    # Trigger when filename changes (file was replaced)
+    saved_change_to_filename?
+  end
+
+  def trigger_static_generation_on_create
+    # Regenerate all static files when a new static file is uploaded
+    GenerateStaticFilesJob.perform_later(type: "all")
+  end
+
+  def trigger_static_generation_on_update
+    # Regenerate all static files when a static file is updated
+    GenerateStaticFilesJob.perform_later(type: "all")
   end
 end

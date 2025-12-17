@@ -1,0 +1,40 @@
+<%# Search form - points to dynamic Rails route %>
+<div class="navbar-search">
+  <form action="/" method="get" class="search-form">
+    <input type="text" name="q" placeholder="搜索..." class="search-input">
+  </form>
+</div>
+
+<ul>
+    <li>
+      <a href="/">Home</a>
+    </li>
+    <li>
+      <a href="/tags/">Tags</a>
+    </li>
+  <% if navbar_items.present? %>
+    <% navbar_items.each do |page| %>
+      <li>
+        <% if page.redirect? %>
+          <a href="<%= page.redirect_url %>" target="_blank" rel="noopener"><%= page.title %></a>
+        <% else %>
+          <a href="/pages/<%= page.slug %>.html"><%= page.title %></a>
+        <% end %>
+      </li>
+    <% end %>     
+  <% end %>
+</ul>
+
+<%# Newsletter subscription form - posts to dynamic Rails route %>
+<% newsletter_setting = NewsletterSetting.instance rescue nil %>
+<% if newsletter_setting&.enabled? && newsletter_setting&.native? %>
+  <div class="newsletter-subscription">
+    <form action="/subscriptions" method="post" class="newsletter-form">
+      <div class="newsletter-form-group">
+        <input type="email" name="subscription[email]" placeholder="通过邮件订阅更新" required class="newsletter-email-input">
+        <input type="submit" value="订阅" class="newsletter-submit-btn">
+      </div>
+    </form>
+  </div>
+<% end %>
+

@@ -1,0 +1,134 @@
+<% content_for :title, "Generate Settings|Admin" %>
+
+<div class="admin-generates">
+  <div class="page-header">
+    <h1>生成设置</h1>
+    <div class="header-actions">
+      <%= button_to "立即生成静态文件", admin_generate_static_path, method: :post, class: "btn btn-success", data: { turbo_confirm: "确定要生成静态文件吗？这可能需要一些时间。" } %>
+    </div>
+  </div>
+
+  <%= form_with(model: @setting, url: admin_generate_path) do |form| %>
+    <% if @setting.errors.any? %>
+      <div class="form-errors">
+        <strong><%= pluralize(@setting.errors.count, "error") %> prohibited this setting from being saved:</strong>
+        <ul>
+          <% @setting.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-section">
+      <h3>生成目标</h3>
+      <p class="form-description">选择生成后的静态文件保存位置</p>
+
+      <div class="field">
+        <%= form.label :static_generation_destination, "保存目标" %>
+        <%= form.select :static_generation_destination,
+                     options_for_select([
+                       ["本地 (Local)", "local"],
+                       ["GitHub 仓库 (GitHub Repo)", "github"]
+                     ], @setting.static_generation_destination || "local"),
+                     {},
+                     { id: "setting_static_generation_destination" } %>
+        <small>选择生成后的文件保存到本地 public 目录还是推送到 GitHub 仓库</small>
+      </div>
+    </div>
+
+    <div class="form-section" id="local-settings" style="<%= 'display: none;' unless @setting.static_generation_destination == 'local' %>">
+      <h3>本地配置</h3>
+      <p class="form-description">配置本地静态文件生成路径</p>
+
+      <div class="field">
+        <%= form.label :local_generation_path, "生成路径" %>
+        <%= form.text_field :local_generation_path, placeholder: Rails.root.join("public").to_s %>
+        <small>静态文件生成的绝对路径（默认：<%= Rails.root.join("public").to_s %>）。必须使用绝对路径，不能使用相对路径。</small>
+      </div>
+    </div>
+
+    <div class="form-section" id="github-settings" style="<%= 'display: none;' unless @setting.static_generation_destination == 'github' %>">
+      <h3>GitHub 配置</h3>
+      <p class="form-description">配置 GitHub 仓库信息以推送生成的静态文件</p>
+
+      <div class="field">
+        <%= form.label :github_repo_url, "GitHub 仓库 URL" %>
+        <%= form.text_field :github_repo_url, placeholder: "https://github.com/username/repo.git" %>
+        <small>GitHub 仓库的完整 URL（例如：https://github.com/username/repo.git）</small>
+      </div>
+
+      <div class="field">
+        <%= form.label :github_token, "GitHub Token" %>
+        <%= form.text_field :github_token, type: "password", placeholder: "ghp_xxxxxxxxxxxx" %>
+        <small>GitHub Personal Access Token（需要 repo 权限）</small>
+      </div>
+
+      <div class="field">
+        <%= form.label :github_backup_branch, "分支名称" %>
+        <%= form.text_field :github_backup_branch, placeholder: "main" %>
+        <small>推送文件的目标分支（默认：main）</small>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>自动更新选项</h3>
+      <p class="form-description">选择在哪些情况下自动触发静态文件生成</p>
+
+      <div class="field">
+        <div class="checkbox-group">
+          <% 
+            triggers = @setting.auto_regenerate_triggers || []
+            trigger_options = [
+              ['article_update', '文章更新'],
+              ['comment_update', '评论更新'],
+              ['crosspost_update', 'Crosspost 更新'],
+              ['page_update', 'Page 更新'],
+              ['static_file_upload', '上传了新的 Static Files'],
+              ['tag_update', 'Tag 更新']
+            ]
+          %>
+          <% trigger_options.each do |value, label| %>
+            <div class="checkbox-item">
+              <%= check_box_tag "setting[auto_regenerate_triggers][]", value, triggers.include?(value), id: "setting_auto_regenerate_triggers_#{value}" %>
+              <%= label_tag "setting_auto_regenerate_triggers_#{value}", label %>
+            </div>
+          <% end %>
+        </div>
+        <small>勾选后，当相应内容更新时会自动触发静态文件生成</small>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit '保存设置', class: "btn btn-primary" %>
+      <%= link_to '取消', admin_root_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  document.addEventListener('turbo:load', function() {
+    const destinationSelect = document.querySelector('#setting_static_generation_destination');
+    const localSettings = document.getElementById('local-settings');
+    const githubSettings = document.getElementById('github-settings');
+    
+    if (destinationSelect) {
+      // 初始化显示状态
+      function updateSettingsVisibility() {
+        if (destinationSelect.value === 'local') {
+          if (localSettings) localSettings.style.display = 'block';
+          if (githubSettings) githubSettings.style.display = 'none';
+        } else if (destinationSelect.value === 'github') {
+          if (localSettings) localSettings.style.display = 'none';
+          if (githubSettings) githubSettings.style.display = 'block';
+        }
+      }
+      
+      // 页面加载时立即更新一次
+      updateSettingsVisibility();
+      
+      // 监听选择变化
+      destinationSelect.addEventListener('change', updateSettingsVisibility);
+    }
+  });
+</script>

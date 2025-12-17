@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_15_051058) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_17_071429) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -190,22 +190,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_15_051058) do
 
   create_table "settings", force: :cascade do |t|
     t.string "author"
+    t.json "auto_regenerate_triggers", default: []
     t.datetime "created_at", null: false
     t.text "custom_css"
     t.text "description"
     t.text "giscus"
-    t.string "git_user_email"
-    t.string "git_user_name"
     t.string "github_backup_branch", default: "main"
     t.boolean "github_backup_enabled", default: false
-    t.string "github_backup_schedule"
     t.string "github_repo_url"
     t.string "github_token"
     t.text "head_code"
-    t.datetime "last_backup_at"
+    t.string "local_generation_path"
     t.boolean "setup_completed", default: false
     t.json "social_links"
     t.json "static_files", default: {}
+    t.string "static_generation_destination", default: "local"
     t.string "time_zone", default: "UTC"
     t.string "title"
     t.text "tool_code"

@@ -5,28 +5,24 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
 
     <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
     <link rel="icon" href="/static/icon.png" type="image/png">
     <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
     <link rel="icon" href="/static/favicon.ico" sizes="32x32">
     <link rel="icon" href="/static/favicon.png" sizes="32x32">
     <link rel="apple-touch-icon" href="/static/favicon.png">
-    <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed">
+    <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed.xml">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <%# Includes all stylesheet files in app/views/stylesheets %>
+    <%# Use Rails asset helpers for correct paths %>
     <%= stylesheet_link_tag "lexxy" %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application" %>
 
     <%= javascript_importmap_tags %>
+
     <%= raw site_settings[:head_code] %>
 
     <style>
@@ -68,34 +64,41 @@
 
       <main class="main-content">
         <div class="limiter">
-          <% if notice %>
-            <div class="flash flash-notice" style="padding: 1rem; margin-bottom: 1rem; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724;">
-              <%= notice %>
-            </div>
-          <% end %>
-          <% if alert %>
-            <div class="flash flash-alert" style="padding: 1rem; margin-bottom: 1rem; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;">
-              <%= alert %>
-            </div>
-          <% end %>
-          <%= yield %>
+          <div id="flash-messages"></div>
+          <%= @content_for_layout || yield %>
         </div>
       </main>
       
       <script>
-        // Auto-dismiss flash messages after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-          const flashMessages = document.querySelectorAll('.flash');
-          flashMessages.forEach(function(flash) {
-            setTimeout(function() {
-              flash.style.transition = 'opacity 0.5s';
-              flash.style.opacity = '0';
+        // Display flash messages from URL parameters (for static pages)
+        (function() {
+          const urlParams = new URLSearchParams(window.location.search);
+          const commentSubmitted = urlParams.get('comment_submitted');
+          
+          if (commentSubmitted === '1') {
+            const flashContainer = document.getElementById('flash-messages');
+            if (flashContainer) {
+              const message = document.createElement('div');
+              message.className = 'flash flash-notice';
+              message.style.cssText = 'padding: 1rem; margin-bottom: 1rem; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724;';
+              message.textContent = '评论已提交，等待审核后显示。';
+              flashContainer.appendChild(message);
+              
+              // Auto-dismiss after 5 seconds
               setTimeout(function() {
-                flash.remove();
-              }, 500);
-            }, 5000);
-          });
-        });
+                message.style.transition = 'opacity 0.5s';
+                message.style.opacity = '0';
+                setTimeout(function() {
+                  message.remove();
+                }, 500);
+              }, 5000);
+              
+              // Remove parameter from URL without reload
+              const newUrl = window.location.pathname + (window.location.search.replace(/[?&]comment_submitted=1/, '').replace(/^&/, '?') || '');
+              window.history.replaceState({}, '', newUrl);
+            }
+          }
+        })();
       </script>
     </div>
 
@@ -103,3 +106,4 @@
     <%= yield :javascript %>
   </body>
 </html>
+

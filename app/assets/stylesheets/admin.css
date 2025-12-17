@@ -178,6 +178,19 @@
     padding: 0.5rem 0;
 }
 
+/* Generate Static button styling */
+.sidebar-footer form {
+    margin: 0;
+}
+
+.generate-static-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+
 .logout-link {
     color: #dc2626;
 }
