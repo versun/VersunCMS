@@ -61,7 +61,7 @@ class Comment < ApplicationRecord
   def should_regenerate_static?
     # Only regenerate if auto-regenerate is enabled for comment updates
     return false unless Setting.first_or_create.auto_regenerate_enabled?("comment_update")
-    
+
     # Trigger when:
     # 1. Comment is created and already approved
     # 2. Comment status changes (approved, rejected, etc.)

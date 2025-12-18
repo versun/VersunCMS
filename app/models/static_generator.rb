@@ -14,9 +14,9 @@ class StaticGenerator
     @output_dir ||= begin
       settings = Setting.first_or_create
       case settings.static_generation_destination
-      when 'local'
+      when "local"
         settings.local_generation_path.present? ? Pathname.new(settings.local_generation_path) : PUBLIC_DIR
-      when 'github'
+      when "github"
         # GitHub mode: always generate to tmp directory to avoid polluting public/
         GITHUB_OUTPUT_DIR
       else
@@ -57,14 +57,14 @@ class StaticGenerator
   def self.deployable_items
     items = DEPLOY_ITEMS.dup
     article_prefix = Rails.application.config.x.article_route_prefix
-    
+
     if article_prefix.present?
       items << article_prefix
     else
       # Add individual article HTML files
       Article.published.pluck(:slug).each { |slug| items << "#{slug}.html" }
     end
-    
+
     items
   end
 
@@ -110,7 +110,7 @@ class StaticGenerator
 
     static_dest = output_dir.join("static")
     FileUtils.mkdir_p(static_dest)
-    
+
     files = Dir.glob("#{static_source_dir}/*")
     return if files.empty?
 
@@ -336,7 +336,7 @@ class StaticGenerator
           Rails.logger.debug "[StaticGenerator] Deleted: #{article.slug}.html"
         end
       end
-      
+
       # Also clean any orphaned HTML files that don't match any article
       # (in case articles were deleted but files remain)
       existing_slugs = Article.pluck(:slug).to_set
@@ -346,7 +346,7 @@ class StaticGenerator
         next if filename.match?(/^(400|404|422|500|index)$/)
         # Skip if it matches an existing article (already cleaned above)
         next if existing_slugs.include?(filename)
-        
+
         File.delete(html_file)
         Rails.logger.debug "[StaticGenerator] Deleted orphaned: #{File.basename(html_file)}"
       end
@@ -554,4 +554,3 @@ class StaticRenderController < ActionController::Base
     {}
   end
 end
-

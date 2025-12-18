@@ -8,22 +8,22 @@ if Rails.env.development? && ENV.fetch("FILTER_PUMA_PARSE_ERRORS", "true") == "t
   # Wrap STDERR to filter out HTTP parse errors
   # Puma writes these errors directly to STDERR, not through the logger
   original_stderr = $stderr
-  
+
   filtered_stderr = Class.new do
     def initialize(original)
       @original = original
       @buffer = ""
     end
-    
+
     def write(message)
       # Buffer multi-line messages
       @buffer << message.to_s
-      
+
       # Check if the buffer contains HTTP parse errors
       if @buffer.include?("\n")
         lines = @buffer.split("\n", -1)
         @buffer = lines.pop || "" # Keep incomplete line in buffer
-        
+
         lines.each do |line|
           # Filter out HTTP parse errors - they're usually from port scanners
           # or clients sending non-HTTP data to the HTTP port
@@ -36,21 +36,19 @@ if Rails.env.development? && ENV.fetch("FILTER_PUMA_PARSE_ERRORS", "true") == "t
         end
       end
     end
-    
+
     def flush
       @original.flush
     end
-    
+
     def method_missing(method, *args, &block)
       @original.send(method, *args, &block)
     end
-    
+
     def respond_to_missing?(method, include_private = false)
       @original.respond_to?(method, include_private) || super
     end
   end.new(original_stderr)
-  
+
   $stderr = filtered_stderr
 end
-
-

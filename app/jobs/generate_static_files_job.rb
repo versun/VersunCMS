@@ -64,14 +64,14 @@ class GenerateStaticFilesJob < ApplicationJob
   rescue => e
     Rails.logger.error "[GenerateStaticFilesJob] Error: #{e.message}"
     Rails.logger.error e.backtrace.first(10).join("\n")
-    
+
     ActivityLog.create!(
       action: "failed",
       target: "static_generation",
       level: :error,
       description: "静态文件生成失败: #{e.message}"
     )
-    
+
     raise e
   end
 
@@ -79,7 +79,7 @@ class GenerateStaticFilesJob < ApplicationJob
 
   def execute_generation(type, id)
     start_time = Time.current
-    
+
     ActivityLog.create!(
       action: "initiated",
       target: "static_generation",
@@ -113,7 +113,7 @@ class GenerateStaticFilesJob < ApplicationJob
     end
 
     elapsed = (Time.current - start_time).round(2)
-    
+
     ActivityLog.create!(
       action: "completed",
       target: "static_generation",
@@ -157,4 +157,3 @@ class GenerateStaticFilesJob < ApplicationJob
     end
   end
 end
-

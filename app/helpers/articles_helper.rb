@@ -53,38 +53,38 @@ module ArticlesHelper
     html += '<div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">'
     html += '<i class="fas fa-quote-left" style="color: #6c757d; font-size: 1.25rem; margin-top: 0.125rem; opacity: 0.6;"></i>'
     html += '<div style="flex: 1;">'
-    
+
     if article.source_author.present?
       html += "<span style=\"font-weight: 600; color: #495057; font-size: 0.95rem;\">#{ERB::Util.html_escape(article.source_author)}</span>"
     end
-    
-    html += '</div></div>'
-    
+
+    html += "</div></div>"
+
     if article.source_content.present?
       html += '<blockquote style="margin: 0 0 0.75rem 0; padding: 0; color: #495057; font-style: italic; line-height: 1.6; font-size: 0.95rem;">'
       formatted_content = simple_format(article.source_content, {}, wrapper_tag: "span")
       html += formatted_content.to_s
-      html += '</blockquote>'
+      html += "</blockquote>"
     end
-    
+
     html += '<div style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.85rem;">'
-    
+
     if article.source_url.present?
       html += "<a href=\"#{ERB::Util.html_escape(article.source_url)}\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color: #007bff; text-decoration: none; display: inline-flex; align-items: center; gap: 0.375rem; transition: color 0.2s;\">"
       html += '<i class="fas fa-external-link-alt" style="font-size: 0.75rem;"></i>'
-      html += '<span>Original</span>'
-      html += '</a>'
+      html += "<span>Original</span>"
+      html += "</a>"
     end
-    
+
     if article.source_archive_url.present?
       html += '<span style="color: #dee2e6;">|</span>'
       html += "<a href=\"#{ERB::Util.html_escape(article.source_archive_url)}\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color: #6c757d; text-decoration: none; display: inline-flex; align-items: center; gap: 0.375rem; transition: color 0.2s;\">"
       html += '<i class="fas fa-archive" style="font-size: 0.75rem;"></i>'
-      html += '<span>Archive</span>'
-      html += '</a>'
+      html += "<span>Archive</span>"
+      html += "</a>"
     end
-    
-    html += '</div></aside>'
+
+    html += "</div></aside>"
     html.html_safe
   end
 

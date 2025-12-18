@@ -1,7 +1,7 @@
 class CommentsController < ApplicationController
   # Allow unauthenticated users to submit comments
   allow_unauthenticated_access only: [ :create, :options ]
-  
+
   # Skip CSRF protection for comments from static pages
   skip_forgery_protection only: [ :create, :options ]
   before_action :set_commentable, only: [ :create ]
@@ -27,7 +27,7 @@ class CommentsController < ApplicationController
         )
         format.html do
           # For AJAX requests, return success response
-          if request.xhr? || request.headers['X-Requested-With'] == 'XMLHttpRequest'
+          if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
             render json: { success: true, message: "评论已提交，等待审核后显示。" }, status: :created
           else
             # For regular form submissions, redirect
@@ -44,7 +44,7 @@ class CommentsController < ApplicationController
           description: "提交评论失败: #{@comment.errors.full_messages.join(', ')}"
         )
         format.html do
-          if request.xhr? || request.headers['X-Requested-With'] == 'XMLHttpRequest'
+          if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
             render json: { success: false, message: "提交评论时出错：#{@comment.errors.full_messages.join('，')}" }, status: :unprocessable_entity
           else
             redirect_path = determine_redirect_path
@@ -57,7 +57,7 @@ class CommentsController < ApplicationController
   rescue ActiveRecord::RecordNotFound => e
     respond_to do |format|
       format.html do
-        if request.xhr? || request.headers['X-Requested-With'] == 'XMLHttpRequest'
+        if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
           render json: { success: false, message: "文章或页面未找到。" }, status: :not_found
         else
           redirect_to root_path, alert: "Article or page not found."
@@ -76,7 +76,7 @@ class CommentsController < ApplicationController
     )
     respond_to do |format|
       format.html do
-        if request.xhr? || request.headers['X-Requested-With'] == 'XMLHttpRequest'
+        if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
           render json: { success: false, message: "提交评论时发生错误，请稍后重试。" }, status: :internal_server_error
         else
           redirect_to root_path, alert: "An error occurred while submitting your comment. Please try again later."
@@ -106,10 +106,10 @@ class CommentsController < ApplicationController
 
   def set_cors_headers
     # Set CORS headers to allow cross-origin requests from static pages
-    headers['Access-Control-Allow-Origin'] = '*'
-    headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-    headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Requested-With'
-    headers['Access-Control-Max-Age'] = '86400' # 24 hours
+    headers["Access-Control-Allow-Origin"] = "*"
+    headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
+    headers["Access-Control-Max-Age"] = "86400" # 24 hours
   end
 
   def determine_redirect_path
@@ -127,7 +127,7 @@ class CommentsController < ApplicationController
         return redirect_uri.to_s
       end
     end
-    
+
     # Fallback to dynamic Rails routes
     @commentable.is_a?(Page) ? page_path(@commentable) : article_path(@commentable)
   end
