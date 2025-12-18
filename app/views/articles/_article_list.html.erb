@@ -32,6 +32,7 @@
                 </div>
               <% end %>
             <% else %>
+              <%= render 'articles/source_reference', article: article %>
               <%= link_to article_path(article), class: "post-content-link" do %>
                 <div class="post-content">
                   <%= render_article_content_with_social_cards(article) %>

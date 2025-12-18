@@ -55,7 +55,7 @@ module Integrations
       return unless @settings&.enabled?
 
       max_length = @settings.effective_max_characters || 300
-      content = build_content(article.slug, article.title, article.plain_text_content, article.description, max_length: max_length)
+      content = build_content(article: article, max_length: max_length)
 
       # 获取文章第一张图片
       first_image = article.first_image_attachment

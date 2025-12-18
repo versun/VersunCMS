@@ -42,7 +42,7 @@ module Integrations
 
       client = create_client
       max_length = @settings.effective_max_characters || 250
-      tweet = build_content(article.slug, article.title, article.plain_text_content, article.description, max_length: max_length, count_non_ascii_double: true)
+      tweet = build_content(article: article, max_length: max_length, count_non_ascii_double: true)
 
       begin
         user = client.get("users/me")

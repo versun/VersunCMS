@@ -11,11 +11,22 @@ xml.rss version: "2.0",
       xml.item do
         xml.title article.title.presence || article.created_at.strftime("%Y-%m-%d")
         xml.description article.description
-        if article.html?
-          xml.tag!("content:encoded") { xml.cdata! (article.html_content || "") }
+        
+        # Build content with source reference if available
+        content_html = if article.html?
+          article.html_content || ""
         else
-          xml.tag!("content:encoded") { xml.cdata! article.content.to_s }
+          article.content.to_s
         end
+        
+        # Prepend source reference if article has source
+        if article.has_source?
+          source_ref_html = render(partial: 'articles/source_reference', locals: { article: article }, formats: [:html])
+          content_html = source_ref_html.to_s + content_html.to_s
+        end
+        
+        xml.tag!("content:encoded") { xml.cdata! content_html }
+        
         xml.pubDate article.created_at.rfc822
         xml.link [ site_settings[:url], Rails.application.config.x.article_route_prefix, article.slug ].reject(&:blank?).join("/")
         xml.guid [ site_settings[:url], Rails.application.config.x.article_route_prefix, article.slug ].reject(&:blank?).join("/")
