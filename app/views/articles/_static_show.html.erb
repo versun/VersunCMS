@@ -101,36 +101,37 @@
         <a href="#" onclick="copyToClipboard('<%= article_full_url %>'); return false;" class="share-menu-item">
           <i class="fas fa-link"></i> Copy Link
         </a>
-        <a href="https://twitter.com/intent/tweet?url=<%= CGI.escape(article_full_url) %>&text=<%= CGI.escape(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://twitter.com/intent/tweet?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-square-x-twitter"></i> Twitter
         </a>
-        <a href="https://mastodon.social/share?text=<%= CGI.escape("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://mastodon.social/share?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-mastodon"></i> Mastodon
         </a>
-        <a href="https://bsky.app/intent/compose?text=<%= CGI.escape("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://bsky.app/intent/compose?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-square-bluesky"></i> Bluesky
         </a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= CGI.escape(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://www.facebook.com/sharer/sharer.php?u=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-facebook"></i> Facebook
         </a>
-        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= CGI.escape(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= URI.encode_www_form_component(article_full_url) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-linkedin"></i> LinkedIn
         </a>
-        <a href="https://www.reddit.com/submit?url=<%= CGI.escape(article_full_url) %>&title=<%= CGI.escape(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://www.reddit.com/submit?url=<%= URI.encode_www_form_component(article_full_url) %>&title=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-reddit"></i> Reddit
         </a>
-        <a href="https://wa.me/?text=<%= CGI.escape("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://wa.me/?text=<%= URI.encode_www_form_component("#{@article.title} #{article_full_url}") %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-whatsapp"></i> WhatsApp
         </a>
-        <a href="https://t.me/share/url?url=<%= CGI.escape(article_full_url) %>&text=<%= CGI.escape(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
+        <a href="https://t.me/share/url?url=<%= URI.encode_www_form_component(article_full_url) %>&text=<%= URI.encode_www_form_component(@article.title) %>" target="_blank" rel="noopener noreferrer" class="share-menu-item">
           <i class="fab fa-telegram"></i> Telegram
         </a>
-        <a href="mailto:?subject=<%= CGI.escape(@article.title) %>&body=<%= CGI.escape("#{@article.title}\n\n#{article_full_url}") %>" class="share-menu-item">
+        <a href="mailto:?subject=<%= URI.encode_www_form_component(@article.title) %>&body=<%= URI.encode_www_form_component("#{@article.title}\n\n#{article_full_url}") %>" class="share-menu-item">
           <i class="fas fa-envelope"></i> Email
         </a>
       </div>
     </span>
   </small>
+  <%= render 'articles/source_reference' %>
   <div class="article-content">
     <%= render_article_content_with_social_cards(@article) %>
   </div>

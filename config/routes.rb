@@ -99,6 +99,9 @@ Rails.application.routes.draw do
     # Activity logs
     resources :activities, only: [ :index ]
 
+    # Source reference API
+    post "sources/archive", to: "sources#archive"
+
     # Static site generation
     post "generate_static", to: "static_generation#create", as: :generate_static
 

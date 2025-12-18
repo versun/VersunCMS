@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_17_071429) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_18_010525) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -79,6 +79,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_17_071429) do
     t.string "meta_title"
     t.datetime "scheduled_at"
     t.string "slug"
+    t.string "source_archive_url"
+    t.string "source_author"
+    t.text "source_content"
+    t.string "source_url"
     t.integer "status", default: 0, null: false
     t.string "title"
     t.datetime "updated_at", null: false

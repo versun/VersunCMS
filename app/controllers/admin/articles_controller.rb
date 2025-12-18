@@ -528,6 +528,6 @@ class Admin::ArticlesController < Admin::BaseController
   end
 
   def article_params
-    params.require(:article).permit(:title, :content, :excerpt, :slug, :status, :published_at, :meta_title, :meta_description, :meta_image, :tags, :description, :created_at, :scheduled_at, :send_newsletter, :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, :crosspost_internet_archive, :tag_list, :comment, :content_type, :html_content, social_media_posts_attributes: [ :id, :platform, :url, :_destroy ])
+    params.require(:article).permit(:title, :content, :excerpt, :slug, :status, :published_at, :meta_title, :meta_description, :meta_image, :tags, :description, :created_at, :scheduled_at, :send_newsletter, :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, :crosspost_internet_archive, :tag_list, :comment, :content_type, :html_content, :source_url, :source_archive_url, :source_author, :source_content, social_media_posts_attributes: [ :id, :platform, :url, :_destroy ])
   end
 end

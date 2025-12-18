@@ -68,6 +68,42 @@
         </div>
       </div>
 
+      <div class="form-section compact" data-controller="source-reference">
+        <h3>Source Reference</h3>
+        <small style="color: #666; display: block; margin-bottom: 1rem;">引用外部内容的来源信息（如推文、新闻、文章等）</small>
+        
+        <div class="field">
+          <%= form.label :source_url, "Source URL" %>
+          <div style="display: flex; gap: 0.5rem;">
+            <%= form.text_field :source_url, placeholder: "https://...", style: "flex: 1;", data: { source_reference_target: "url" } %>
+            <button type="button" class="btn btn-secondary" data-action="click->source-reference#archiveUrl" data-source-reference-target="archiveBtn" style="white-space: nowrap;">
+              <i class="fas fa-archive"></i> Archive
+            </button>
+          </div>
+          <small style="color: #666;">引用内容的原始链接（点击 Archive 按钮保存到 Internet Archive）</small>
+        </div>
+
+        <div class="field">
+          <%= form.label :source_archive_url, "Archive URL" %>
+          <%= form.text_field :source_archive_url, placeholder: "https://web.archive.org/...", style: "width: 100%;", data: { source_reference_target: "archiveUrl" }, readonly: true %>
+          <small style="color: #666;">Internet Archive 存档链接（保存时自动生成，也可手动点击 Archive 按钮）</small>
+        </div>
+
+        <div class="field">
+          <%= form.label :source_author, "Author / Source" %>
+          <%= form.text_field :source_author, placeholder: "发言人或来源名称", data: { source_reference_target: "author" } %>
+          <small style="color: #666;">引用内容的作者或来源名称</small>
+        </div>
+
+        <div class="field">
+          <%= form.label :source_content, "Quote Content" %>
+          <%= form.text_area :source_content, rows: 3, placeholder: "引用的主要内容...", data: { source_reference_target: "content" } %>
+          <small style="color: #666;">引用内容的摘要或主要文字</small>
+        </div>
+
+        <div data-source-reference-target="status" style="display: none; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;"></div>
+      </div>
+
       <div class="form-section compact">
         <h3>SEO Meta Tags</h3>
         
