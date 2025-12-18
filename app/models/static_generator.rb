@@ -51,6 +51,9 @@ class StaticGenerator
     404.html
     422.html
     500.html
+    _redirects
+    .htaccess
+    redirects.js
   ].freeze
 
   # Get all items to deploy including dynamic article files
@@ -92,6 +95,7 @@ class StaticGenerator
     generate_all_tag_pages
     generate_feed
     generate_sitemap
+    generate_redirects
     copy_user_static_files
 
     Rails.logger.info "[StaticGenerator] Static generation complete!"
@@ -255,6 +259,245 @@ class StaticGenerator
     Rails.logger.info "[StaticGenerator] Generated sitemap"
   end
 
+  # Generate redirects for static site
+  def generate_redirects
+    redirects = Redirect.enabled
+    
+    if redirects.empty?
+      # Still generate empty redirects.js to avoid 404 errors
+      generate_js_redirect_handler(redirects)
+      Rails.logger.info "[StaticGenerator] No redirects configured, generated empty redirects.js"
+      return
+    end
+
+    Rails.logger.info "[StaticGenerator] Generating redirects for #{redirects.count} redirect rules..."
+
+    # Collect all paths that need redirect pages
+    redirect_paths = collect_redirect_paths(redirects)
+
+    # Generate HTML redirect pages for each path
+    redirect_paths.each do |path_info|
+      generate_redirect_page(path_info[:path], path_info[:target_url], path_info[:permanent])
+    end
+
+    # Generate _redirects file for Netlify (supports regex)
+    generate_netlify_redirects_file(redirects)
+
+    # Generate .htaccess file for Apache (supports regex)
+    generate_htaccess_file(redirects)
+
+    # Generate JavaScript redirect handler for client-side redirects (fallback)
+    generate_js_redirect_handler(redirects)
+
+    Rails.logger.info "[StaticGenerator] Generated #{redirect_paths.count} redirect pages and redirect config files"
+  end
+
+  # Collect all paths that match redirect rules
+  def collect_redirect_paths(redirects)
+    paths = []
+    
+    # Get all existing paths from the site
+    all_paths = collect_all_site_paths
+    
+    redirects.each do |redirect|
+      # Check existing paths
+      all_paths.each do |path|
+        if redirect.match?(path)
+          target_url = redirect.apply_to(path)
+          if target_url
+            paths << {
+              path: path,
+              target_url: target_url,
+              permanent: redirect.permanent?,
+              redirect: redirect
+            }
+          end
+        end
+      end
+      
+      # For redirects that match patterns (like /old/* -> /new/*), 
+      # we can't generate all possible matches, but we can generate
+      # a JavaScript-based redirect handler for unmatched paths
+    end
+    
+    paths.uniq { |p| p[:path] }
+  end
+
+  # Collect all paths from the site (articles, pages, tags, etc.)
+  def collect_all_site_paths
+    paths = ["/"]
+    
+    # Article paths
+    Article.published.find_each do |article|
+      if @article_route_prefix.present?
+        paths << "/#{@article_route_prefix}/#{article.slug}"
+      else
+        paths << "/#{article.slug}"
+      end
+    end
+    
+    # Page paths
+    Page.published.find_each do |page|
+      paths << "/pages/#{page.slug}" unless page.redirect?
+    end
+    
+    # Tag paths
+    Tag.find_each do |tag|
+      paths << "/tags/#{tag.slug}"
+    end
+    
+    # Pagination paths
+    article_count = Article.published.count
+    total_pages = (article_count.to_f / PER_PAGE).ceil
+    (2..total_pages).each { |p| paths << "/page/#{p}" }
+    
+    paths
+  end
+
+  # Generate a single HTML redirect page
+  def generate_redirect_page(path, target_url, permanent)
+    # Normalize path: remove leading slash, add .html if needed
+    file_path = path.sub(/^\//, "")
+    
+    # Handle root path
+    if file_path.empty? || file_path == "/"
+      file_path = "index.html"
+    else
+      file_path += ".html" unless file_path.end_with?(".html")
+    end
+    
+    # Ensure target_url is absolute or starts with /
+    target_url = "/#{target_url}" if target_url.present? && !target_url.start_with?("http", "/")
+    
+    html = render_static_partial("redirects/static_redirect", {
+      target_url: target_url,
+      permanent: permanent
+    })
+    
+    write_file(file_path, html)
+  end
+
+  # Generate _redirects file for Netlify
+  def generate_netlify_redirects_file(redirects)
+    lines = []
+    
+    redirects.each do |redirect|
+      begin
+        regex = Regexp.new(redirect.regex)
+        target = redirect.replacement
+        status = redirect.permanent? ? 301 : 302
+        
+        # Netlify supports regex patterns with /* syntax or full regex
+        # Convert our regex to Netlify format
+        pattern = redirect.regex
+        
+        # Remove leading ^ and trailing $ if present (Netlify doesn't need them)
+        pattern = pattern.gsub(/^\^/, "").gsub(/\$$/, "")
+        
+        # Netlify uses /* for wildcards, but also supports regex
+        # For simple patterns, use Netlify syntax; for complex, use regex
+        if pattern.match?(/^[^$*+?()\[\]{}|\\]+$/)
+          # Simple literal pattern - use as-is
+          lines << "#{pattern} #{target} #{status}"
+        else
+          # Complex regex - Netlify supports regex with /regex/ syntax
+          lines << "/#{pattern}/ #{target} #{status}"
+        end
+      rescue => e
+        Rails.logger.warn "[StaticGenerator] Skipping invalid redirect regex for Netlify: #{redirect.regex} - #{e.message}"
+      end
+    end
+    
+    if lines.any?
+      content = lines.join("\n")
+      write_file("_redirects", content)
+      Rails.logger.info "[StaticGenerator] Generated _redirects file with #{lines.count} rules"
+    end
+  end
+
+  # Generate .htaccess file for Apache
+  def generate_htaccess_file(redirects)
+    lines = [
+      "# Auto-generated redirect rules",
+      "# Enable RewriteEngine",
+      "RewriteEngine On",
+      ""
+    ]
+    
+    redirects.each do |redirect|
+      begin
+        regex = Regexp.new(redirect.regex)
+        target = redirect.replacement
+        status = redirect.permanent? ? "R=301" : "R=302"
+        
+        # Convert regex to Apache RewriteRule pattern
+        # Apache uses PCRE regex, so we can use the regex directly with some escaping
+        pattern = redirect.regex
+        # Escape backslashes and dollar signs for Apache
+        pattern = pattern.gsub(/\\/, "\\\\").gsub(/\$/, "\\$")
+        
+        lines << "RewriteRule ^#{pattern}$ #{target} [L,#{status}]"
+      rescue => e
+        Rails.logger.warn "[StaticGenerator] Skipping invalid redirect regex: #{redirect.regex} - #{e.message}"
+      end
+    end
+    
+    if lines.length > 4
+      content = lines.join("\n")
+      write_file(".htaccess", content)
+      Rails.logger.info "[StaticGenerator] Generated .htaccess file with #{lines.length - 4} rules"
+    end
+  end
+
+  # Generate JavaScript redirect handler as fallback for platforms that don't support server-side redirects
+  def generate_js_redirect_handler(redirects)
+    if redirects.empty?
+      # Generate empty file to avoid 404 errors
+      write_file("redirects.js", "// No redirects configured\n")
+      return
+    end
+    
+    js_rules = redirects.map do |redirect|
+      {
+        regex: redirect.regex,
+        replacement: redirect.replacement,
+        permanent: redirect.permanent?
+      }
+    end
+    
+    js_content = <<~JAVASCRIPT
+      // Auto-generated redirect rules for static sites
+      (function() {
+        var redirects = #{js_rules.to_json};
+        var currentPath = window.location.pathname;
+        
+        for (var i = 0; i < redirects.length; i++) {
+          var rule = redirects[i];
+          try {
+            var regex = new RegExp(rule.regex);
+            if (regex.test(currentPath)) {
+              var target = currentPath.replace(regex, rule.replacement);
+              if (target !== currentPath) {
+                // Use replace for permanent redirects, assign for temporary
+                if (rule.permanent) {
+                  window.location.replace(target);
+                } else {
+                  window.location.href = target;
+                }
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn('Invalid redirect regex:', rule.regex, e);
+          }
+        }
+      })();
+    JAVASCRIPT
+    
+    write_file("redirects.js", js_content)
+    Rails.logger.info "[StaticGenerator] Generated redirects.js fallback handler"
+  end
+
   # Regenerate affected pages when content changes
   def regenerate_for_article(article)
     # Export images from this article first
@@ -291,7 +534,10 @@ class StaticGenerator
       "search.html",
       "search.json",
       "feed.xml",
-      "sitemap.xml"
+      "sitemap.xml",
+      "_redirects",
+      ".htaccess",
+      "redirects.js"
     ]
 
     dirs_to_clean = [

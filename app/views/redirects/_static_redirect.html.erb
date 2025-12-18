@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0; url=<%= target_url %>">
+  <link rel="canonical" href="<%= target_url %>">
+  <title>Redirecting...</title>
+  <script>
+    // Immediate redirect via JavaScript (faster than meta refresh)
+    window.location.replace("<%= target_url %>");
+  </script>
+</head>
+<body>
+  <div style="text-align: center; padding: 50px; font-family: system-ui, -apple-system, sans-serif;">
+    <p>正在重定向...</p>
+    <p>如果页面没有自动跳转，请<a href="<%= target_url %>">点击这里</a>。</p>
+  </div>
+</body>
+</html>

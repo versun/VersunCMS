@@ -114,6 +114,8 @@
 
     <%= raw site_settings[:tool_code] %>
     <%= yield :javascript %>
+    <%# Client-side redirect fallback for static sites %>
+    <script src="/redirects.js" defer></script>
   </body>
 </html>
 
