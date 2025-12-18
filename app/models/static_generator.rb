@@ -108,19 +108,64 @@ class StaticGenerator
     Rails.logger.info "[StaticGenerator] Generated search files"
   end
 
-  # Copy user uploaded static files from storage/static to public/static
+  # Copy user uploaded static files from storage/static and StaticFile records to public/static
   def copy_user_static_files
-    return unless Dir.exist?(static_source_dir)
-
     static_dest = output_dir.join("static")
+    
+    # Clean existing static directory before copying to ensure consistency
+    if Dir.exist?(static_dest)
+      FileUtils.rm_rf(static_dest)
+    end
     FileUtils.mkdir_p(static_dest)
 
-    files = Dir.glob("#{static_source_dir}/*")
-    return if files.empty?
+    file_count = 0
 
-    FileUtils.cp_r(files, static_dest)
-    file_count = Dir.glob("#{static_source_dir}/**/*").count { |f| File.file?(f) }
-    Rails.logger.info "[StaticGenerator] Copied #{file_count} user static files"
+    # First, copy files from StaticFile records (Active Storage)
+    StaticFile.find_each do |static_file|
+      next unless static_file.file.attached?
+
+      begin
+        dest_file = static_dest.join(static_file.filename)
+        FileUtils.mkdir_p(File.dirname(dest_file))
+        
+        # Download blob and save to file
+        static_file.file.blob.open do |temp_file|
+          FileUtils.cp(temp_file.path, dest_file)
+        end
+        
+        file_count += 1
+        Rails.logger.debug "[StaticGenerator] Copied StaticFile: #{static_file.filename}"
+      rescue => e
+        Rails.logger.error "[StaticGenerator] Failed to copy StaticFile #{static_file.filename}: #{e.message}"
+      end
+    end
+
+    # Then, copy files from storage/static directory (manual uploads)
+    if Dir.exist?(static_source_dir)
+      files = Dir.glob("#{static_source_dir}/**/*", File::FNM_DOTMATCH).select do |f|
+        # Skip directories and hidden files (except .gitkeep if needed)
+        File.file?(f)
+      end
+
+      files.each do |source_file|
+        begin
+          relative_path = Pathname.new(source_file).relative_path_from(Pathname.new(static_source_dir))
+          dest_file = static_dest.join(relative_path)
+          FileUtils.mkdir_p(File.dirname(dest_file))
+          FileUtils.cp(source_file, dest_file)
+          file_count += 1
+          Rails.logger.debug "[StaticGenerator] Copied file from storage/static: #{relative_path}"
+        rescue => e
+          Rails.logger.error "[StaticGenerator] Failed to copy file #{source_file}: #{e.message}"
+        end
+      end
+    end
+    
+    if file_count > 0
+      Rails.logger.info "[StaticGenerator] Copied #{file_count} user static files to static/"
+    else
+      Rails.logger.info "[StaticGenerator] No static files to copy"
+    end
   end
 
   # Export all ActiveStorage images from published content
@@ -544,7 +589,8 @@ class StaticGenerator
       "page",
       "pages",
       "tags",
-      "uploads"
+      "uploads",
+      "static"
     ]
 
     # If output is NOT public/, we need to manage assets inside output_dir too
