@@ -106,7 +106,7 @@ module Integrations
         http.read_timeout = 120  # 增加读取超时，存档可能需要较长时间
 
         request = Net::HTTP::Get.new(save_uri)
-        request["User-Agent"] = "Mozilla/5.0 (compatible; VersunCMS/1.0; +https://versun.me)"
+        request["User-Agent"] = "Mozilla/5.0 (compatible; Rables/1.0; +https://versun.me)"
         request["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
 
         response = http.request(request)
@@ -259,7 +259,7 @@ module Integrations
       http.read_timeout = 15
 
       request = Net::HTTP::Get.new(check_uri)
-      request["User-Agent"] = "Mozilla/5.0 (compatible; VersunCMS/1.0)"
+      request["User-Agent"] = "Mozilla/5.0 (compatible; Rables/1.0)"
       response = http.request(request)
 
       if response.is_a?(Net::HTTPSuccess)

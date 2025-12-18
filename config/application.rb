@@ -9,7 +9,7 @@ Bundler.require(*Rails.groups)
 # Require custom middleware
 require_relative "../app/middleware/redirect_middleware"
 
-module VersunCms
+module Rables
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1

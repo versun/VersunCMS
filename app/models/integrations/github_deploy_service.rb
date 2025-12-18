@@ -77,7 +77,7 @@ module Integrations
       # Configure git user
       Dir.chdir(DEPLOY_DIR) do
         git('config user.email "bot@versun.me"')
-        git('config user.name "VersunCMS Bot"')
+        git('config user.name "Rables Bot"')
       end
     end
 

@@ -83,7 +83,7 @@ class WordpressExport
     setting = Setting.first if Setting.table_exists?
 
     # 基本信息
-    add_text_node(channel, "title", setting&.title || "VersunCMS Site")
+    add_text_node(channel, "title", setting&.title || "Rables Site")
     add_text_node(channel, "link", setting&.url || "http://localhost:3000")
     add_text_node(channel, "description", setting&.description || "")
     add_text_node(channel, "pubDate", Time.current.rfc822)
