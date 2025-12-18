@@ -33,6 +33,7 @@
               </div>
             <% end %>
           <% else %>
+            <%= render 'articles/source_reference', article: article %>
             <% if article_route_prefix.present? %>
               <a href="/<%= article_route_prefix %>/<%= article.slug %>.html" class="post-content-link">
             <% else %>
