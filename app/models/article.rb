@@ -31,7 +31,6 @@ class Article < ApplicationRecord
   after_save :schedule_publication, if: :should_schedule?
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
   after_save :handle_newsletter, if: -> { Setting.table_exists? }
-  after_save :archive_source_url, if: :should_archive_source?
   after_save :trigger_static_generation, if: :should_regenerate_static?
   after_destroy :trigger_static_regeneration_on_destroy
 
@@ -319,14 +318,5 @@ class Article < ApplicationRecord
   def trigger_static_regeneration_on_destroy
     # Regenerate index and related pages when article is destroyed
     GenerateStaticFilesJob.perform_later(type: "index")
-  end
-
-  def should_archive_source?
-    # Archive source URL when it's added/changed and archive_url is empty
-    saved_change_to_source_url? && source_url.present? && source_archive_url.blank?
-  end
-
-  def archive_source_url
-    ArchiveSourceUrlJob.perform_later(id)
   end
 end
