@@ -48,7 +48,7 @@ class Tag < ApplicationRecord
   def should_regenerate_static?
     # Only regenerate if auto-regenerate is enabled for tag updates
     return false unless Setting.first_or_create.auto_regenerate_enabled?("tag_update")
-    
+
     saved_change_to_name?
   end
 

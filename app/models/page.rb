@@ -48,7 +48,7 @@ class Page < ApplicationRecord
   def should_regenerate_static?
     # Only regenerate if auto-regenerate is enabled for page updates
     return false unless Setting.first_or_create.auto_regenerate_enabled?("page_update")
-    
+
     saved_change_to_status? || (publish? && (saved_change_to_title? || @content_changed))
   end
 

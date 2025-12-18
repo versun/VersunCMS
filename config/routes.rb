@@ -111,9 +111,9 @@ Rails.application.routes.draw do
 
   # Public comment submission
   resources :comments, only: [ :create ]
-  
+
   # Handle CORS preflight requests for comments
-  match '/comments', to: 'comments#options', via: :options
+  match "/comments", to: "comments#options", via: :options
 
   # Static files public access
   get "/static/*filename", to: "static_files#show", as: :static_file, format: false

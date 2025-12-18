@@ -295,7 +295,7 @@ class Article < ApplicationRecord
   def should_regenerate_static?
     # Only regenerate if auto-regenerate is enabled for article updates
     return false unless Setting.first_or_create.auto_regenerate_enabled?("article_update")
-    
+
     # Regenerate when status changes to/from published, or when published content changes
     saved_change_to_status? || (publish? && (saved_change_to_title? || saved_change_to_description? || @content_changed))
   end

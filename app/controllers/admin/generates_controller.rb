@@ -5,19 +5,19 @@ class Admin::GeneratesController < Admin::BaseController
 
   def update
     @setting = Setting.first_or_create
-    
+
     params_hash = generate_params
     # Ensure auto_regenerate_triggers is always an array (even if empty)
     params_hash[:auto_regenerate_triggers] ||= []
-    
+
     if @setting.update(params_hash)
       description = "更新生成设置"
-      if params_hash[:static_generation_destination] == 'local' && params_hash[:local_generation_path].present?
+      if params_hash[:static_generation_destination] == "local" && params_hash[:local_generation_path].present?
         description += " - 本地路径: #{params_hash[:local_generation_path]}"
-      elsif params_hash[:static_generation_destination] == 'github'
+      elsif params_hash[:static_generation_destination] == "github"
         description += " - GitHub 仓库: #{params_hash[:github_repo_url]}"
       end
-      
+
       ActivityLog.create!(
         action: "updated",
         target: "setting",

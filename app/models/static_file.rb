@@ -50,7 +50,7 @@ class StaticFile < ApplicationRecord
   def should_regenerate_on_update?
     # Only regenerate if auto-regenerate is enabled for static file uploads
     return false unless Setting.first_or_create.auto_regenerate_enabled?("static_file_upload")
-    
+
     # Trigger when filename changes (file was replaced)
     saved_change_to_filename?
   end

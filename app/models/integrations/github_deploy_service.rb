@@ -125,7 +125,7 @@ module Integrations
         # Push (with force fallback for first push)
         repo_url = build_authenticated_url
         output, status = git("push #{repo_url} #{branch}")
-        
+
         unless status.success?
           if output.include?("rejected") || output.include?("non-fast-forward")
             output, status = git("push --force #{repo_url} #{branch}")
@@ -155,7 +155,7 @@ module Integrations
       cmd = "git #{args} 2>&1"
       Rails.logger.debug "[GithubDeployService] #{mask_token(cmd)}"
       output, status = Open3.capture2e(cmd)
-      [output, status]
+      [ output, status ]
     end
 
     def mask_token(text)

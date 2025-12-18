@@ -96,5 +96,4 @@ class Admin::MigratesController < Admin::BaseController
   ensure
     # 清理临时文件将在job完成后进行
   end
-
 end

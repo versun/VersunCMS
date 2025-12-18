@@ -13,4 +13,3 @@ class Admin::StaticGenerationController < Admin::BaseController
                   notice: "静态文件生成任务已加入队列，请在 Activity 页面查看生成进度。"
   end
 end
-

@@ -8,7 +8,7 @@ class Setting < ApplicationRecord
   attr_accessor :social_links_json
 
   # Validate local_generation_path is absolute path
-  validate :validate_local_generation_path, if: -> { static_generation_destination == 'local' && local_generation_path.present? }
+  validate :validate_local_generation_path, if: -> { static_generation_destination == "local" && local_generation_path.present? }
 
   # Check if initial setup is incomplete
   def self.setup_incomplete?
@@ -24,14 +24,14 @@ class Setting < ApplicationRecord
   private
 
   def set_default_local_generation_path
-    if static_generation_destination == 'local' && local_generation_path.blank?
+    if static_generation_destination == "local" && local_generation_path.blank?
       self.local_generation_path = Rails.root.join("public").to_s
     end
   end
 
   def validate_local_generation_path
     # Check if path is absolute (starts with / on Unix or C:\ on Windows)
-    unless local_generation_path.start_with?('/') || local_generation_path.match?(/^[A-Za-z]:[\\\/]/)
+    unless local_generation_path.start_with?("/") || local_generation_path.match?(/^[A-Za-z]:[\\\/]/)
       errors.add(:local_generation_path, "必须是绝对路径，不能使用相对路径")
     end
   end
@@ -61,14 +61,14 @@ class Setting < ApplicationRecord
       saved_change_to_head_code? ||
       saved_change_to_tool_code? ||
       saved_change_to_giscus?
-    
+
     # If layout fields changed, definitely regenerate
     return true if layout_fields_changed
-    
+
     # If only updated_at changed (and no other tracked fields), it might be footer
     # Check if time_zone or other non-layout fields changed - if not, assume footer changed
     non_layout_fields_changed = saved_change_to_time_zone? || saved_change_to_url? || saved_change_to_author?
-    
+
     # If updated_at changed but no tracked fields changed, assume footer or social_links changed
     saved_change_to_updated_at? && !non_layout_fields_changed
   end
