@@ -744,8 +744,12 @@ class StaticGenerator
     full_path = output_dir.join(relative_path)
     FileUtils.mkdir_p(File.dirname(full_path))
 
-    # Replace ActiveStorage URLs with static paths in HTML content
-    content = replace_active_storage_urls(content) if relative_path.end_with?(".html")
+    # Replace ActiveStorage URLs with static paths in HTML and XML content
+    if relative_path.end_with?(".html")
+      content = replace_active_storage_urls(content)
+    elsif relative_path == "feed.xml"
+      content = replace_active_storage_urls_for_rss(content)
+    end
 
     File.write(full_path, content)
     Rails.logger.debug "[StaticGenerator] Written: #{relative_path}"
@@ -803,7 +807,87 @@ class StaticGenerator
       $1 # Return just the /uploads/xxx part
     end
 
+    # Pattern 3: action-text-attachment url attribute
+    html = html.gsub(/<action-text-attachment([^>]*)url="([^"]+)"/) do |match|
+      attrs = $1
+      original_url = $2
+      new_url = replace_attachment_url(original_url)
+      "<action-text-attachment#{attrs}url=\"#{new_url}\""
+    end
+
+    # Pattern 4: action-text-attachment url attribute (single quotes)
+    html = html.gsub(/<action-text-attachment([^>]*)url='([^']+)'/) do |match|
+      attrs = $1
+      original_url = $2
+      new_url = replace_attachment_url(original_url)
+      "<action-text-attachment#{attrs}url='#{new_url}'"
+    end
+
     html
+  end
+
+  # Replace ActiveStorage URLs in RSS XML with static paths (full URLs)
+  def replace_active_storage_urls_for_rss(xml)
+    return xml if xml.blank?
+
+    site_url = @site_settings[:url].to_s.chomp("/")
+
+    # Pattern 1: /rails/active_storage/blobs/redirect/:signed_id/*filename
+    xml = xml.gsub(%r{(https?://[^/]+)?/rails/active_storage/(blobs|representations)/(redirect/)?([^/"'\s]+)/[^"'\s]+}) do |match|
+      signed_id = $4
+      static_path = replace_blob_url(signed_id, match)
+      # Convert relative path to full URL
+      static_path.start_with?("http") ? static_path : "#{site_url}#{static_path}"
+    end
+
+    # Pattern 2: action-text-attachment url attribute
+    xml = xml.gsub(/<action-text-attachment([^>]*)url="([^"]+)"/) do |match|
+      attrs = $1
+      original_url = $2
+      new_url = replace_attachment_url(original_url)
+      # Convert relative path to full URL
+      new_url = "#{site_url}#{new_url}" if new_url.start_with?("/")
+      "<action-text-attachment#{attrs}url=\"#{new_url}\""
+    end
+
+    # Pattern 3: action-text-attachment url attribute (single quotes)
+    xml = xml.gsub(/<action-text-attachment([^>]*)url='([^']+)'/) do |match|
+      attrs = $1
+      original_url = $2
+      new_url = replace_attachment_url(original_url)
+      # Convert relative path to full URL
+      new_url = "#{site_url}#{new_url}" if new_url.start_with?("/")
+      "<action-text-attachment#{attrs}url='#{new_url}'"
+    end
+
+    # Pattern 4: img src in action-text-attachment
+    xml = xml.gsub(%r{<img([^>]*)src="([^"]+)"}) do |match|
+      attrs = $1
+      original_src = $2
+      new_src = replace_attachment_url(original_src)
+      # Convert relative path to full URL
+      new_src = "#{site_url}#{new_src}" if new_src.start_with?("/")
+      "<img#{attrs}src=\"#{new_src}\""
+    end
+
+    xml
+  end
+
+  # Replace a single attachment URL (from action-text-attachment or img src)
+  def replace_attachment_url(original_url)
+    return original_url if original_url.blank?
+
+    # If it's already a static path, return as is
+    return original_url if original_url.start_with?("/uploads/")
+
+    # If it's an Active Storage URL (full URL or path), try to extract blob and replace
+    match = original_url.match(%r{(?:https?://[^/]+)?/rails/active_storage/(blobs|representations)/(redirect/)?([^/"'\s]+)/})
+    if match
+      signed_id = match[3]
+      replace_blob_url(signed_id, original_url)
+    else
+      original_url
+    end
   end
 
   def replace_blob_url(signed_id, original)
