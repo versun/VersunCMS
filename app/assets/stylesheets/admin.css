@@ -589,6 +589,111 @@ table tbody tr:hover {
     font-size: 13px;
 }
 
+/* Admin Activity Page - extra compact spacing */
+.admin-activity h1 {
+    margin-bottom: 0.5rem;
+}
+
+.admin-activity.admin-container {
+    padding: 1rem;
+}
+
+.admin-activity .form-section {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.admin-activity table {
+    margin: 0.5rem 0 0;
+}
+
+/* Activity table: minimal, dense, no-wrap */
+.admin-activity-table {
+    table-layout: fixed;
+}
+
+.admin-activity-table th,
+.admin-activity-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.admin-activity-table .truncate {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Column widths (information-dense defaults) */
+.admin-activity-table .col-time {
+    width: 170px;
+}
+
+.admin-activity-table .col-level {
+    width: 78px;
+}
+
+.admin-activity-table .col-action {
+    width: 160px;
+}
+
+.admin-activity-table .col-target {
+    width: 220px;
+}
+
+/* Description cell can contain text + action button */
+.admin-activity-table .col-description {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.admin-activity-table .col-description .truncate {
+    flex: 1;
+}
+
+.admin-activity-table .col-description .btn {
+    flex: 0 0 auto;
+}
+
+/* Level indicator: minimal dot + text */
+.admin-activity-table .level {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-light);
+}
+
+.admin-activity-table .level::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #9ca3af;
+}
+
+.admin-activity-table .level-info::before {
+    background: #10b981;
+}
+
+.admin-activity-table .level-warn::before {
+    background: #f59e0b;
+}
+
+.admin-activity-table .level-error::before {
+    background: #ef4444;
+}
+
 /* Column Widths for Compact Tables */
 .col-order {
     width: 50px;
