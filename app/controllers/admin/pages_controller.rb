@@ -22,10 +22,22 @@ class Admin::PagesController < Admin::BaseController
 
     respond_to do |format|
       if @page.save
+        ActivityLog.create!(
+          action: "created",
+          target: "page",
+          level: :info,
+          description: "创建页面: #{@page.title}"
+        )
         refresh_pages
         format.html { redirect_to admin_pages_path, notice: "Page was successfully created." }
         format.json { render :show, status: :created, location: @page }
       else
+        ActivityLog.create!(
+          action: "failed",
+          target: "page",
+          level: :error,
+          description: "创建页面失败: #{@page.errors.full_messages.join(', ')}"
+        )
         format.html { render :new }
         format.json { render json: @page.errors, status: :unprocessable_entity }
       end
@@ -35,10 +47,22 @@ class Admin::PagesController < Admin::BaseController
   def update
     respond_to do |format|
       if @page.update(page_params)
+        ActivityLog.create!(
+          action: "updated",
+          target: "page",
+          level: :info,
+          description: "更新页面: #{@page.title}"
+        )
         refresh_pages
         format.html { redirect_to admin_pages_path, notice: "Page was successfully updated." }
         format.json { render :show, status: :ok, location: @page }
       else
+        ActivityLog.create!(
+          action: "failed",
+          target: "page",
+          level: :error,
+          description: "更新页面失败: #{@page.title} - #{@page.errors.full_messages.join(', ')}"
+        )
         format.html { render :edit }
         format.json { render json: @page.errors, status: :unprocessable_entity }
       end
@@ -46,7 +70,14 @@ class Admin::PagesController < Admin::BaseController
   end
 
   def destroy
+    page_title = @page.title
     @page.destroy!
+    ActivityLog.create!(
+      action: "deleted",
+      target: "page",
+      level: :info,
+      description: "删除页面: #{page_title}"
+    )
     refresh_pages
 
     respond_to do |format|
@@ -57,8 +88,20 @@ class Admin::PagesController < Admin::BaseController
 
   def reorder
     if @page.insert_at(params[:position].to_i)
+      ActivityLog.create!(
+        action: "updated",
+        target: "page",
+        level: :info,
+        description: "调整页面顺序: #{@page.title} -> 位置#{params[:position]}"
+      )
       head :ok
     else
+      ActivityLog.create!(
+        action: "failed",
+        target: "page",
+        level: :error,
+        description: "调整页面顺序失败: #{@page.title}"
+      )
       head :unprocessable_entity
     end
   end

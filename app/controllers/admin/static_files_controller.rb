@@ -22,8 +22,20 @@ class Admin::StaticFilesController < Admin::BaseController
     if existing_file
       # 更新记录
       if existing_file.update(static_file_params)
+        ActivityLog.create!(
+          action: "updated",
+          target: "static_file",
+          level: :info,
+          description: "更新静态文件: #{new_filename}"
+        )
         redirect_to admin_static_files_path, notice: "文件上传成功（已覆盖同名文件）"
       else
+        ActivityLog.create!(
+          action: "failed",
+          target: "static_file",
+          level: :error,
+          description: "更新静态文件失败: #{new_filename} - #{existing_file.errors.full_messages.join(', ')}"
+        )
         @static_files = StaticFile.order(created_at: :desc)
         flash.now[:alert] = "文件上传失败: #{existing_file.errors.full_messages.join(', ')}"
         render :index
@@ -33,8 +45,20 @@ class Admin::StaticFilesController < Admin::BaseController
       @static_file = StaticFile.new(static_file_params.merge(filename: new_filename))
 
       if @static_file.save
+        ActivityLog.create!(
+          action: "created",
+          target: "static_file",
+          level: :info,
+          description: "上传静态文件: #{new_filename}"
+        )
         redirect_to admin_static_files_path, notice: "文件上传成功"
       else
+        ActivityLog.create!(
+          action: "failed",
+          target: "static_file",
+          level: :error,
+          description: "上传静态文件失败: #{new_filename} - #{@static_file.errors.full_messages.join(', ')}"
+        )
         @static_files = StaticFile.order(created_at: :desc)
         flash.now[:alert] = "文件上传失败: #{@static_file.errors.full_messages.join(', ')}"
         render :index
@@ -47,8 +71,20 @@ class Admin::StaticFilesController < Admin::BaseController
     filename = @static_file.filename
 
     if @static_file.destroy
+      ActivityLog.create!(
+        action: "deleted",
+        target: "static_file",
+        level: :info,
+        description: "删除静态文件: #{filename}"
+      )
       redirect_to admin_static_files_path, notice: "文件 #{filename} 已删除"
     else
+      ActivityLog.create!(
+        action: "failed",
+        target: "static_file",
+        level: :error,
+        description: "删除静态文件失败: #{filename}"
+      )
       redirect_to admin_static_files_path, alert: "删除失败"
     end
   end

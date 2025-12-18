@@ -27,9 +27,12 @@ class Article < ApplicationRecord
 
   before_save :handle_time_zone, if: -> { schedule? && scheduled_at_changed? }
   before_save :cleanup_empty_social_media_posts
+  before_save :track_content_changes
   after_save :schedule_publication, if: :should_schedule?
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
   after_save :handle_newsletter, if: -> { Setting.table_exists? }
+  after_save :trigger_static_generation, if: :should_regenerate_static?
+  after_destroy :trigger_static_regeneration_on_destroy
 
   # SQLite原生搜索功能
   scope :search_content, ->(query) {
@@ -105,6 +108,11 @@ class Article < ApplicationRecord
     else
       content.present? ? content.to_plain_text : ""
     end
+  end
+
+  # 检查是否有引用信息
+  def has_source?
+    source_url.present?
   end
 
   # SEO Meta 字段的默认值方法
@@ -282,5 +290,33 @@ class Article < ApplicationRecord
         errors.add(:content, "can't be blank")
       end
     end
+  end
+
+  def should_regenerate_static?
+    # Only regenerate if auto-regenerate is enabled for article updates
+    return false unless Setting.first_or_create.auto_regenerate_enabled?("article_update")
+    
+    # Regenerate when status changes to/from published, or when published content changes
+    saved_change_to_status? || (publish? && (saved_change_to_title? || saved_change_to_description? || @content_changed))
+  end
+
+  def track_content_changes
+    # Track content changes before save
+    if html?
+      # For HTML content type, check the html_content field directly
+      @content_changed = html_content_changed?
+    else
+      # For rich_text, check ActionText body changes
+      @content_changed = content.present? && content.body_changed?
+    end
+  end
+
+  def trigger_static_generation
+    GenerateStaticFilesJob.perform_later(type: "article", id: id)
+  end
+
+  def trigger_static_regeneration_on_destroy
+    # Regenerate index and related pages when article is destroyed
+    GenerateStaticFilesJob.perform_later(type: "index")
   end
 end

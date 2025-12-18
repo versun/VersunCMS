@@ -1,0 +1,35 @@
+<% article ||= @article %>
+<% if article.has_source? %>
+<aside class="source-reference" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; border-left: 4px solid #6c757d; background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%); border-radius: 0 8px 8px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+  <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
+    <i class="fas fa-quote-left" style="color: #6c757d; font-size: 1.25rem; margin-top: 0.125rem; opacity: 0.6;"></i>
+    <div style="flex: 1;">
+      <% if article.source_author.present? %>
+        <span style="font-weight: 600; color: #495057; font-size: 0.95rem;"><%= article.source_author %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <% if article.source_content.present? %>
+    <blockquote style="margin: 0 0 0.75rem 0; padding: 0; color: #495057; font-style: italic; line-height: 1.6; font-size: 0.95rem;">
+      <%= simple_format(article.source_content, {}, wrapper_tag: "span") %>
+    </blockquote>
+  <% end %>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.85rem;">
+    <% if article.source_url.present? %>
+      <a href="<%= article.source_url %>" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: none; display: inline-flex; align-items: center; gap: 0.375rem; transition: color 0.2s;">
+        <i class="fas fa-external-link-alt" style="font-size: 0.75rem;"></i>
+        <small>Original</small>
+      </a>
+    <% end %>
+    <% if article.source_archive_url.present? %>
+      <span style="color: #dee2e6;">|</span>
+      <a href="<%= article.source_archive_url %>" target="_blank" rel="noopener noreferrer" style="color: #6c757d; text-decoration: none; display: inline-flex; align-items: center; gap: 0.375rem; transition: color 0.2s;">
+        <i class="fas fa-archive" style="font-size: 0.75rem;"></i>
+        <small>Archive</small>
+      </a>
+    <% end %>
+  </div>
+</aside>
+<% end %>

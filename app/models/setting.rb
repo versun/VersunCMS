@@ -1,25 +1,40 @@
 class Setting < ApplicationRecord
   has_rich_text :footer
+  before_validation :set_default_local_generation_path
   before_save :parse_social_links_json
-  after_save :update_github_backup_schedule, if: :github_backup_settings_changed?
+  after_save :trigger_static_generation, if: :should_regenerate_static?
 
   # Virtual attribute for JSON textarea input
   attr_accessor :social_links_json
 
-  # Check if GitHub backup is fully configured
-  def github_backup_configured?
-    github_backup_enabled &&
-      github_repo_url.present? &&
-      github_token.present?
-  end
+  # Validate local_generation_path is absolute path
+  validate :validate_local_generation_path, if: -> { static_generation_destination == 'local' && local_generation_path.present? }
 
   # Check if initial setup is incomplete
   def self.setup_incomplete?
     User.count.zero? || Setting.first_or_create.setup_completed == false
   end
 
+  # Check if a specific trigger is enabled for auto-regeneration
+  def auto_regenerate_enabled?(trigger)
+    triggers = auto_regenerate_triggers || []
+    triggers.include?(trigger.to_s)
+  end
 
   private
+
+  def set_default_local_generation_path
+    if static_generation_destination == 'local' && local_generation_path.blank?
+      self.local_generation_path = Rails.root.join("public").to_s
+    end
+  end
+
+  def validate_local_generation_path
+    # Check if path is absolute (starts with / on Unix or C:\ on Windows)
+    unless local_generation_path.start_with?('/') || local_generation_path.match?(/^[A-Za-z]:[\\\/]/)
+      errors.add(:local_generation_path, "必须是绝对路径，不能使用相对路径")
+    end
+  end
 
   def parse_social_links_json
     # If social_links_json is provided, parse it and update social_links
@@ -34,14 +49,32 @@ class Setting < ApplicationRecord
     end
   end
 
-  def github_backup_settings_changed?
-    saved_change_to_github_backup_enabled? ||
-      saved_change_to_github_backup_schedule? ||
-      saved_change_to_github_repo_url? ||
-      saved_change_to_github_token?
+  # Check if settings that affect static pages have changed
+  def should_regenerate_static?
+    # Regenerate when footer or other layout-affecting settings change
+    # Note: footer is ActionText (has_rich_text), so when it changes, Setting's updated_at also changes
+    # We check for changes in fields that affect static page layout
+    # For footer, we check if updated_at changed but other non-layout fields didn't change
+    layout_fields_changed = saved_change_to_title? ||
+      saved_change_to_description? ||
+      saved_change_to_custom_css? ||
+      saved_change_to_head_code? ||
+      saved_change_to_tool_code? ||
+      saved_change_to_giscus?
+    
+    # If layout fields changed, definitely regenerate
+    return true if layout_fields_changed
+    
+    # If only updated_at changed (and no other tracked fields), it might be footer
+    # Check if time_zone or other non-layout fields changed - if not, assume footer changed
+    non_layout_fields_changed = saved_change_to_time_zone? || saved_change_to_url? || saved_change_to_author?
+    
+    # If updated_at changed but no tracked fields changed, assume footer or social_links changed
+    saved_change_to_updated_at? && !non_layout_fields_changed
   end
 
-  def update_github_backup_schedule
-    ScheduledGithubBackupJob.update_schedule
+  def trigger_static_generation
+    # Regenerate all static pages when footer or layout settings change
+    GenerateStaticFilesJob.perform_later(type: "all")
   end
 end

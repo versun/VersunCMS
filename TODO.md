@@ -13,10 +13,10 @@
 - [ ] 添加打赏功能，Patreon，Github，AFdian
 - [ ] MetaWeblog/Micropub APIs
 - [ ] 自定义专属于RSS的Footer： 感谢您让 RSS 继续存活下去。你太棒了。
-- [ ] 添加“状态/微博/随笔/碎碎念？”实时更新？Live
+- [ ] 添加Live
 - [ ] 备份方式更新:增量备份和完整备份
 - [x] Newsletter功能：只有简单的订阅和发送功能，每个tag除了rss也支持newsletterter订阅；如果要模版跟踪等高级功能，则使用listmonk
-- [ ] 多站点多用户
+- [ ] 多站点模式，一个repo，不同的文件夹，每个文件夹一个站点
 - [ ] 文章多修订历史功能
 - [x] 暗黑模式
 - [ ] AI功能

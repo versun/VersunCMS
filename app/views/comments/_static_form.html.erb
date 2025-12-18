@@ -1,0 +1,143 @@
+<% parent_id = local_assigns[:parent_id] %>
+<% is_reply = parent_id.present? %>
+<% 
+  # Get Rails API URL for form submission
+  # This will use RAILS_API_URL environment variable if set, otherwise fallback to site URL
+  api_base_url = rails_api_url
+  
+  # Determine the form URL based on the commentable type
+  if defined?(@page) && @page.present?
+    form_url = "#{api_base_url}/comments?page_id=#{@page.slug}"
+  elsif defined?(@article) && @article.present?
+    form_url = "#{api_base_url}/comments?article_id=#{@article.slug}"
+  else
+    form_url = "#{api_base_url}/comments"
+  end
+  
+  form_id = is_reply ? "comment-form-#{parent_id}" : "comment-form-main"
+%>
+<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-container-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;">
+  <div id="<%= form_id %>-message" style="display: none; margin-bottom: 0.75rem; padding: 0.75rem; border-radius: 4px; font-size: 0.875rem;"></div>
+  <form id="<%= form_id %>" action="<%= form_url %>" method="post" accept-charset="UTF-8">
+    <% if parent_id %>
+      <input type="hidden" name="comment[parent_id]" value="<%= parent_id %>">
+    <% end %>
+    
+    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
+      <div style="flex: 1;">
+        <input type="text" name="comment[author_name]" id="<%= form_id %>-author_name" required placeholder="Name *" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;">
+      </div>
+      <div style="flex: 1;">
+        <input type="url" name="comment[author_url]" id="<%= form_id %>-author_url" placeholder="Website (optional)" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;">
+      </div>
+    </div>
+
+    <div style="margin-bottom: 0.75rem;">
+      <textarea name="comment[content]" id="<%= form_id %>-content" required placeholder="<%= is_reply ? 'Reply *' : 'Comment *' %>" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;"></textarea>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <input type="submit" id="<%= form_id %>-submit" value="<%= is_reply ? 'Reply' : 'Submit' %>" style="padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">
+      <% if is_reply %>
+        <button type="button" onclick="hideReplyForm(<%= parent_id %>)" style="padding: 0.5rem 1rem; background-color: #f0f0f0; color: #666; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Cancel</button>
+      <% end %>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  const form = document.getElementById('<%= form_id %>');
+  if (!form) return;
+  
+  const messageDiv = document.getElementById('<%= form_id %>-message');
+  const submitBtn = document.getElementById('<%= form_id %>-submit');
+  const authorNameInput = document.getElementById('<%= form_id %>-author_name');
+  const authorUrlInput = document.getElementById('<%= form_id %>-author_url');
+  const contentTextarea = document.getElementById('<%= form_id %>-content');
+  
+  function showMessage(message, isError) {
+    messageDiv.style.display = 'block';
+    messageDiv.textContent = message;
+    messageDiv.style.backgroundColor = isError ? '#f8d7da' : '#d4edda';
+    messageDiv.style.border = isError ? '1px solid #f5c6cb' : '1px solid #c3e6cb';
+    messageDiv.style.color = isError ? '#721c24' : '#155724';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+      messageDiv.style.transition = 'opacity 0.5s';
+      messageDiv.style.opacity = '0';
+      setTimeout(function() {
+        messageDiv.style.display = 'none';
+        messageDiv.style.opacity = '1';
+      }, 500);
+    }, 5000);
+  }
+  
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.value = '提交中...';
+    
+    // Create FormData
+    const formData = new FormData(form);
+    
+    // Submit via fetch
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'same-origin'
+    })
+    .then(function(response) {
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return response.json().then(function(data) {
+          if (data.success) {
+            showMessage(data.message || '评论已提交，等待审核后显示。', false);
+            // Clear form
+            form.reset();
+            <% if is_reply %>
+              // Hide reply form after successful submission
+              setTimeout(function() {
+                hideReplyForm(<%= parent_id %>);
+              }, 2000);
+            <% end %>
+          } else {
+            showMessage(data.message || '提交失败，请重试。', true);
+          }
+        });
+      } else {
+        // If redirected or HTML response, treat as success
+        if (response.redirected || response.ok) {
+          showMessage('评论已提交，等待审核后显示。', false);
+          form.reset();
+          <% if is_reply %>
+            setTimeout(function() {
+              hideReplyForm(<%= parent_id %>);
+            }, 2000);
+          <% end %>
+        } else {
+          throw new Error('Server returned an error');
+        }
+      }
+    })
+    .catch(function(error) {
+      console.error('Error:', error);
+      showMessage('提交评论时出错，请稍后重试。', true);
+    })
+    .finally(function() {
+      // Re-enable submit button
+      submitBtn.disabled = false;
+      submitBtn.value = '<%= is_reply ? 'Reply' : 'Submit' %>';
+    });
+  });
+})();
+</script>
+

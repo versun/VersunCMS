@@ -1,0 +1,123 @@
+<% content_for :title, "Generate Settings|Admin" %>
+
+<div class="admin-generates">
+  <div class="page-header">
+    <h1>Generate Settings</h1>
+    <div class="header-actions">
+      <%= button_to "立即生成静态文件", admin_generate_static_path, method: :post, class: "btn btn-success", data: { turbo_confirm: "确定要生成静态文件吗？这可能需要一些时间。" } %>
+    </div>
+  </div>
+
+  <%= form_with(model: @setting, url: admin_generate_path) do |form| %>
+    <% if @setting.errors.any? %>
+      <div class="form-errors">
+        <strong><%= pluralize(@setting.errors.count, "error") %> prohibited this setting from being saved:</strong>
+        <ul>
+          <% @setting.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-section">
+      <div class="field">
+        <%= form.label :static_generation_destination, "Save Destination" %>
+        <%= form.select :static_generation_destination,
+                     options_for_select([
+                       ["Local", "local"],
+                       ["GitHub Repository", "github"]
+                     ], @setting.static_generation_destination || "local"),
+                     {},
+                     { id: "setting_static_generation_destination" } %>
+        <small>Choose where to save the generated static files: local public directory or GitHub repository</small>
+      </div>
+    </div>
+
+    <div class="form-section" id="local-settings" style="<%= 'display: none;' unless @setting.static_generation_destination == 'local' %>">
+      <div class="field">
+        <%= form.label :local_generation_path, "Generation Path" %>
+        <%= form.text_field :local_generation_path, placeholder: Rails.root.join("public").to_s %>
+        <small>Absolute path for static file generation (default: <%= Rails.root.join("public").to_s %>). Must use absolute path, not relative path.</small>
+      </div>
+    </div>
+
+    <div class="form-section" id="github-settings" style="<%= 'display: none;' unless @setting.static_generation_destination == 'github' %>">
+      <div class="field">
+        <%= form.label :github_repo_url, "GitHub Repository URL" %>
+        <%= form.text_field :github_repo_url, placeholder: "https://github.com/username/repo.git" %>
+        <small>Full URL of the GitHub repository (e.g. https://github.com/username/repo.git)</small>
+      </div>
+
+      <div class="field">
+        <%= form.label :github_token, "GitHub Token" %>
+        <%= form.text_field :github_token, type: "password", placeholder: "ghp_xxxxxxxxxxxx" %>
+        <small>GitHub Personal Access Token (requires repo permissions)</small>
+      </div>
+
+      <div class="field">
+        <%= form.label :github_backup_branch, "Branch Name" %>
+        <%= form.text_field :github_backup_branch, placeholder: "main" %>
+        <small>Target branch for pushing files (default: main)</small>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <small>Select the content types that should trigger automatic static file generation</small>
+
+      <div class="field">
+        <div class="checkbox-group">
+          <% 
+            triggers = @setting.auto_regenerate_triggers || []
+            trigger_options = [
+              ['article_update', 'Article Update'],
+              ['comment_update', 'Comment Update'],
+              ['crosspost_update', 'Crosspost Update'],
+              ['page_update', 'Page Update'],
+              ['static_file_upload', 'New Static Files Uploaded'],
+              ['tag_update', 'Tag Update']
+            ]
+          %>
+          <% trigger_options.each do |value, label| %>
+            <div class="field checkbox">
+              <%= check_box_tag "setting[auto_regenerate_triggers][]", value, triggers.include?(value), id: "setting_auto_regenerate_triggers_#{value}" %>
+              <%= label_tag "setting_auto_regenerate_triggers_#{value}", label %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit 'Save Settings', class: "btn btn-primary" %>
+      <%= link_to 'Cancel', admin_root_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  document.addEventListener('turbo:load', function() {
+    const destinationSelect = document.querySelector('#setting_static_generation_destination');
+    const localSettings = document.getElementById('local-settings');
+    const githubSettings = document.getElementById('github-settings');
+    
+    if (destinationSelect) {
+      // 初始化显示状态
+      function updateSettingsVisibility() {
+        if (destinationSelect.value === 'local') {
+          if (localSettings) localSettings.style.display = 'block';
+          if (githubSettings) githubSettings.style.display = 'none';
+        } else if (destinationSelect.value === 'github') {
+          if (localSettings) localSettings.style.display = 'none';
+          if (githubSettings) githubSettings.style.display = 'block';
+        }
+      }
+      
+      // 页面加载时立即更新一次
+      updateSettingsVisibility();
+      
+      // 监听选择变化
+      destinationSelect.addEventListener('change', updateSettingsVisibility);
+    }
+  });
+</script>

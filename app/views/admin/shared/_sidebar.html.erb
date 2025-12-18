@@ -20,7 +20,7 @@
     data-sidebar-target="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-header-content">
-        <%= link_to "VersunCMS", root_path, class: "sidebar-brand" %>
+        <%= link_to "Rables", root_path, class: "sidebar-brand" %>
         <button 
           type="button" 
           class="sidebar-close-btn"
@@ -69,6 +69,10 @@
         <i class="fa fa-cog"></i>
         <span>Site Settings</span>
       <% end %>
+      <%= link_to edit_admin_generate_path, class: "nav-link" do %>
+        <i class="fa fa-file-export"></i>
+        <span>Generate Settings</span>
+      <% end %>
     </div>
 
     <div class="nav-section">
@@ -76,10 +80,6 @@
       <%= link_to admin_migrates_path, class: "nav-link" do %>
         <i class="fa fa-exchange"></i>
         <span>Migrate</span>
-      <% end %>
-      <%= link_to admin_backups_path, class: "nav-link" do %>
-        <i class="fa fa-database"></i>
-        <span>Backup</span>
       <% end %>
       <%= link_to admin_crossposts_path, class: "nav-link" do %>
         <i class="fa fa-share-nodes"></i>
@@ -98,6 +98,10 @@
 
   <% if Current.user.present? %>
     <div class="sidebar-footer">
+      <%= button_to admin_generate_static_path, method: :post, class: "nav-link generate-static-btn", data: { turbo_confirm: "确定要重新生成所有静态文件吗？" } do %>
+        <i class="fa fa-sync"></i>
+        <span>Generate Static</span>
+      <% end %>
       <%= link_to edit_user_path(Current.user), class: "nav-link" do %>
         <i class="fa fa-user"></i>
         <span>Account</span>

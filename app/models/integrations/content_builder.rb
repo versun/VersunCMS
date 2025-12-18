@@ -1,16 +1,32 @@
 module Integrations
   module ContentBuilder
     # 构建社交媒体发布内容
-    # @param slug [String] 文章slug
-    # @param title [String] 文章标题
-    # @param content_text [String] 文章内容
-    # @param description_text [String, nil] 文章描述（可选）
+    # @param slug [String] 文章slug（如果提供了article则忽略此参数）
+    # @param title [String] 文章标题（如果提供了article则忽略此参数）
+    # @param content_text [String] 文章内容（如果提供了article则忽略此参数）
+    # @param description_text [String, nil] 文章描述（可选，如果提供了article则忽略此参数）
+    # @param article [Article] 文章对象，用于检查source reference和获取文章属性
     # @param max_length [Integer] 最大字符长度限制
     # @param always_add_link [Boolean] 是否总是添加链接（默认false，即根据内容长度判断）
     # @param count_non_ascii_double [Boolean] 是否将非ASCII字符计为2个字符（用于Twitter等平台）
     # @return [String] 构建好的内容
-    def build_content(slug, title, content_text, description_text = nil, max_length: 300, always_add_link: false, count_non_ascii_double: false)
+    def build_content(slug = nil, title = nil, content_text = nil, description_text = nil, article: nil, max_length: 300, always_add_link: false, count_non_ascii_double: false)
+      # 如果提供了 article 对象，优先使用 article 的属性
+      if article
+        slug = article.slug
+        title = article.title
+        content_text = article.plain_text_content
+        description_text = article.description
+      end
+
       content_text = description_text.presence || content_text
+
+      # 检查是否有source reference，如果有则在内容末尾添加source URL
+      if article&.has_source? && article.source_url.present?
+        source_url_text = "\n#{article.source_url}"
+        content_text = content_text + source_url_text
+      end
+
       title_length = count_chars(title, count_non_ascii_double)
       content_length = count_chars(content_text, count_non_ascii_double)
 

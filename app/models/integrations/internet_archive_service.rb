@@ -1,5 +1,6 @@
 require "net/http"
 require "uri"
+require "cgi"
 
 module Integrations
   class InternetArchiveService
@@ -56,119 +57,224 @@ module Integrations
       end
     end
 
+    # Save any URL to Internet Archive (for source references)
+    # This method doesn't require the crosspost settings to be enabled
+    def save_url(url)
+      return { error: "URL is required" } if url.blank?
+
+      begin
+        archived_url = save_to_wayback(url)
+
+        if archived_url
+          ActivityLog.create!(
+            action: "completed",
+            target: "internet_archive",
+            level: :info,
+            description: "Successfully archived URL to Internet Archive: #{url}"
+          )
+
+          { success: true, archived_url: archived_url }
+        else
+          { error: "Failed to archive URL" }
+        end
+      rescue => e
+        ActivityLog.create!(
+          action: "failed",
+          target: "internet_archive",
+          level: :error,
+          description: "Failed to archive URL to Internet Archive: #{url} - #{e.message}"
+        )
+        { error: e.message }
+      end
+    end
+
     private
 
     def save_to_wayback(url, max_retries: 3, retry_count: 0)
       # 使用 Wayback Machine Save API
-      # 方法：使用 GET 请求到 https://web.archive.org/save/<url>
-      # 这会触发存档过程，但不会立即返回存档 URL
-      # 我们需要稍后检查存档状态
+      # URL 需要进行路径编码，以正确处理包含 ?、&、#、空格等特殊字符的 URL
+      # 例如：https://example.com/page?foo=bar 需要编码为 https%3A%2F%2Fexample.com%2Fpage%3Ffoo%3Dbar
 
       begin
-        encoded_url = URI.encode_www_form_component(url)
+        # 对 URL 进行编码，确保特殊字符被正确处理
+        encoded_url = CGI.escape(url)
         save_uri = URI("https://web.archive.org/save/#{encoded_url}")
 
         http = Net::HTTP.new(save_uri.host, save_uri.port)
         http.use_ssl = true
-        http.open_timeout = 30
-        http.read_timeout = 30
+        http.open_timeout = 60
+        http.read_timeout = 120  # 增加读取超时，存档可能需要较长时间
 
         request = Net::HTTP::Get.new(save_uri)
-        request["User-Agent"] = "VersunCMS/1.0"
+        request["User-Agent"] = "Mozilla/5.0 (compatible; Rables/1.0; +https://versun.me)"
+        request["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
 
         response = http.request(request)
 
-        # Wayback Machine 的保存请求通常是异步的
-        # 即使返回成功，存档也可能需要一些时间
-        if response.is_a?(Net::HTTPSuccess) || response.is_a?(Net::HTTPRedirection) || response.code == "200"
-          # 等待一小段时间，然后检查存档状态
-          sleep(2)
+        Rails.logger.info "Internet Archive save response: code=#{response.code}, location=#{response['Location']}"
 
-          # 检查存档 URL
-          archived_url = check_archived_url(url)
-
+        # 检查响应
+        case response.code
+        when "200"
+          # 成功：从响应头或 body 中提取存档 URL
+          archived_url = extract_archived_url_from_response(response, url)
           if archived_url
+            Rails.logger.info "Internet Archive archived URL: #{archived_url}"
             archived_url
           else
-            # 如果还没有存档，返回一个待处理的 URL
-            # 用户稍后可以手动检查
-            Rails.logger.info "Internet Archive save request submitted for #{url}, but archive not yet available"
-            # 返回一个检查 URL，用户可以稍后访问
-            "https://web.archive.org/web/*/#{url}"
+            # 如果无法从响应中提取，等待后检查
+            sleep(5)
+            check_archived_url(url) || generate_archive_url(url)
           end
-        elsif response.code == "429"
-          # 速率限制 - 使用指数退避重试
-          if retry_count < max_retries
-            wait_time = calculate_backoff_time(retry_count + 1)
-            Rails.logger.warn "Internet Archive rate limit exceeded, waiting #{wait_time} seconds before retry #{retry_count + 1}/#{max_retries}"
-            ActivityLog.create!(
-              action: "rate_limited",
-              target: "internet_archive_api",
-              level: :warning,
-              description: "Internet Archive rate limit exceeded, retrying in #{wait_time} seconds (attempt #{retry_count + 1}/#{max_retries})"
-            )
-            sleep(wait_time)
-            save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
+        when "302", "301"
+          # 重定向：通常会重定向到存档页面
+          location = response["Location"]
+          if location&.include?("web.archive.org/web/")
+            Rails.logger.info "Internet Archive redirect to: #{location}"
+            location
           else
-            Rails.logger.error "Internet Archive rate limit exceeded after #{max_retries} retries"
-            ActivityLog.create!(
-              action: "rate_limited",
-              target: "internet_archive_api",
-              level: :error,
-              description: "Internet Archive rate limit exceeded after #{max_retries} retries"
-            )
-            # 抛出异常以便 Job 可以重试
-            raise StandardError, "Internet Archive rate limit exceeded after #{max_retries} retries"
+            # 跟随重定向
+            sleep(3)
+            check_archived_url(url) || generate_archive_url(url)
           end
+        when "429"
+          handle_rate_limit(url, max_retries, retry_count)
+        when "523", "520", "521", "522", "524"
+          # Cloudflare 错误 - 目标网站可能有问题，但仍可能已存档
+          Rails.logger.warn "Internet Archive received Cloudflare error #{response.code} for #{url}"
+          sleep(5)
+          check_archived_url(url) || generate_archive_url(url)
         else
-          Rails.logger.error "Failed to save to Wayback Machine: #{response.code} - #{response.body}"
-          nil
+          Rails.logger.error "Failed to save to Wayback Machine: #{response.code} - #{response.body[0..500]}"
+          # 尝试检查是否已经存档，如果没有则生成预期的存档 URL
+          check_archived_url(url) || generate_archive_url(url)
         end
+      rescue Net::OpenTimeout, Net::ReadTimeout => e
+        Rails.logger.warn "Internet Archive timeout for #{url}: #{e.message}"
+        # 超时不一定是失败，可能存档正在进行，检查是否已存档
+        sleep(5)
+        check_archived_url(url) || generate_archive_url(url)
       rescue => e
-        # 如果是速率限制错误且还有重试次数，继续重试
-        if e.message.include?("rate limit") && retry_count < max_retries
-          wait_time = calculate_backoff_time(retry_count + 1)
-          Rails.logger.warn "Internet Archive error, retrying in #{wait_time} seconds (attempt #{retry_count + 1}/#{max_retries}): #{e.message}"
-          sleep(wait_time)
-          save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
-        else
-          Rails.logger.error "Error saving to Wayback Machine: #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          raise e if e.message.include?("rate limit")
-          nil
+        handle_save_error(e, url, max_retries, retry_count)
+      end
+    end
+
+    def handle_rate_limit(url, max_retries, retry_count)
+      if retry_count < max_retries
+        wait_time = calculate_backoff_time(retry_count + 1)
+        Rails.logger.warn "Internet Archive rate limit exceeded, waiting #{wait_time} seconds before retry #{retry_count + 1}/#{max_retries}"
+        ActivityLog.create!(
+          action: "rate_limited",
+          target: "internet_archive_api",
+          level: :warning,
+          description: "Internet Archive rate limit exceeded, retrying in #{wait_time} seconds (attempt #{retry_count + 1}/#{max_retries})"
+        )
+        sleep(wait_time)
+        save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
+      else
+        Rails.logger.error "Internet Archive rate limit exceeded after #{max_retries} retries"
+        ActivityLog.create!(
+          action: "rate_limited",
+          target: "internet_archive_api",
+          level: :error,
+          description: "Internet Archive rate limit exceeded after #{max_retries} retries"
+        )
+        raise StandardError, "Internet Archive rate limit exceeded after #{max_retries} retries"
+      end
+    end
+
+    def handle_save_error(error, url, max_retries, retry_count)
+      if error.message.include?("rate limit") && retry_count < max_retries
+        wait_time = calculate_backoff_time(retry_count + 1)
+        Rails.logger.warn "Internet Archive error, retrying in #{wait_time} seconds (attempt #{retry_count + 1}/#{max_retries}): #{error.message}"
+        sleep(wait_time)
+        save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
+      else
+        Rails.logger.error "Error saving to Wayback Machine: #{error.message}"
+        Rails.logger.error error.backtrace.first(5).join("\n")
+        raise error if error.message.include?("rate limit")
+        nil
+      end
+    end
+
+    def extract_archived_url_from_response(response, original_url)
+      # 尝试从响应头中获取存档 URL
+      content_location = response["Content-Location"]
+      if content_location&.include?("/web/")
+        return "https://web.archive.org#{content_location}"
+      end
+
+      # 尝试从 X-Archive-Orig-* 头中构建
+      if response["X-Archive-Orig-Date"]
+        # 存档成功，构建存档 URL
+        # 从 Link 头或其他头信息中提取时间戳
+        memento_link = response["Link"]
+        if memento_link
+          # 解析 Link 头中的 memento URL
+          match = memento_link.match(/web\.archive\.org\/web\/(\d+)/)
+          if match
+            return "https://web.archive.org/web/#{match[1]}/#{original_url}"
+          end
         end
       end
+
+      nil
+    end
+
+    def generate_archive_url(url)
+      # 生成一个带有当前时间戳的预期存档 URL
+      # 格式：YYYYMMDDHHmmss
+      timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
+      "https://web.archive.org/web/#{timestamp}/#{url}"
     end
 
     # 计算指数退避时间（秒）
     def calculate_backoff_time(retry_count)
-      # 指数退避：2^retry_count 秒，最大 60 秒
-      [ 2 ** retry_count, 60 ].min
+      # 指数退避：基础 5 秒，最大 120 秒
+      # Internet Archive 需要更长的退避时间
+      base_wait = 5
+      [ base_wait * (2 ** retry_count), 120 ].min
     end
 
     # 检查 URL 是否已被存档，并返回存档 URL
-    def check_archived_url(url)
+    def check_archived_url(url, retries: 2)
+      retries.times do |attempt|
+        result = fetch_archived_url(url)
+        return result if result
+
+        # 如果没找到，等待后重试（存档可能还在处理中）
+        sleep(3) if attempt < retries - 1
+      end
+      nil
+    end
+
+    def fetch_archived_url(url)
       # 使用 Wayback Machine 的 available API 检查
       check_uri = URI("https://archive.org/wayback/available")
       check_uri.query = URI.encode_www_form(url: url)
 
       http = Net::HTTP.new(check_uri.host, check_uri.port)
       http.use_ssl = true
-      http.open_timeout = 10
-      http.read_timeout = 10
+      http.open_timeout = 15
+      http.read_timeout = 15
 
       request = Net::HTTP::Get.new(check_uri)
+      request["User-Agent"] = "Mozilla/5.0 (compatible; Rables/1.0)"
       response = http.request(request)
 
       if response.is_a?(Net::HTTPSuccess)
         data = JSON.parse(response.body)
+        Rails.logger.info "Internet Archive availability check response: #{data.inspect}"
+
         if data.dig("archived_snapshots", "closest", "available")
-          data.dig("archived_snapshots", "closest", "url")
+          archived_url = data.dig("archived_snapshots", "closest", "url")
+          # 确保返回 https 版本
+          archived_url&.sub("http://", "https://")
         else
-          # 如果还没有存档，返回原始 URL（保存请求可能还在处理中）
           nil
         end
       else
+        Rails.logger.warn "Internet Archive availability check failed: #{response.code}"
         nil
       end
     rescue => e

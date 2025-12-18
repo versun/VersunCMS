@@ -33,6 +33,9 @@ class Comment < ApplicationRecord
 
   default_scope { order(published_at: :asc) }
 
+  # Trigger static generation when comment is created, updated, or status changes
+  after_save :schedule_static_generation, if: :should_regenerate_static?
+
   private
 
   def external_comment?
@@ -53,5 +56,30 @@ class Comment < ApplicationRecord
     if parent_record.commentable_type != commentable_type || parent_record.commentable_id != commentable_id
       errors.add(:parent_id, "must belong to the same #{commentable_type}")
     end
+  end
+
+  def should_regenerate_static?
+    # Only regenerate if auto-regenerate is enabled for comment updates
+    return false unless Setting.first_or_create.auto_regenerate_enabled?("comment_update")
+    
+    # Trigger when:
+    # 1. Comment is created and already approved
+    # 2. Comment status changes (approved, rejected, etc.)
+    # 3. Comment content or other fields change (if approved)
+    if new_record?
+      # New comment that is already approved
+      approved?
+    else
+      # Existing comment: trigger on status change or content update (if approved)
+      saved_change_to_status? || (approved? && (saved_change_to_content? || saved_change_to_author_name? || saved_change_to_author_url?))
+    end
+  end
+
+  def schedule_static_generation
+    # Schedule debounced static generation for the commentable
+    GenerateStaticFilesJob.schedule_debounced(
+      type: commentable_type.downcase,
+      id: commentable_id
+    )
   end
 end

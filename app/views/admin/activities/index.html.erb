@@ -1,53 +1,50 @@
-<div class="admin-container">
+<div class="admin-container admin-activity">
   <h1>Activity</h1>
-  
   <div class="form-section">
-    <table class="table table-striped">
+    <table class="admin-activity-table">
       <thead>
         <tr>
           <th>Time</th>
           <th>Level</th>
           <th>Action</th>
+          <th>Target</th>
           <th>Description</th>
         </tr>
-        </thead>
-        <tbody>
+      </thead>
+      <tbody>
         <% @activity_logs.each do |log| %>
-          <tr class="<%= case log.level&.to_sym
-                        when :error then 'table-danger'
-                        when :warn then 'table-warning'
-                        when :info then 'table-success'
-                        else ''
-                        end %>">
-            <td><%= log.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
-            <td><span class="badge <%= case log.level&.to_sym
-                                      when :error then 'bg-danger'
-                                      when :warn then 'bg-warning'
-                                      when :info then 'bg-success'
-                                      else 'bg-secondary'
-                                      end %>">
-                  <%= log.level&.capitalize || 'Unknown' %>
-                </span></td>
-            <td><%= log.action %></td>
-            <td>
-              <% if log.description&.include?('/tmp/exports/') %>
-                <% filename = log.description.split('/').last %>
+          <% level = (log.level.presence || "unknown") %>
+          <tr>
+            <td class="col-time">
+              <code title="<%= log.created_at.iso8601 %>"><%= log.created_at.strftime('%Y-%m-%d %H:%M:%S') %></code>
+            </td>
+            <td class="col-level">
+              <span class="level level-<%= level %>" title="<%= level %>"><%= level %></span>
+            </td>
+            <td class="col-action">
+              <% action_text = log.action.to_s %>
+              <span class="truncate" title="<%= action_text.squish %>"><%= action_text %></span>
+            </td>
+            <td class="col-target">
+              <% target_text = log.target.to_s %>
+              <code class="truncate" title="<%= target_text.squish %>"><%= target_text %></code>
+            </td>
+            <td class="col-description">
+              <% description_text = log.description.to_s %>
+              <% if description_text.include?('/tmp/exports/') %>
+                <% filename = description_text.split('/').last %>
+                <% prefix = description_text.split(':').first.to_s %>
+                <span class="truncate" title="<%= description_text.squish %>"><%= prefix %></span>
                 <% if filename.present? %>
-                  <%= log.description.split(':').first %>:
-                  <%= link_to "Download #{filename}", admin_download_path(filename),
-                      class: "btn btn-sm btn-primary ml-2",
-                      download: filename %>
-                <% else %>
-                  <%= log.description %>
+                  <%= link_to "Download", admin_download_path(filename), class: "btn btn-small", download: filename %>
                 <% end %>
               <% else %>
-                <%= log.description %>
+                <span class="truncate" title="<%= description_text.squish %>"><%= description_text %></span>
               <% end %>
             </td>
           </tr>
         <% end %>
-        </tbody>
+      </tbody>
     </table>
-
   </div>
 </div>

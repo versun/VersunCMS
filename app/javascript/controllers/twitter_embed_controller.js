@@ -10,6 +10,20 @@ export default class extends Controller {
         this.loadTweet()
     }
 
+    apiBaseUrl() {
+        // Prefer explicit base URL so static pages can call the Rails API cross-origin.
+        // Provided by layouts via: <meta name="rails-api-url" content="...">
+        const meta = document.querySelector('meta[name="rails-api-url"]')
+        const base = meta?.getAttribute("content")?.trim()
+        return base ? base.replace(/\/+$/, "") : ""
+    }
+
+    oembedEndpoint() {
+        const path = `/api/twitter/oembed?url=${encodeURIComponent(this.urlValue)}`
+        const base = this.apiBaseUrl()
+        return base ? `${base}${path}` : path
+    }
+
     async loadTweet() {
         if (!this.urlValue) return
 
@@ -20,12 +34,14 @@ export default class extends Controller {
 
         try {
             // 调用后端 API 获取推文内容
-            const response = await fetch(`/api/twitter/oembed?url=${encodeURIComponent(this.urlValue)}`, {
+            const response = await fetch(this.oembedEndpoint(), {
                 method: "GET",
                 headers: {
-                    "Accept": "application/json",
-                    "X-Requested-With": "XMLHttpRequest"
-                }
+                    "Accept": "application/json"
+                },
+                // When using a separate Rails API origin (e.g. static hosting + API backend),
+                // we don't rely on cookies for this endpoint.
+                credentials: "omit"
             })
 
             if (!response.ok) {

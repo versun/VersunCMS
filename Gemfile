@@ -13,8 +13,7 @@ gem "will_paginate"
 gem "mission_control-jobs"
 
 gem "csv"
-gem "git"  # For GitHub backup functionality
-gem "reverse_markdown"  # For converting HTML to Markdown in backups
+# GitHub deploy/backup uses the system `git` command (see Integrations::GithubDeployService)
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.1"

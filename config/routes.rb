@@ -10,9 +10,11 @@ Rails.application.routes.draw do
   resource :setup, only: [ :show, :create ], controller: "setup"
 
   # Newsletter subscriptions
-  resources :subscriptions, only: [ :create ]
+  resources :subscriptions, only: [ :index, :create ]
   get "/confirm", to: "subscriptions#confirm", as: :confirm_subscription
   get "/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe
+  # Handle CORS preflight requests for subscriptions (static pages fetch)
+  match "/subscriptions", to: "subscriptions#options", via: :options
 
   # Admin namespace - 统一所有后台管理功能
   namespace :admin do
@@ -70,6 +72,7 @@ Rails.application.routes.draw do
 
     # System management
     resource :setting, only: [ :edit, :update ]
+    resource :generate, only: [ :edit, :update ], controller: "generates"
     resources :static_files, only: [ :index, :create, :destroy ]
     resources :redirects
 
@@ -84,7 +87,6 @@ Rails.application.routes.draw do
       end
     end
     resources :migrates, only: [ :index, :create ]
-    resource :backups, only: [ :show, :update, :create ]
 
     # 导出文件下载
     get "downloads/:filename", to: "downloads#show", as: :download, constraints: { filename: /[^\/]+/ }
@@ -97,12 +99,21 @@ Rails.application.routes.draw do
     # Activity logs
     resources :activities, only: [ :index ]
 
+    # Source reference API
+    post "sources/archive", to: "sources#archive"
+
+    # Static site generation
+    post "generate_static", to: "static_generation#create", as: :generate_static
+
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end
 
   # Public comment submission
   resources :comments, only: [ :create ]
+  
+  # Handle CORS preflight requests for comments
+  match '/comments', to: 'comments#options', via: :options
 
   # Static files public access
   get "/static/*filename", to: "static_files#show", as: :static_file, format: false
@@ -110,6 +121,7 @@ Rails.application.routes.draw do
   # API endpoints
   namespace :api do
     get "twitter/oembed", to: "twitter#oembed"
+    match "twitter/oembed", to: "twitter#options", via: :options
   end
 
   # Health check and feeds

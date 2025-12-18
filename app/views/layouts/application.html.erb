@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="rails-api-url" content="<%= rails_api_url %>">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -59,7 +60,7 @@
             <% end %>
         </div>        
         <nav class="sidebar-nav">
-          <%= render 'components/nav_bar', navbar_items: navbar_items, site_settings: site_settings %>
+          <%= render 'components/static_nav_bar' %>
         </nav>
         <div class="sidebar-footer">
           <%= render 'components/footer', site_settings: site_settings %>
@@ -68,9 +69,35 @@
 
       <main class="main-content">
         <div class="limiter">
+          <% if notice %>
+            <div class="flash flash-notice" style="padding: 1rem; margin-bottom: 1rem; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724;">
+              <%= notice %>
+            </div>
+          <% end %>
+          <% if alert %>
+            <div class="flash flash-alert" style="padding: 1rem; margin-bottom: 1rem; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;">
+              <%= alert %>
+            </div>
+          <% end %>
           <%= yield %>
         </div>
       </main>
+      
+      <script>
+        // Auto-dismiss flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+          const flashMessages = document.querySelectorAll('.flash');
+          flashMessages.forEach(function(flash) {
+            setTimeout(function() {
+              flash.style.transition = 'opacity 0.5s';
+              flash.style.opacity = '0';
+              setTimeout(function() {
+                flash.remove();
+              }, 500);
+            }, 5000);
+          });
+        });
+      </script>
     </div>
 
     <%= raw site_settings[:tool_code] %>

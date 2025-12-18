@@ -1,7 +1,9 @@
 <footer>
-    <small style="color:grey">
-    <%= site_settings[:footer] %>
-    </small>
+    <div class="footer-content">
+        <small class="footer-text">
+            <%= site_settings[:footer] %>
+        </small>
+    </div>
     <div class="theme-toggle">
         <button type="button" 
                 data-action="click->theme-toggle#toggle"

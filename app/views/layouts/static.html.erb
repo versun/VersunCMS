@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html data-controller="theme-toggle">
+  <head>
+    <title><%= content_for?(:title) ? yield(:title) : site_settings[:title] %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="rails-api-url" content="<%= rails_api_url %>">
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/static/icon.png" type="image/png">
+    <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/static/favicon.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/static/favicon.png">
+    <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed.xml">
+
+    <%# Speed up third-party stylesheet fetch (avoid blocking render) %>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    </noscript>
+
+    <%# Use Rails asset helpers for correct paths %>
+    <%# Preload critical CSS to reduce render-blocking time %>
+    <link rel="preload" as="style" href="<%= asset_path('lexxy.css') %>" fetchpriority="high">
+    <link rel="preload" as="style" href="<%= asset_path('application.css') %>" fetchpriority="high">
+    <%= stylesheet_link_tag "lexxy" %>
+    <%= stylesheet_link_tag "application" %>
+
+    <%= javascript_importmap_tags %>
+
+    <%= raw site_settings[:head_code] %>
+
+    <style>
+      <%= site_settings[:custom_css] %>
+    </style>
+  </head>
+
+  <body>
+    <div class="site-container">
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <h1><a href="/" class="front-page-title"><%= site_settings[:title] %></a></h1>
+          <p class="site-description"><%= site_settings[:description] %></p>
+        </header>
+        <div class="social-links">
+            <% if site_settings[:social_links].present? %>
+              <% site_settings[:social_links].each do |platform, data| %>
+                <% if data['url'].present? %>
+                  <% 
+                    icon_class = data['icon']
+                    display_name = data['name'] || platform.to_s.titleize
+                  %>
+                  <a rel="me" href="<%= data['url'] %>" target="_blank" class="social" title="<%= display_name %>">
+                    <% if icon_class.present? %>
+                      <i class="<%= icon_class %>" style="font-size: 20px;"></i>
+                    <% end %>
+                  </a>
+                <% end %>
+              <% end %>
+            <% end %>
+        </div>        
+        <nav class="sidebar-nav">
+          <%= render 'components/static_nav_bar' %>
+        </nav>
+        <div class="sidebar-footer">
+          <%= render 'components/footer', site_settings: site_settings %>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div class="limiter">
+          <div id="flash-messages"></div>
+          <%= @content_for_layout || yield %>
+        </div>
+      </main>
+      
+      <script>
+        // Display flash messages from URL parameters (for static pages)
+        (function() {
+          const urlParams = new URLSearchParams(window.location.search);
+          const commentSubmitted = urlParams.get('comment_submitted');
+          
+          if (commentSubmitted === '1') {
+            const flashContainer = document.getElementById('flash-messages');
+            if (flashContainer) {
+              const message = document.createElement('div');
+              message.className = 'flash flash-notice';
+              message.style.cssText = 'padding: 1rem; margin-bottom: 1rem; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724;';
+              message.textContent = '评论已提交，等待审核后显示。';
+              flashContainer.appendChild(message);
+              
+              // Auto-dismiss after 5 seconds
+              setTimeout(function() {
+                message.style.transition = 'opacity 0.5s';
+                message.style.opacity = '0';
+                setTimeout(function() {
+                  message.remove();
+                }, 500);
+              }, 5000);
+              
+              // Remove parameter from URL without reload
+              const newUrl = window.location.pathname + (window.location.search.replace(/[?&]comment_submitted=1/, '').replace(/^&/, '?') || '');
+              window.history.replaceState({}, '', newUrl);
+            }
+          }
+        })();
+      </script>
+    </div>
+
+    <%= raw site_settings[:tool_code] %>
+    <%= yield :javascript %>
+  </body>
+</html>
+

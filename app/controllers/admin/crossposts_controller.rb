@@ -12,9 +12,21 @@ class Admin::CrosspostsController < Admin::BaseController
     # Rails.logger.info "Params: #{params.inspect}"
 
     if @settings.update(crosspost_params)
+      ActivityLog.create!(
+        action: "updated",
+        target: "crosspost",
+        level: :info,
+        description: "更新跨平台发布设置: #{params[:id]}"
+      )
       # Rails.logger.info "Successfully updated Crosspost"
       redirect_to admin_crossposts_path, notice: "CrossPost settings updated successfully."
     else
+      ActivityLog.create!(
+        action: "failed",
+        target: "crosspost",
+        level: :error,
+        description: "更新跨平台发布设置失败: #{params[:id]} - #{@settings.errors.full_messages.join(', ')}"
+      )
       # Rails.logger.error "Failed to update Crosspost: #{@settings.errors.full_messages}"
       redirect_to admin_crossposts_path, alert: @settings.errors.full_messages.join(", ")
     end
