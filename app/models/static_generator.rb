@@ -768,26 +768,59 @@ class StaticGenerator
   end
 
   # Export a single ActiveStorage blob to public/uploads
-  def export_blob(blob)
-    return @exported_blobs[blob.id] if @exported_blobs[blob.id]
+  # Compresses images for faster loading, especially for index pages
+  def export_blob(blob, options = {})
+    return @exported_blobs[blob.id] if @exported_blobs[blob.id] && !options[:force]
+
+    # Only process images
+    return nil unless blob.representable?
 
     # Generate unique filename: id-filename.ext
     filename = "#{blob.id}-#{blob.filename}"
     output_path = uploads_dir.join(filename)
 
     begin
-      # Download blob content and save to file
-      blob.open do |file|
+      # For images, use variant to compress and resize
+      # Optimize for index pages: max width 1200px, quality 85%
+      # This balances quality and file size for faster page loads
+      variant = blob.variant(
+        resize_to_limit: [1200, 1200],
+        saver: { 
+          quality: 85,
+          strip: true  # Remove metadata to reduce file size
+        }
+      )
+
+      # Download processed variant and save to file
+      variant.download do |file|
         FileUtils.cp(file.path, output_path)
       end
 
       static_path = "/uploads/#{filename}"
       @exported_blobs[blob.id] = static_path
-      Rails.logger.debug "[StaticGenerator] Exported image: #{static_path}"
+      
+      # Log compression info
+      original_size = blob.byte_size
+      compressed_size = File.size(output_path)
+      compression_ratio = ((1 - compressed_size.to_f / original_size) * 100).round(1)
+      Rails.logger.debug "[StaticGenerator] Exported and compressed image: #{static_path} (#{compression_ratio}% reduction)"
+      
       static_path
     rescue => e
       Rails.logger.error "[StaticGenerator] Failed to export blob #{blob.id}: #{e.message}"
-      nil
+      # Fallback to original if variant processing fails
+      begin
+        blob.open do |file|
+          FileUtils.cp(file.path, output_path)
+        end
+        static_path = "/uploads/#{filename}"
+        @exported_blobs[blob.id] = static_path
+        Rails.logger.warn "[StaticGenerator] Exported original image without compression: #{static_path}"
+        static_path
+      rescue => fallback_error
+        Rails.logger.error "[StaticGenerator] Fallback export also failed: #{fallback_error.message}"
+        nil
+      end
     end
   end
 
