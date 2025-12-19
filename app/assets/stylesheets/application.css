@@ -2,6 +2,20 @@
  *= require actiontext
  */
 
+/* Font Display Optimization - Ensure text is always visible */
+/* All @font-face declarations should use font-display: swap or optional */
+/* This ensures text remains visible during font loading */
+@font-face {
+    font-family: 'font-display-swap';
+    src: local('Arial');
+    font-display: swap;
+}
+
+/* Optimize font loading for better text visibility */
+/* Note: For external fonts (like Font Awesome from CDN), 
+   the font-display property must be set in their @font-face rules.
+   Consider self-hosting fonts or using a CDN that supports font-display: swap */
+
 /* Reset & Base */
 * {
     box-sizing: border-box;

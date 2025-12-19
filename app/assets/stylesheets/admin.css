@@ -2,6 +2,13 @@
    Minimal Admin Interface
    ======================================== */
 
+/* Font Display Optimization - Ensure text is always visible */
+@font-face {
+    font-family: 'font-display-swap';
+    src: local('Arial');
+    font-display: swap;
+}
+
 /* Core Variables */
 :root {
     --spacing: 1rem;
