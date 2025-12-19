@@ -75,7 +75,7 @@ module Integrations
         Rails.event.notify "bluesky_service.upload_image_result",
           level: "info",
           component: "BlueskyService",
-          result: embed.present? ? 'success' : 'failed'
+          result: embed.present? ? "success" : "failed"
       else
         Rails.event.notify "bluesky_service.no_image",
           level: "info",
@@ -420,7 +420,7 @@ module Integrations
         Rails.event.notify "bluesky_service.upload_blob_result",
           level: "info",
           component: "BlueskyService",
-          result: blob_data.present? ? 'success' : 'failed'
+          result: blob_data.present? ? "success" : "failed"
         return nil unless blob_data
 
         # 创建图片embed

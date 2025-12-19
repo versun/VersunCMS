@@ -115,7 +115,7 @@ module Integrations
           level: "info",
           component: "InternetArchiveService",
           response_code: response.code,
-          location: response['Location']
+          location: response["Location"]
 
         # 检查响应
         case response.code

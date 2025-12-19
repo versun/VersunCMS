@@ -111,7 +111,7 @@ class StaticGenerator
   # Copy user uploaded static files from storage/static and StaticFile records to public/static
   def copy_user_static_files
     static_dest = output_dir.join("static")
-    
+
     # Clean existing static directory before copying to ensure consistency
     if Dir.exist?(static_dest)
       FileUtils.rm_rf(static_dest)
@@ -127,12 +127,12 @@ class StaticGenerator
       begin
         dest_file = static_dest.join(static_file.filename)
         FileUtils.mkdir_p(File.dirname(dest_file))
-        
+
         # Download blob and save to file
         static_file.file.blob.open do |temp_file|
           FileUtils.cp(temp_file.path, dest_file)
         end
-        
+
         file_count += 1
         Rails.event.notify("static_generator.static_file_copied", level: "debug", component: "StaticGenerator", filename: static_file.filename)
       rescue => e
@@ -160,7 +160,7 @@ class StaticGenerator
         end
       end
     end
-    
+
     if file_count > 0
       Rails.event.notify("static_generator.static_files_copied", level: "info", component: "StaticGenerator", count: file_count)
     else
@@ -307,7 +307,7 @@ class StaticGenerator
   # Generate redirects for static site
   def generate_redirects
     redirects = Redirect.enabled
-    
+
     if redirects.empty?
       # Still generate empty redirects.js to avoid 404 errors
       generate_js_redirect_handler(redirects)
@@ -340,10 +340,10 @@ class StaticGenerator
   # Collect all paths that match redirect rules
   def collect_redirect_paths(redirects)
     paths = []
-    
+
     # Get all existing paths from the site
     all_paths = collect_all_site_paths
-    
+
     redirects.each do |redirect|
       # Check existing paths
       all_paths.each do |path|
@@ -359,19 +359,19 @@ class StaticGenerator
           end
         end
       end
-      
-      # For redirects that match patterns (like /old/* -> /new/*), 
+
+      # For redirects that match patterns (like /old/* -> /new/*),
       # we can't generate all possible matches, but we can generate
       # a JavaScript-based redirect handler for unmatched paths
     end
-    
+
     paths.uniq { |p| p[:path] }
   end
 
   # Collect all paths from the site (articles, pages, tags, etc.)
   def collect_all_site_paths
-    paths = ["/"]
-    
+    paths = [ "/" ]
+
     # Article paths
     Article.published.find_each do |article|
       if @article_route_prefix.present?
@@ -380,22 +380,22 @@ class StaticGenerator
         paths << "/#{article.slug}"
       end
     end
-    
+
     # Page paths
     Page.published.find_each do |page|
       paths << "/pages/#{page.slug}" unless page.redirect?
     end
-    
+
     # Tag paths
     Tag.find_each do |tag|
       paths << "/tags/#{tag.slug}"
     end
-    
+
     # Pagination paths
     article_count = Article.published.count
     total_pages = (article_count.to_f / PER_PAGE).ceil
     (2..total_pages).each { |p| paths << "/page/#{p}" }
-    
+
     paths
   end
 
@@ -403,42 +403,42 @@ class StaticGenerator
   def generate_redirect_page(path, target_url, permanent)
     # Normalize path: remove leading slash, add .html if needed
     file_path = path.sub(/^\//, "")
-    
+
     # Handle root path
     if file_path.empty? || file_path == "/"
       file_path = "index.html"
     else
       file_path += ".html" unless file_path.end_with?(".html")
     end
-    
+
     # Ensure target_url is absolute or starts with /
     target_url = "/#{target_url}" if target_url.present? && !target_url.start_with?("http", "/")
-    
+
     html = render_static_partial("redirects/static_redirect", {
       target_url: target_url,
       permanent: permanent
     })
-    
+
     write_file(file_path, html)
   end
 
   # Generate _redirects file for Netlify
   def generate_netlify_redirects_file(redirects)
     lines = []
-    
+
     redirects.each do |redirect|
       begin
         regex = Regexp.new(redirect.regex)
         target = redirect.replacement
         status = redirect.permanent? ? 301 : 302
-        
+
         # Netlify supports regex patterns with /* syntax or full regex
         # Convert our regex to Netlify format
         pattern = redirect.regex
-        
+
         # Remove leading ^ and trailing $ if present (Netlify doesn't need them)
         pattern = pattern.gsub(/^\^/, "").gsub(/\$$/, "")
-        
+
         # Netlify uses /* for wildcards, but also supports regex
         # For simple patterns, use Netlify syntax; for complex, use regex
         if pattern.match?(/^[^$*+?()\[\]{}|\\]+$/)
@@ -452,7 +452,7 @@ class StaticGenerator
         Rails.event.notify("static_generator.invalid_redirect_regex", level: "warn", component: "StaticGenerator", regex: redirect.regex, error: e.message, platform: "Netlify")
       end
     end
-    
+
     if lines.any?
       content = lines.join("\n")
       write_file("_redirects", content)
@@ -468,25 +468,25 @@ class StaticGenerator
       "RewriteEngine On",
       ""
     ]
-    
+
     redirects.each do |redirect|
       begin
         regex = Regexp.new(redirect.regex)
         target = redirect.replacement
         status = redirect.permanent? ? "R=301" : "R=302"
-        
+
         # Convert regex to Apache RewriteRule pattern
         # Apache uses PCRE regex, so we can use the regex directly with some escaping
         pattern = redirect.regex
         # Escape backslashes and dollar signs for Apache
         pattern = pattern.gsub(/\\/, "\\\\").gsub(/\$/, "\\$")
-        
+
         lines << "RewriteRule ^#{pattern}$ #{target} [L,#{status}]"
       rescue => e
         Rails.event.notify("static_generator.invalid_redirect_regex", level: "warn", component: "StaticGenerator", regex: redirect.regex, error: e.message, platform: "Apache")
       end
     end
-    
+
     if lines.length > 4
       content = lines.join("\n")
       write_file(".htaccess", content)
@@ -501,7 +501,7 @@ class StaticGenerator
       write_file("redirects.js", "// No redirects configured\n")
       return
     end
-    
+
     js_rules = redirects.map do |redirect|
       {
         regex: redirect.regex,
@@ -509,13 +509,13 @@ class StaticGenerator
         permanent: redirect.permanent?
       }
     end
-    
+
     js_content = <<~JAVASCRIPT
       // Auto-generated redirect rules for static sites
       (function() {
         var redirects = #{js_rules.to_json};
         var currentPath = window.location.pathname;
-        
+      #{'  '}
         for (var i = 0; i < redirects.length; i++) {
           var rule = redirects[i];
           try {
@@ -538,7 +538,7 @@ class StaticGenerator
         }
       })();
     JAVASCRIPT
-    
+
     write_file("redirects.js", js_content)
     Rails.event.notify("static_generator.js_redirects_generated", level: "info", component: "StaticGenerator")
   end
@@ -784,8 +784,8 @@ class StaticGenerator
       # Optimize for index pages: max width 1200px, quality 85%
       # This balances quality and file size for faster page loads
       variant = blob.variant(
-        resize_to_limit: [1200, 1200],
-        saver: { 
+        resize_to_limit: [ 1200, 1200 ],
+        saver: {
           quality: 85,
           strip: true  # Remove metadata to reduce file size
         }
@@ -798,7 +798,7 @@ class StaticGenerator
 
       static_path = "/uploads/#{filename}"
       @exported_blobs[blob.id] = static_path
-      
+
       # Log compression info
       original_size = blob.byte_size
       compressed_size = File.size(output_path)
