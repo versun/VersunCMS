@@ -856,7 +856,29 @@ class StaticGenerator
       "<action-text-attachment#{attrs}url='#{new_url}'"
     end
 
+    # Add lazy loading to all images for better performance
+    html = add_lazy_loading_to_images(html)
+
     html
+  end
+
+  # Add loading="lazy" attribute to img tags that don't already have it
+  def add_lazy_loading_to_images(html)
+    return html if html.blank?
+
+    # Match img tags and add loading="lazy" if not present
+    html.gsub(/<img\s+([^>]*?)(\s*\/?>)/i) do |match|
+      attrs = $1
+      closing = $2
+
+      # Skip if already has loading attribute
+      if attrs.include?("loading=")
+        match
+      else
+        # Add loading="lazy" and decoding="async" for better performance
+        "<img #{attrs} loading=\"lazy\" decoding=\"async\"#{closing}"
+      end
+    end
   end
 
   # Replace ActiveStorage URLs in RSS XML with static paths (full URLs)
