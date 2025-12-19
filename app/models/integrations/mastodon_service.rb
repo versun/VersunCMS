@@ -150,12 +150,19 @@ module Integrations
 
           { comments: comments, rate_limit: rate_limit_info }
         else
-          Rails.logger.error "Failed to fetch Mastodon comments: #{response.code} - #{response.body}"
+          Rails.event.notify "mastodon_service.fetch_comments_failed",
+            level: "error",
+            component: "MastodonService",
+            response_code: response.code,
+            response_body: response.body[0..200]
           { comments: [], rate_limit: rate_limit_info }
         end
       rescue => e
-        Rails.logger.error "Error fetching Mastodon comments: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "mastodon_service.fetch_comments_error",
+          level: "error",
+          component: "MastodonService",
+          error_message: e.message,
+          backtrace: e.backtrace.join("\n")
         default_response
       end
     end
@@ -170,7 +177,10 @@ module Integrations
     # end
 
     def upload_image(attachable)
-      Rails.logger.info "Mastodon: upload_image called with attachable: #{attachable.class}"
+      Rails.event.notify "mastodon_service.upload_image_started",
+        level: "info",
+        component: "MastodonService",
+        attachable_type: attachable.class.to_s
       return nil unless attachable
 
       begin
@@ -180,15 +190,24 @@ module Integrations
 
         # Handle ActiveStorage::Blob
         if attachable.is_a?(ActiveStorage::Blob) && attachable.content_type&.start_with?("image/")
-          Rails.logger.info "Mastodon: Processing ActiveStorage::Blob"
+          Rails.event.notify "mastodon_service.processing_blob",
+            level: "info",
+            component: "MastodonService",
+            storage_type: "ActiveStorage::Blob"
           image_data = attachable.download
           filename = attachable.filename.to_s if attachable.respond_to?(:filename)
           content_type = attachable.content_type
         # Handle RemoteImage
         elsif attachable.class.name == "ActionText::Attachables::RemoteImage"
-          Rails.logger.info "Mastodon: Processing RemoteImage"
+          Rails.event.notify "mastodon_service.processing_remote_image",
+            level: "info",
+            component: "MastodonService",
+            storage_type: "RemoteImage"
           image_url = attachable.try(:url)
-          Rails.logger.info "Mastodon: RemoteImage URL = #{image_url}"
+          Rails.event.notify "mastodon_service.remote_image_url",
+            level: "info",
+            component: "MastodonService",
+            image_url: image_url
 
           if image_url.present?
             # Download remote image
@@ -199,15 +218,24 @@ module Integrations
               # Ensure we have a valid filename
               filename = "image.jpg" if filename.blank? || filename == "/"
             rescue URI::InvalidURIError => e
-              Rails.logger.warn "Mastodon: Invalid URL for filename extraction: #{image_url}, using default"
+              Rails.event.notify "mastodon_service.invalid_url",
+                level: "warn",
+                component: "MastodonService",
+                image_url: image_url,
+                error_message: e.message
               filename = "image.jpg"
             end
           else
-            Rails.logger.warn "Mastodon: RemoteImage has no URL, skipping"
+            Rails.event.notify "mastodon_service.remote_image_no_url",
+              level: "warn",
+              component: "MastodonService"
             return nil
           end
         else
-          Rails.logger.warn "Mastodon: Unknown attachable type: #{attachable.class}"
+          Rails.event.notify "mastodon_service.unknown_attachable_type",
+            level: "warn",
+            component: "MastodonService",
+            attachable_type: attachable.class.to_s
           return nil
         end
 
@@ -241,15 +269,25 @@ module Integrations
 
         if response.is_a?(Net::HTTPSuccess)
           media_data = JSON.parse(response.body)
-          Rails.logger.info "Mastodon: Successfully uploaded image to Mastodon"
+          Rails.event.notify "mastodon_service.image_uploaded",
+            level: "info",
+            component: "MastodonService",
+            media_id: media_data["id"]
           media_data["id"]
         else
-          Rails.logger.error "Failed to upload image to Mastodon: #{response.code} - #{response.body}"
+          Rails.event.notify "mastodon_service.image_upload_failed",
+            level: "error",
+            component: "MastodonService",
+            response_code: response.code,
+            response_body: response.body[0..200]
           nil
         end
       rescue => e
-        Rails.logger.error "Error uploading image to Mastodon: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "mastodon_service.image_upload_error",
+          level: "error",
+          component: "MastodonService",
+          error_message: e.message,
+          backtrace: e.backtrace.join("\n")
         nil
       end
     end
@@ -268,7 +306,12 @@ module Integrations
       return unless rate_limit_info[:remaining]
 
       if rate_limit_info[:remaining] < 10
-        Rails.logger.warn "⚠️  Mastodon API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining (resets at #{rate_limit_info[:reset_at]})"
+        Rails.event.notify "mastodon_service.rate_limit_low",
+          level: "warn",
+          component: "MastodonService",
+          remaining: rate_limit_info[:remaining],
+          limit: rate_limit_info[:limit],
+          reset_at: rate_limit_info[:reset_at]
 
         ActivityLog.create!(
           action: "warning",
@@ -277,7 +320,11 @@ module Integrations
           description: "Mastodon API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
         )
       elsif rate_limit_info[:remaining] < 50
-        Rails.logger.info "Mastodon API rate limit: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+        Rails.event.notify "mastodon_service.rate_limit_status",
+          level: "info",
+          component: "MastodonService",
+          remaining: rate_limit_info[:remaining],
+          limit: rate_limit_info[:limit]
       end
     end
 
@@ -286,7 +333,11 @@ module Integrations
       reset_time = rate_limit_info[:reset_at] || Time.current + 5.minutes
       wait_seconds = [ (reset_time - Time.current).to_i, 0 ].max
 
-      Rails.logger.error "🚫 Mastodon API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
+      Rails.event.notify "mastodon_service.rate_limit_exceeded",
+        level: "error",
+        component: "MastodonService",
+        reset_time: reset_time,
+        wait_seconds: wait_seconds
 
       ActivityLog.create!(
         action: "rate_limited",
@@ -319,7 +370,10 @@ module Integrations
         image_response = fetch_with_redirect(uri)
 
         unless image_response.is_a?(Net::HTTPSuccess)
-          Rails.logger.error "Failed to download remote image: #{image_response.code}"
+          Rails.event.notify "mastodon_service.remote_image_download_failed",
+            level: "error",
+            component: "MastodonService",
+            response_code: image_response.code
           return nil
         end
 
@@ -328,8 +382,11 @@ module Integrations
 
         [ image_data, content_type ]
       rescue => e
-        Rails.logger.error "Error downloading remote image: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "mastodon_service.remote_image_download_error",
+          level: "error",
+          component: "MastodonService",
+          error_message: e.message,
+          backtrace: e.backtrace.join("\n")
         nil
       end
     end
@@ -355,7 +412,10 @@ module Integrations
         if redirect_uri.relative?
           redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response["location"])
         end
-        Rails.logger.info "Mastodon: Following redirect to #{redirect_uri}"
+        Rails.event.notify "mastodon_service.following_redirect",
+          level: "info",
+          component: "MastodonService",
+          redirect_uri: redirect_uri.to_s
         fetch_with_redirect(redirect_uri, limit - 1)
       else
         response

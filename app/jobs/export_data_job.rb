@@ -17,7 +17,10 @@ class ExportDataJob < ApplicationJob
         description: "Data Export Finished:#{download_url}"
       )
 
-      Rails.logger.info "Export completed successfully. File saved to: #{ download_url }"
+      Rails.event.notify "export_data_job.completed",
+        level: "info",
+        component: "ExportDataJob",
+        download_url: download_url
     else
       # 创建ActivityLog记录失败信息
       ActivityLog.create!(
@@ -27,7 +30,10 @@ class ExportDataJob < ApplicationJob
         description: "Data Export Failed:#{exporter.error_message}",
       )
 
-      Rails.logger.error "Export failed: #{exporter.error_message}"
+      Rails.event.notify "export_data_job.failed",
+        level: "error",
+        component: "ExportDataJob",
+        error_message: exporter.error_message
     end
   end
 end

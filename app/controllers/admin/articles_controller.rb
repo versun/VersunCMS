@@ -493,8 +493,16 @@ class Admin::ArticlesController < Admin::BaseController
       rescue => e
         error_msg = "Failed to fetch #{post.platform} comments: #{e.message}"
         errors << error_msg
-        Rails.logger.error error_msg
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify(
+          "admin.articles_controller.fetch_comments_error",
+          level: "error",
+          component: "Admin::ArticlesController",
+          platform: post.platform,
+          message: e.message,
+          backtrace: e.backtrace,
+          article_id: @article.id,
+          article_title: @article.title
+        )
 
         ActivityLog.create!(
           action: "failed",

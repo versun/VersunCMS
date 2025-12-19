@@ -66,7 +66,7 @@ class ImportZip
   private
 
   def extract_zip_file
-    Rails.logger.info "Extracting ZIP file: #{@zip_path}"
+    Rails.event.notify("import_zip.extraction_started", component: "ImportZip", zip_path: @zip_path, level: "info")
     Zip::File.open(@zip_path) do |zip_file|
       zip_file.each do |entry|
         next if entry.directory?
@@ -74,14 +74,14 @@ class ImportZip
         FileUtils.mkdir_p(File.dirname(extract_path))
         begin
           File.open(extract_path, "wb") { |f| f.write(entry.get_input_stream.read) }
-          Rails.logger.info "Extracted: #{entry.name} -> #{extract_path}"
+          Rails.event.notify("import_zip.file_extracted", component: "ImportZip", entry_name: entry.name, extract_path: extract_path, level: "info")
         rescue => e
-          Rails.logger.error "Failed to extract #{entry.name}: #{e.message}"
+          Rails.event.notify("import_zip.extraction_failed", component: "ImportZip", entry_name: entry.name, error: e.message, level: "error")
           raise
         end
       end
     end
-    Rails.logger.info "ZIP file extracted to: #{@import_dir}"
+    Rails.event.notify("import_zip.extraction_completed", component: "ImportZip", import_dir: @import_dir, level: "info")
   end
 
   # Find the directory containing CSV files
@@ -99,12 +99,12 @@ class ImportZip
     csv_path = File.join(base_dir, "tags.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing tags from: #{csv_path}"
+    Rails.event.notify("import_zip.tags_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       if Tag.exists?(slug: row["slug"])
-        Rails.logger.info "Tag with slug '#{row['slug']}' already exists, skipping..."
+        Rails.event.notify("import_zip.tag_skipped", component: "ImportZip", slug: row["slug"], reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -116,7 +116,7 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Tags import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.tags_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_articles
@@ -124,12 +124,12 @@ class ImportZip
     csv_path = File.join(base_dir, "articles.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing articles from: #{csv_path}"
+    Rails.event.notify("import_zip.articles_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       if Article.exists?(slug: row["slug"])
-        Rails.logger.info "Article with slug '#{row['slug']}' already exists, skipping..."
+        Rails.event.notify("import_zip.article_skipped", component: "ImportZip", slug: row["slug"], reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -149,7 +149,7 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Articles import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.articles_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_article_tags
@@ -157,21 +157,21 @@ class ImportZip
     csv_path = File.join(base_dir, "article_tags.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing article_tags from: #{csv_path}"
+    Rails.event.notify("import_zip.article_tags_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       # 使用 article_slug 查找 article
       article_slug = row["article_slug"]
       unless article_slug.present?
-        Rails.logger.warn "article_slug not provided, skipping article_tag..."
+        Rails.event.notify("import_zip.article_tag_skipped", component: "ImportZip", reason: "article_slug_missing", level: "warn")
         skipped_count += 1
         next
       end
 
       article = Article.find_by(slug: article_slug)
       unless article
-        Rails.logger.info "Article with slug '#{article_slug}' does not exist, skipping article_tag..."
+        Rails.event.notify("import_zip.article_tag_skipped", component: "ImportZip", article_slug: article_slug, reason: "article_not_found", level: "info")
         skipped_count += 1
         next
       end
@@ -179,21 +179,21 @@ class ImportZip
       # 使用 tag_slug 查找 tag
       tag_slug = row["tag_slug"]
       unless tag_slug.present?
-        Rails.logger.warn "tag_slug not provided, skipping article_tag..."
+        Rails.event.notify("import_zip.article_tag_skipped", component: "ImportZip", reason: "tag_slug_missing", level: "warn")
         skipped_count += 1
         next
       end
 
       tag = Tag.find_by(slug: tag_slug)
       unless tag
-        Rails.logger.info "Tag with slug '#{tag_slug}' does not exist, skipping article_tag..."
+        Rails.event.notify("import_zip.article_tag_skipped", component: "ImportZip", tag_slug: tag_slug, reason: "tag_not_found", level: "info")
         skipped_count += 1
         next
       end
 
       # 检查是否已存在相同的关联
       if ArticleTag.exists?(article_id: article.id, tag_id: tag.id)
-        Rails.logger.info "ArticleTag for article_id '#{article.id}' and tag_id '#{tag.id}' already exists, skipping..."
+        Rails.event.notify("import_zip.article_tag_skipped", component: "ImportZip", article_id: article.id, tag_id: tag.id, reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -206,7 +206,7 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Article_tags import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.article_tags_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_crossposts
@@ -214,7 +214,7 @@ class ImportZip
     csv_path = File.join(base_dir, "crossposts.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing crossposts from: #{csv_path}"
+    Rails.event.notify("import_zip.crossposts_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       Crosspost.update(
@@ -234,14 +234,14 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Crossposts import completed: #{imported_count} imported"
+    Rails.event.notify("import_zip.crossposts_import_completed", component: "ImportZip", imported_count: imported_count, level: "info")
   end
 
   def import_listmonks
     base_dir = find_csv_base_dir
     csv_path = File.join(base_dir, "listmonks.csv")
     return unless File.exist?(csv_path)
-    Rails.logger.info "Importing listmonks from: #{csv_path}"
+    Rails.event.notify("import_zip.listmonks_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       Listmonk.find_or_create_by(
@@ -256,19 +256,19 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Listmonks import completed: #{imported_count} imported"
+    Rails.event.notify("import_zip.listmonks_import_completed", component: "ImportZip", imported_count: imported_count, level: "info")
   end
 
   def import_pages
     base_dir = find_csv_base_dir
     csv_path = File.join(base_dir, "pages.csv")
     return unless File.exist?(csv_path)
-    Rails.logger.info "Importing pages from: #{csv_path}"
+    Rails.event.notify("import_zip.pages_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       if Page.exists?(slug: row["slug"])
-        Rails.logger.info "Page with slug '#{row['slug']}' already exists, skipping..."
+        Rails.event.notify("import_zip.page_skipped", component: "ImportZip", slug: row["slug"], reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -288,14 +288,14 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Pages import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.pages_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_settings
     base_dir = find_csv_base_dir
     csv_path = File.join(base_dir, "settings.csv")
     return unless File.exist?(csv_path)
-    Rails.logger.info "Importing settings from: #{csv_path}"
+    Rails.event.notify("import_zip.settings_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     # 只允许有一个 Setting
     existing_setting = Setting.first
@@ -345,7 +345,7 @@ class ImportZip
     # 富文本 footer
     footer_csv_path = File.join(base_dir, "setting_footers.csv")
     if File.exist?(footer_csv_path)
-      Rails.logger.info "Importing setting footer content..."
+      Rails.event.notify("import_zip.setting_footer_import_started", component: "ImportZip", footer_csv_path: footer_csv_path, level: "info")
       CSV.foreach(footer_csv_path, headers: true) do |row|
         setting = Setting.first
         content = row["content"].presence || ""
@@ -353,13 +353,13 @@ class ImportZip
           processed_content = process_setting_footer_content(content, setting.id, "setting")
           processed_content = fix_content_sgid_references(processed_content)
           setting.update!(footer: processed_content)
-          Rails.logger.info "Updated setting footer content"
+          Rails.event.notify("import_zip.setting_footer_updated", component: "ImportZip", setting_id: setting.id, level: "info")
         end
       end
     end
-    Rails.logger.info "Settings import completed: #{imported_count} imported"
+    Rails.event.notify("import_zip.settings_import_completed", component: "ImportZip", imported_count: imported_count, level: "info")
   rescue StandardError => e
-    Rails.logger.error "Error importing settings: #{e.message}"
+    Rails.event.notify("import_zip.settings_import_failed", component: "ImportZip", error: e.message, level: "error")
     raise
   end
 
@@ -368,28 +368,28 @@ class ImportZip
     csv_path = File.join(base_dir, "social_media_posts.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing social_media_posts from: #{csv_path}"
+    Rails.event.notify("import_zip.social_media_posts_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       # 使用 article_slug 查找 article
       article_slug = row["article_slug"]
       unless article_slug.present?
-        Rails.logger.warn "article_slug not provided, skipping social_media_post..."
+        Rails.event.notify("import_zip.social_media_post_skipped", component: "ImportZip", reason: "article_slug_missing", level: "warn")
         skipped_count += 1
         next
       end
 
       article = Article.find_by(slug: article_slug)
       unless article
-        Rails.logger.info "Article with slug '#{article_slug}' does not exist, skipping social_media_post..."
+        Rails.event.notify("import_zip.social_media_post_skipped", component: "ImportZip", article_slug: article_slug, reason: "article_not_found", level: "info")
         skipped_count += 1
         next
       end
 
       # 检查是否已存在相同的记录（根据 article_id 和 platform）
       if SocialMediaPost.exists?(article_id: article.id, platform: row["platform"])
-        Rails.logger.info "SocialMediaPost for article_id '#{article.id}' and platform '#{row['platform']}' already exists, skipping..."
+        Rails.event.notify("import_zip.social_media_post_skipped", component: "ImportZip", article_id: article.id, platform: row["platform"], reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -403,7 +403,7 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Social_media_posts import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.social_media_posts_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_comments
@@ -411,7 +411,7 @@ class ImportZip
     csv_path = File.join(base_dir, "comments.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing comments from: #{csv_path}"
+    Rails.event.notify("import_zip.comments_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
 
@@ -423,14 +423,14 @@ class ImportZip
       # 使用 article_slug 查找 article
       article_slug = row["article_slug"]
       unless article_slug.present?
-        Rails.logger.warn "article_slug not provided, skipping comment..."
+        Rails.event.notify("import_zip.comment_skipped", component: "ImportZip", reason: "article_slug_missing", level: "warn")
         skipped_count += 1
         next
       end
 
       article = Article.find_by(slug: article_slug)
       unless article
-        Rails.logger.info "Article with slug '#{article_slug}' does not exist, skipping comment..."
+        Rails.event.notify("import_zip.comment_skipped", component: "ImportZip", article_slug: article_slug, reason: "article_not_found", level: "info")
         skipped_count += 1
         next
       end
@@ -442,7 +442,7 @@ class ImportZip
       if row["platform"].present? && row["external_id"].present?
         existing_comment = Comment.find_by(article_id: article.id, platform: row["platform"], external_id: row["external_id"])
         if existing_comment
-          Rails.logger.info "Comment for article_id '#{article.id}', platform '#{row['platform']}', external_id '#{row['external_id']}' already exists, skipping..."
+          Rails.event.notify("import_zip.comment_skipped", component: "ImportZip", article_id: article.id, platform: row["platform"], external_id: row["external_id"], reason: "already_exists", level: "info")
           skipped_count += 1
           # 仍然记录到映射中，以便后续处理 parent_id
           comment_id_map[row["id"].to_i] = existing_comment.id if row["id"].present?
@@ -480,7 +480,7 @@ class ImportZip
         end
 
         if existing_comment
-          Rails.logger.info "Local comment for article_id '#{article.id}', author '#{row['author_name']}' already exists, skipping..."
+          Rails.event.notify("import_zip.comment_skipped", component: "ImportZip", article_id: article.id, author_name: row["author_name"], reason: "already_exists", level: "info")
           skipped_count += 1
           # 仍然记录到映射中，以便后续处理 parent_id
           comment_id_map[row["id"].to_i] = existing_comment.id if row["id"].present?
@@ -525,12 +525,12 @@ class ImportZip
         comment = Comment.find_by(id: new_comment_id)
         if comment && comment.parent_id.nil?
           comment.update(parent_id: new_parent_id)
-          Rails.logger.info "Updated parent_id for comment #{new_comment_id}"
+          Rails.event.notify("import_zip.comment_parent_updated", component: "ImportZip", comment_id: new_comment_id, parent_id: new_parent_id, level: "info")
         end
       end
     end
 
-    Rails.logger.info "Comments import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.comments_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_static_files
@@ -538,19 +538,19 @@ class ImportZip
     csv_path = File.join(base_dir, "static_files.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing static_files from: #{csv_path}"
+    Rails.event.notify("import_zip.static_files_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       if StaticFile.exists?(filename: row["filename"])
-        Rails.logger.info "StaticFile with filename '#{row['filename']}' already exists, skipping..."
+        Rails.event.notify("import_zip.static_file_skipped", component: "ImportZip", filename: row["filename"], reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
 
       # 必须要有 blob_filename 才能导入
       unless row["blob_filename"].present?
-        Rails.logger.warn "Static file row #{row['id']} has no blob_filename, skipping..."
+        Rails.event.notify("import_zip.static_file_skipped", component: "ImportZip", row_id: row["id"], reason: "blob_filename_missing", level: "warn")
         skipped_count += 1
         next
       end
@@ -560,7 +560,7 @@ class ImportZip
       file_path = File.join(static_files_dir, "#{row['id']}_#{row['blob_filename']}")
 
       unless File.exist?(file_path) && safe_file_path?(file_path)
-        Rails.logger.warn "Static file not found: #{file_path} for id #{row['id']}, blob_filename: #{row['blob_filename']}"
+        Rails.event.notify("import_zip.static_file_skipped", component: "ImportZip", file_path: file_path, row_id: row["id"], blob_filename: row["blob_filename"], reason: "file_not_found", level: "warn")
         skipped_count += 1
         next
       end
@@ -582,10 +582,10 @@ class ImportZip
       )
 
       static_file.save!
-      Rails.logger.info "Imported static file: #{row['filename']} from #{row['blob_filename']}"
+      Rails.event.notify("import_zip.static_file_imported", component: "ImportZip", filename: row["filename"], blob_filename: row["blob_filename"], level: "info")
       imported_count += 1
     end
-    Rails.logger.info "Static_files import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.static_files_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_redirects
@@ -593,13 +593,13 @@ class ImportZip
     csv_path = File.join(base_dir, "redirects.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing redirects from: #{csv_path}"
+    Rails.event.notify("import_zip.redirects_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       # 检查是否已存在相同的 regex
       if Redirect.exists?(regex: row["regex"])
-        Rails.logger.info "Redirect with regex '#{row['regex']}' already exists, skipping..."
+        Rails.event.notify("import_zip.redirect_skipped", component: "ImportZip", regex: row["regex"], reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -614,7 +614,7 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Redirects import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.redirects_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_newsletter_settings
@@ -622,7 +622,7 @@ class ImportZip
     csv_path = File.join(base_dir, "newsletter_settings.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing newsletter_settings from: #{csv_path}"
+    Rails.event.notify("import_zip.newsletter_settings_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     # 只允许有一个 NewsletterSetting
     existing_setting = NewsletterSetting.first
@@ -701,14 +701,14 @@ class ImportZip
         break # 只允许有一个 NewsletterSetting，处理完第一行后退出循环
       end
     end
-    Rails.logger.info "Newsletter_settings import completed: #{imported_count} imported"
+    Rails.event.notify("import_zip.newsletter_settings_import_completed", component: "ImportZip", imported_count: imported_count, level: "info")
   end
 
   def process_newsletter_setting_footer_content(content, record_id = nil, record_type = nil)
     return content if content.blank?
     record_id ||= "newsletter_setting"
     record_type ||= "newsletter_setting"
-    Rails.logger.info "process_newsletter_setting_footer_content..."
+    Rails.event.notify("import_zip.newsletter_footer_processing", component: "ImportZip", record_id: record_id, level: "info")
     doc = Nokogiri::HTML.fragment(content)
     doc.css("action-text-attachment").each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
     doc.css("figure[data-trix-attachment]").each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
@@ -721,12 +721,12 @@ class ImportZip
     csv_path = File.join(base_dir, "subscribers.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing subscribers from: #{csv_path}"
+    Rails.event.notify("import_zip.subscribers_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       if Subscriber.exists?(email: row["email"])
-        Rails.logger.info "Subscriber with email '#{row['email']}' already exists, skipping..."
+        Rails.event.notify("import_zip.subscriber_skipped", component: "ImportZip", email: row["email"], reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -742,7 +742,7 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Subscribers import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.subscribers_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   def import_subscriber_tags
@@ -750,21 +750,21 @@ class ImportZip
     csv_path = File.join(base_dir, "subscriber_tags.csv")
     return unless File.exist?(csv_path)
 
-    Rails.logger.info "Importing subscriber_tags from: #{csv_path}"
+    Rails.event.notify("import_zip.subscriber_tags_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
     skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
       # 使用 subscriber_email 查找 subscriber
       subscriber_email = row["subscriber_email"]
       unless subscriber_email.present?
-        Rails.logger.warn "subscriber_email not provided, skipping subscriber_tag..."
+        Rails.event.notify("import_zip.subscriber_tag_skipped", component: "ImportZip", reason: "subscriber_email_missing", level: "warn")
         skipped_count += 1
         next
       end
 
       subscriber = Subscriber.find_by(email: subscriber_email)
       unless subscriber
-        Rails.logger.info "Subscriber with email '#{subscriber_email}' does not exist, skipping subscriber_tag..."
+        Rails.event.notify("import_zip.subscriber_tag_skipped", component: "ImportZip", subscriber_email: subscriber_email, reason: "subscriber_not_found", level: "info")
         skipped_count += 1
         next
       end
@@ -772,21 +772,21 @@ class ImportZip
       # 使用 tag_slug 查找 tag
       tag_slug = row["tag_slug"]
       unless tag_slug.present?
-        Rails.logger.warn "tag_slug not provided, skipping subscriber_tag..."
+        Rails.event.notify("import_zip.subscriber_tag_skipped", component: "ImportZip", reason: "tag_slug_missing", level: "warn")
         skipped_count += 1
         next
       end
 
       tag = Tag.find_by(slug: tag_slug)
       unless tag
-        Rails.logger.info "Tag with slug '#{tag_slug}' does not exist, skipping subscriber_tag..."
+        Rails.event.notify("import_zip.subscriber_tag_skipped", component: "ImportZip", tag_slug: tag_slug, reason: "tag_not_found", level: "info")
         skipped_count += 1
         next
       end
 
       # 检查是否已存在相同的关联
       if SubscriberTag.exists?(subscriber_id: subscriber.id, tag_id: tag.id)
-        Rails.logger.info "SubscriberTag for subscriber_id '#{subscriber.id}' and tag_id '#{tag.id}' already exists, skipping..."
+        Rails.event.notify("import_zip.subscriber_tag_skipped", component: "ImportZip", subscriber_id: subscriber.id, tag_id: tag.id, reason: "already_exists", level: "info")
         skipped_count += 1
         next
       end
@@ -799,7 +799,7 @@ class ImportZip
       )
       imported_count += 1
     end
-    Rails.logger.info "Subscriber_tags import completed: #{imported_count} imported, #{skipped_count} skipped"
+    Rails.event.notify("import_zip.subscriber_tags_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
   end
 
   # ----- 内容和附件处理通用工具方法 -----
@@ -807,7 +807,7 @@ class ImportZip
     return content if content.blank?
     record_id ||= "unknown"
     record_type ||= "content"
-    Rails.logger.info "process_imported_content called with record_id: #{record_id}, record_type: #{record_type}"
+    Rails.event.notify("import_zip.content_processing", component: "ImportZip", record_id: record_id, record_type: record_type, level: "info")
     doc = Nokogiri::HTML.fragment(content)
 
     doc.css("action-text-attachment").each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
@@ -837,7 +837,7 @@ class ImportZip
           update_attachment_element_with_blob(attachment, blob)
         end
       else
-        Rails.logger.warn "Attachment file not found: #{attachment_path}"
+        Rails.event.notify("import_zip.attachment_not_found", component: "ImportZip", attachment_path: attachment_path, level: "warn")
       end
     elsif is_active_storage_url?(original_url)
       blob = extract_blob_from_url(original_url)
@@ -870,7 +870,7 @@ class ImportZip
           update_img_src_in_node(figure, attachment_data["url"])
         end
       else
-        Rails.logger.warn "Figure attachment file not found: #{attachment_path}"
+        Rails.event.notify("import_zip.figure_attachment_not_found", component: "ImportZip", attachment_path: attachment_path, level: "warn")
       end
     elsif is_active_storage_url?(original_url)
       blob = extract_blob_from_url(original_url)
@@ -906,7 +906,7 @@ class ImportZip
           img["src"] = new_url
         end
       else
-        Rails.logger.warn "Image file not found: #{attachment_path}"
+        Rails.event.notify("import_zip.image_not_found", component: "ImportZip", attachment_path: attachment_path, level: "warn")
       end
     elsif is_active_storage_url?(original_url)
       blob = extract_blob_from_url(original_url)
@@ -922,7 +922,7 @@ class ImportZip
     return content if content.blank?
     record_id ||= "setting"
     record_type ||= "setting"
-    Rails.logger.info "process_setting_footer_content..."
+    Rails.event.notify("import_zip.setting_footer_processing", component: "ImportZip", record_id: record_id, level: "info")
     doc = Nokogiri::HTML.fragment(content)
     doc.css("action-text-attachment").each { |a| safe_process { process_imported_attachment_element(a, record_id, record_type) } }
     doc.css("figure[data-trix-attachment]").each { |f| safe_process { process_imported_figure_element(f, record_id, record_type) } }
@@ -952,7 +952,7 @@ class ImportZip
           attachment["url"] = correct_url
         end
       rescue => e
-        Rails.logger.error "Error fixing attachment in content: #{e.message}"
+        Rails.event.notify("import_zip.attachment_fix_failed", component: "ImportZip", error: e.message, level: "error")
       end
     end
 
@@ -968,13 +968,13 @@ class ImportZip
         correct_sgid = blob.to_sgid.to_s
         figure["sgid"] = correct_sgid if current_sgid != correct_sgid
       rescue => e
-        Rails.logger.error "Error fixing figure in content: #{e.message}"
+        Rails.event.notify("import_zip.figure_fix_failed", component: "ImportZip", error: e.message, level: "error")
       end
     end
 
     doc.to_html
   rescue => e
-    Rails.logger.error "Error fixing content SGID references: #{e.message}"
+    Rails.event.notify("import_zip.sgid_fix_failed", component: "ImportZip", error: e.message, level: "error")
     content # 返回原始内容, 如果异常
   end
 
@@ -983,7 +983,7 @@ class ImportZip
     return nil if json_string.blank?
     JSON.parse(json_string)
   rescue JSON::ParserError
-    Rails.logger.warn "Invalid JSON format, using empty hash"
+    Rails.event.notify("import_zip.json_parse_failed", component: "ImportZip", reason: "invalid_format", level: "warn")
     {}
   end
 
@@ -998,7 +998,7 @@ class ImportZip
     signed_id = match[1]
     ActiveStorage::Blob.find_signed(signed_id)
   rescue => e
-    Rails.logger.error "Failed to find blob for signed_id #{signed_id}: #{e.message}"
+    Rails.event.notify("import_zip.blob_extraction_failed", component: "ImportZip", signed_id: signed_id, error: e.message, level: "error")
     nil
   end
 
@@ -1038,6 +1038,6 @@ class ImportZip
   def safe_process
     yield
   rescue => e
-    Rails.logger.error "Safe process exception: #{e.message}"
+    Rails.event.notify("import_zip.safe_process_exception", component: "ImportZip", error: e.message, level: "error")
   end
 end

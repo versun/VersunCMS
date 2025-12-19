@@ -31,8 +31,11 @@ module Integrations
         log_activity(:info, "成功推送到 GitHub: #{@settings.github_repo_url}")
         success("成功推送静态文件到 GitHub 仓库")
       rescue => e
-        Rails.logger.error "[GithubDeployService] Error: #{e.message}"
-        Rails.logger.error e.backtrace.first(10).join("\n")
+        Rails.event.notify "github_deploy_service.deploy_error",
+          level: "error",
+          component: "GithubDeployService",
+          error_message: e.message,
+          backtrace: e.backtrace.first(10).join("\n")
         log_activity(:error, "GitHub 推送失败: #{e.message}")
         failure("推送到 GitHub 失败: #{e.message}")
       ensure
@@ -103,7 +106,11 @@ module Integrations
         copied += 1
       end
 
-      Rails.logger.info "[GithubDeployService] Copied #{copied} items from #{source_dir}"
+      Rails.event.notify "github_deploy_service.files_copied",
+        level: "info",
+        component: "GithubDeployService",
+        copied_items: copied,
+        source_dir: source_dir.to_s
     end
 
     def commit_and_push
@@ -113,7 +120,9 @@ module Integrations
         # Skip if no changes
         output, = git("status --porcelain")
         if output.strip.empty?
-          Rails.logger.info "[GithubDeployService] No changes to commit"
+          Rails.event.notify "github_deploy_service.no_changes",
+            level: "info",
+            component: "GithubDeployService"
           return
         end
 
@@ -133,7 +142,10 @@ module Integrations
           raise "推送失败: #{mask_token(output)}" unless status.success?
         end
 
-        Rails.logger.info "[GithubDeployService] Pushed to #{branch}"
+        Rails.event.notify "github_deploy_service.pushed",
+          level: "info",
+          component: "GithubDeployService",
+          branch: branch
       end
     end
 
@@ -153,7 +165,10 @@ module Integrations
 
     def git(args)
       cmd = "git #{args} 2>&1"
-      Rails.logger.debug "[GithubDeployService] #{mask_token(cmd)}"
+      Rails.event.notify "github_deploy_service.git_command",
+        level: "debug",
+        component: "GithubDeployService",
+        command: mask_token(cmd)
       output, status = Open3.capture2e(cmd)
       [ output, status ]
     end

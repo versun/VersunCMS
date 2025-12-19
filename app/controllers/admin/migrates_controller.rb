@@ -22,7 +22,13 @@ class Admin::MigratesController < Admin::BaseController
       redirect_to admin_migrates_path, alert: "Unsupported operation type"
     end
   rescue StandardError => e
-    Rails.logger.error "Migrate error: #{e.message}"
+    Rails.event.notify(
+      "admin.migrates_controller.operation_error",
+      level: "error",
+      component: "Admin::MigratesController",
+      operation_type: params[:operation_type],
+      message: e.message
+    )
     redirect_to admin_migrates_path, alert: "An unexpected error occurred: #{e.message}"
   end
 
@@ -91,7 +97,13 @@ class Admin::MigratesController < Admin::BaseController
 
     redirect_to admin_migrates_path, notice: "ZIP Import in progress, please check the logs for details"
   rescue StandardError => e
-    Rails.logger.error "ZIP Import error: #{e.message}"
+    Rails.event.notify(
+      "admin.migrates_controller.zip_import_error",
+      level: "error",
+      component: "Admin::MigratesController",
+      message: e.message,
+      filename: uploaded_file&.original_filename
+    )
     redirect_to admin_migrates_path, alert: "ZIP import failed: #{e.message}"
   ensure
     # 清理临时文件将在job完成后进行

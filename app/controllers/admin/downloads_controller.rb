@@ -23,7 +23,13 @@ class Admin::DownloadsController < Admin::BaseController
               type: "application/octet-stream",
               disposition: "attachment"
   rescue => e
-    Rails.logger.error "Download error: #{e.message}"
+    Rails.event.notify(
+      "admin.downloads_controller.download_error",
+      level: "error",
+      component: "Admin::DownloadsController",
+      message: e.message,
+      filename: params[:filename]
+    )
     flash[:alert] = "下载失败: #{e.message}"
     redirect_to admin_exports_path
   end

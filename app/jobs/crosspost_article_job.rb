@@ -5,7 +5,12 @@ class CrosspostArticleJob < ApplicationJob
   retry_on StandardError, wait: :exponentially_longer, attempts: 5 do |job, error|
     # 对于 Internet Archive 的速率限制，使用更长的等待时间
     if job.arguments[1] == "internet_archive" && error.message.include?("rate limit")
-      Rails.logger.warn "Internet Archive rate limit hit, will retry with exponential backoff"
+      Rails.event.notify "crosspost_article_job.rate_limit_hit",
+        level: "warn",
+        component: "CrosspostArticleJob",
+        platform: "internet_archive",
+        article_id: job.arguments[0],
+        error_message: error.message
     end
   end
 

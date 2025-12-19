@@ -26,3 +26,5 @@
     - [ ] 图片生成描述 alt text
     - [ ] 智能搜索
 - [ ] 文章不同语言切换，但共享一个comment
+- [ ] 评论支持markdown格式
+- [ ] internet archive功能单独出来，使用archive.md，而不是internet archive

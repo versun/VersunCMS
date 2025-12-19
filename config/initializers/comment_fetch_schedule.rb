@@ -5,10 +5,16 @@ Rails.application.config.after_initialize do
   if Crosspost.table_exists?
     begin
       ScheduledFetchSocialCommentsJob.update_schedule
-      Rails.logger.info "Comment fetch schedule initialized on application startup"
+      Rails.event.notify "comment_fetch.schedule.initialized",
+        level: "info",
+        component: "comment_fetch_schedule"
     rescue => e
-      Rails.logger.error "Failed to initialize comment fetch schedule on startup: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
+      Rails.event.notify "comment_fetch.schedule.initialization_failed",
+        level: "error",
+        component: "comment_fetch_schedule",
+        error_message: e.message,
+        error_class: e.class.name,
+        backtrace: e.backtrace.join("\n")
     end
   end
 end

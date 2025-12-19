@@ -184,7 +184,7 @@ class Article < ApplicationRecord
   end
 
   def schedule_publication
-    Rails.logger.info "Scheduling publication for article #{id} at #{scheduled_at}"
+    Rails.event.notify("article.publication_scheduled", level: "info", component: "Article", article_id: id, scheduled_at: scheduled_at)
     PublishScheduledArticlesJob.schedule_at(self)
   end
 
@@ -193,16 +193,16 @@ class Article < ApplicationRecord
 
     %w[mastodon twitter bluesky internet_archive].each do |platform|
       should_post = should_crosspost_to?(platform)
-      Rails.logger.info "Crosspost check for #{platform}: should_post=#{should_post}"
+      Rails.event.notify("article.crosspost_check", level: "info", component: "Article", article_id: id, platform: platform, should_post: should_post)
       CrosspostArticleJob.perform_later(id, platform) if should_post
     end
   end
 
   def should_send_newsletter?
-    Rails.logger.info "Newsletter check start: article_id=#{id}, status=#{status}, publish?=#{publish?}, send_newsletter=#{send_newsletter.inspect}, resend_newsletter=#{resend_newsletter.inspect}"
+    Rails.event.notify("article.newsletter_check_started", level: "info", component: "Article", article_id: id, status: status, publish: publish?, send_newsletter: send_newsletter.inspect, resend_newsletter: resend_newsletter.inspect)
 
     unless publish?
-      Rails.logger.info "Newsletter check: article is not published, skipping"
+      Rails.event.notify("article.newsletter_check_skipped", level: "info", component: "Article", article_id: id, reason: "not_published")
       return false
     end
 
@@ -211,13 +211,13 @@ class Article < ApplicationRecord
     configured = newsletter_setting.configured?
     missing_fields = newsletter_setting.missing_config_fields
 
-    Rails.logger.info "Newsletter setting: enabled=#{enabled}, configured=#{configured}, provider=#{newsletter_setting.provider}"
+    Rails.event.notify("article.newsletter_setting_checked", level: "info", component: "Article", article_id: id, enabled: enabled, configured: configured, provider: newsletter_setting.provider)
     if missing_fields.any?
-      Rails.logger.warn "Newsletter missing required fields: #{missing_fields.join(', ')}. Please configure these in Newsletter Settings."
+      Rails.event.notify("article.newsletter_missing_fields", level: "warn", component: "Article", article_id: id, missing_fields: missing_fields.join(", "))
     end
 
     unless enabled && configured
-      Rails.logger.info "Newsletter check: newsletter setting not enabled or not configured, skipping"
+      Rails.event.notify("article.newsletter_check_skipped", level: "info", component: "Article", article_id: id, reason: "not_enabled_or_configured")
       return false
     end
 
@@ -232,30 +232,30 @@ class Article < ApplicationRecord
     # 只要勾选了任一复选框即发送
     result = send_checked || resend_checked
 
-    Rails.logger.info "Newsletter check result: should_send=#{result}, send_checked=#{send_checked}, resend_checked=#{resend_checked}, send_newsletter_value=#{send_newsletter.inspect}, resend_newsletter_value=#{resend_newsletter.inspect}"
+    Rails.event.notify("article.newsletter_check_result", level: "info", component: "Article", article_id: id, should_send: result, send_checked: send_checked, resend_checked: resend_checked)
 
     result
   end
 
   def handle_newsletter
-    Rails.logger.info "handle_newsletter called: article_id=#{id}, status=#{status}"
+    Rails.event.notify("article.handle_newsletter_called", level: "info", component: "Article", article_id: id, status: status)
 
     unless should_send_newsletter?
-      Rails.logger.info "handle_newsletter: should_send_newsletter? returned false, skipping"
+      Rails.event.notify("article.newsletter_send_skipped", level: "info", component: "Article", article_id: id, reason: "should_send_newsletter_false")
       return
     end
 
     newsletter_setting = NewsletterSetting.instance
-    Rails.logger.info "handle_newsletter: sending newsletter, provider=#{newsletter_setting.provider}"
+    Rails.event.notify("article.newsletter_sending", level: "info", component: "Article", article_id: id, provider: newsletter_setting.provider)
 
     if newsletter_setting.native?
-      Rails.logger.info "handle_newsletter: enqueuing NativeNewsletterSenderJob for article #{id}"
+      Rails.event.notify("article.newsletter_job_enqueued", level: "info", component: "Article", article_id: id, job: "NativeNewsletterSenderJob")
       NativeNewsletterSenderJob.perform_later(id)
     elsif newsletter_setting.listmonk?
-      Rails.logger.info "handle_newsletter: enqueuing ListmonkSenderJob for article #{id}"
+      Rails.event.notify("article.newsletter_job_enqueued", level: "info", component: "Article", article_id: id, job: "ListmonkSenderJob")
       ListmonkSenderJob.perform_later(id)
     else
-      Rails.logger.warn "handle_newsletter: unknown provider #{newsletter_setting.provider}"
+      Rails.event.notify("article.unknown_newsletter_provider", level: "warn", component: "Article", article_id: id, provider: newsletter_setting.provider)
     end
   end
 

@@ -66,8 +66,13 @@ class CommentsController < ApplicationController
       format.json { render json: { success: false, message: "文章或页面未找到。" }, status: :not_found }
     end
   rescue => e
-    Rails.logger.error "Error creating comment: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
+    Rails.event.notify(
+      "comments_controller.comment_creation_error",
+      level: "error",
+      component: "CommentsController",
+      message: e.message,
+      backtrace: e.backtrace
+    )
     ActivityLog.create!(
       action: "failed",
       target: "comment",

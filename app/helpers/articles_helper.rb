@@ -385,11 +385,20 @@ module ArticlesHelper
           author_avatar: author_avatar
         }
       else
-        Rails.logger.warn "Twitter oEmbed API failed: #{response.code}"
+        Rails.event.notify "articles.twitter_oembed.api_failed",
+          level: "warn",
+          component: "articles_helper",
+          response_code: response.code,
+          tweet_url: tweet_url
         nil
       end
     rescue => e
-      Rails.logger.error "Error fetching Twitter oEmbed: #{e.message}"
+      Rails.event.notify "articles.twitter_oembed.fetch_error",
+        level: "error",
+        component: "articles_helper",
+        error_message: e.message,
+        error_class: e.class.name,
+        tweet_url: tweet_url
       nil
     end
   end
@@ -478,7 +487,12 @@ module ArticlesHelper
         end
       end
     rescue => e
-      Rails.logger.error "Error fetching Twitter user avatar for #{username}: #{e.message}"
+      Rails.event.notify "articles.twitter_avatar.fetch_error",
+        level: "error",
+        component: "articles_helper",
+        username: username,
+        error_message: e.message,
+        error_class: e.class.name
     end
 
     nil

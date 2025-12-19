@@ -71,8 +71,14 @@ namespace :active_storage do
       rescue => e
         error_count += 1
         puts "  ✗ Error: #{e.message}"
-        Rails.logger.error "Failed to mirror blob #{blob.id}: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "active_storage.mirror.blob_failed",
+          level: "error",
+          component: "active_storage_mirror_rake",
+          blob_id: blob.id,
+          filename: blob.filename.to_s,
+          error_message: e.message,
+          error_class: e.class.name,
+          backtrace: e.backtrace.join("\n")
       end
     end
 

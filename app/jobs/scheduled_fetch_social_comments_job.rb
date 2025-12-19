@@ -9,7 +9,10 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
 
     return if enabled_platforms.empty?
 
-    Rails.logger.info "Running scheduled social comments fetch for #{enabled_platforms.count} platform(s)"
+    Rails.event.notify "scheduled_fetch_social_comments_job.started",
+      level: "info",
+      component: "ScheduledFetchSocialCommentsJob",
+      platforms_count: enabled_platforms.count
 
     # Trigger the fetch job
     FetchSocialCommentsJob.perform_later
@@ -42,7 +45,10 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
         when "monthly"
           "every month on the 1st at midnight"  # Monthly on 1st at midnight
         else
-          Rails.logger.error "Invalid schedule option for comment fetch: #{schedule_option}"
+          Rails.event.notify "scheduled_fetch_social_comments_job.invalid_schedule",
+            level: "error",
+            component: "ScheduledFetchSocialCommentsJob",
+            schedule_option: schedule_option
           return
         end
 
@@ -50,12 +56,19 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
         fugit_schedule = Fugit.parse(schedule_string)
 
         unless fugit_schedule
-          Rails.logger.error "Invalid schedule format for comment fetch: #{schedule_string}"
+          Rails.event.notify "scheduled_fetch_social_comments_job.invalid_schedule_format",
+            level: "error",
+            component: "ScheduledFetchSocialCommentsJob",
+            schedule_string: schedule_string
           return
         end
 
         # Use SolidQueue::RecurringTask to create a dynamic (non-static) recurring task
-        Rails.logger.info "Scheduling comment fetch with schedule: #{schedule_option} (#{schedule_string})"
+        Rails.event.notify "scheduled_fetch_social_comments_job.scheduling",
+          level: "info",
+          component: "ScheduledFetchSocialCommentsJob",
+          schedule_option: schedule_option,
+          schedule_string: schedule_string
 
         SolidQueue::RecurringTask.find_or_initialize_by(key: "fetch_social_comments").tap do |task|
           task.class_name = "ScheduledFetchSocialCommentsJob"
@@ -67,13 +80,25 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
           task.save!
         end
 
-        Rails.logger.info "Comment fetch scheduled successfully with schedule: #{schedule_option} (#{schedule_string})"
+        Rails.event.notify "scheduled_fetch_social_comments_job.scheduled",
+          level: "info",
+          component: "ScheduledFetchSocialCommentsJob",
+          schedule_option: schedule_option,
+          schedule_string: schedule_string
       rescue => e
-        Rails.logger.error "Failed to schedule comment fetch: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "scheduled_fetch_social_comments_job.schedule_failed",
+          level: "error",
+          component: "ScheduledFetchSocialCommentsJob",
+          error_message: e.message
+        Rails.event.notify "scheduled_fetch_social_comments_job.error_backtrace",
+          level: "error",
+          component: "ScheduledFetchSocialCommentsJob",
+          backtrace: e.backtrace.join("\n")
       end
     else
-      Rails.logger.info "Comment fetch schedule not created: no platforms configured"
+      Rails.event.notify "scheduled_fetch_social_comments_job.no_platforms",
+        level: "info",
+        component: "ScheduledFetchSocialCommentsJob"
     end
   end
 
@@ -82,9 +107,14 @@ class ScheduledFetchSocialCommentsJob < ApplicationJob
     task = SolidQueue::RecurringTask.find_by(key: "fetch_social_comments", static: false)
     if task
       task.destroy
-      Rails.logger.info "Removed comment fetch scheduled task"
+      Rails.event.notify "scheduled_fetch_social_comments_job.schedule_removed",
+        level: "info",
+        component: "ScheduledFetchSocialCommentsJob"
     end
   rescue => e
-    Rails.logger.error "Failed to remove comment fetch schedule: #{e.message}"
+    Rails.event.notify "scheduled_fetch_social_comments_job.remove_failed",
+      level: "error",
+      component: "ScheduledFetchSocialCommentsJob",
+      error_message: e.message
   end
 end

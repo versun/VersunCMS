@@ -19,7 +19,10 @@ class FetchSocialCommentsJob < ApplicationJob
   end
 
   def fetch_mastodon_comments
-    Rails.logger.info "Starting Mastodon comment fetch"
+    Rails.event.notify "fetch_social_comments_job.mastodon_started",
+      level: "info",
+      component: "FetchSocialCommentsJob",
+      platform: "mastodon"
 
     articles = Article.published
                       .joins(:social_media_posts)
@@ -31,7 +34,10 @@ class FetchSocialCommentsJob < ApplicationJob
   end
 
   def fetch_bluesky_comments
-    Rails.logger.info "Starting Bluesky comment fetch"
+    Rails.event.notify "fetch_social_comments_job.bluesky_started",
+      level: "info",
+      component: "FetchSocialCommentsJob",
+      platform: "bluesky"
 
     articles = Article.published
                       .joins(:social_media_posts)
@@ -62,7 +68,11 @@ class FetchSocialCommentsJob < ApplicationJob
 
           # Stop processing if rate limit is critically low
           if rate_limit[:remaining] && rate_limit[:remaining] < rate_limit_thresholds[:stop]
-            Rails.logger.warn "⚠️  Stopping #{platform} comment fetch: Rate limit too low (#{rate_limit[:remaining]} remaining)"
+            Rails.event.notify "fetch_social_comments_job.rate_limit_stop",
+              level: "warn",
+              component: "FetchSocialCommentsJob",
+              platform: platform,
+              remaining: rate_limit[:remaining]
             ActivityLog.create!(
               action: "paused",
               target: "fetch_comments",
@@ -76,7 +86,12 @@ class FetchSocialCommentsJob < ApplicationJob
           # Add delay if rate limit is getting low
           if rate_limit[:remaining] && rate_limit[:remaining] < rate_limit_thresholds[:delay]
             sleep_time = 2
-            Rails.logger.info "#{platform.capitalize} rate limit low (#{rate_limit[:remaining]}), adding #{sleep_time}s delay"
+            Rails.event.notify "fetch_social_comments_job.rate_limit_delay",
+              level: "info",
+              component: "FetchSocialCommentsJob",
+              platform: platform,
+              remaining: rate_limit[:remaining],
+              sleep_time: sleep_time
             sleep(sleep_time)
           end
         end
@@ -102,18 +117,34 @@ class FetchSocialCommentsJob < ApplicationJob
           if comment.new_record?
             comment.save!
             total_comments += 1
-            Rails.logger.info "Created new #{platform} comment for article #{article.slug}"
+            Rails.event.notify "fetch_social_comments_job.comment_created",
+              level: "info",
+              component: "FetchSocialCommentsJob",
+              platform: platform,
+              article_slug: article.slug
           elsif comment.changed?
             comment.save!
-            Rails.logger.info "Updated #{platform} comment for article #{article.slug}"
+            Rails.event.notify "fetch_social_comments_job.comment_updated",
+              level: "info",
+              component: "FetchSocialCommentsJob",
+              platform: platform,
+              article_slug: article.slug
           end
         end
 
         success_count += 1
       rescue => e
         error_count += 1
-        Rails.logger.error "Failed to fetch #{platform} comments for article #{article.slug}: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "fetch_social_comments_job.article_failed",
+          level: "error",
+          component: "FetchSocialCommentsJob",
+          platform: platform,
+          article_slug: article.slug,
+          error_message: e.message
+        Rails.event.notify "fetch_social_comments_job.error_backtrace",
+          level: "error",
+          component: "FetchSocialCommentsJob",
+          backtrace: e.backtrace.join("\n")
 
         ActivityLog.create!(
           action: "failed",
@@ -135,6 +166,13 @@ class FetchSocialCommentsJob < ApplicationJob
       description: summary_message
     )
 
-    Rails.logger.info "Completed #{platform.capitalize} comment fetch: #{success_count} success, #{error_count} errors, #{total_comments} new comments"
+    Rails.event.notify "fetch_social_comments_job.platform_completed",
+      level: "info",
+      component: "FetchSocialCommentsJob",
+      platform: platform,
+      success_count: success_count,
+      error_count: error_count,
+      total_comments: total_comments,
+      stopped_due_to_rate_limit: stopped_due_to_rate_limit
   end
 end

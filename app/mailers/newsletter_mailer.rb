@@ -8,11 +8,19 @@ class NewsletterMailer < ApplicationMailer
 
     from_email = @newsletter_setting.from_email
     if from_email.blank?
-      Rails.logger.error "NewsletterMailer: from_email is blank, using default"
+      Rails.event.notify "newsletter.mailer.missing_from_email",
+        level: "error",
+        component: "newsletter_mailer",
+        fallback_email: "noreply@example.com"
       from_email = "noreply@example.com"
     end
 
-    Rails.logger.info "NewsletterMailer: 创建邮件对象 - 收件人: #{@subscriber.email}, 发件人: #{from_email}"
+    Rails.event.notify "newsletter.mailer.creating_email",
+      level: "info",
+      component: "newsletter_mailer",
+      recipient: @subscriber.email,
+      from_email: from_email,
+      article_id: @article.id
 
     mail_obj = mail(
       to: @subscriber.email,
@@ -21,7 +29,11 @@ class NewsletterMailer < ApplicationMailer
     )
 
     # 验证邮件对象设置
-    Rails.logger.info "NewsletterMailer: 邮件对象已创建 - TO: #{mail_obj.to.inspect}, FROM: #{mail_obj.from.inspect}"
+    Rails.event.notify "newsletter.mailer.email_created",
+      level: "info",
+      component: "newsletter_mailer",
+      to: mail_obj.to,
+      from: mail_obj.from
 
     mail_obj
   end

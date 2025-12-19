@@ -3,10 +3,16 @@ class PublishScheduledArticlesJob < ApplicationJob
   queue_with_priority 10
 
   def self.cancel_old_jobs(article_id)
-    Rails.logger.info "Checking for scheduled job for article #{article_id}"
+    Rails.event.notify "publish_scheduled_articles_job.checking_old_jobs",
+      level: "info",
+      component: "PublishScheduledArticlesJob",
+      article_id: article_id
     ActiveJob::Base.jobs.scheduled.where(job_class_name: "PublishScheduledArticlesJob").each do |job|
       if job.arguments[0]["arguments"] == [ article_id ]
-        Rails.logger.info "Cancelling old job for article #{article_id}"
+        Rails.event.notify "publish_scheduled_articles_job.cancelling_old_job",
+          level: "info",
+          component: "PublishScheduledArticlesJob",
+          article_id: article_id
         job.discard
       end
     end
@@ -14,10 +20,18 @@ class PublishScheduledArticlesJob < ApplicationJob
 
   def perform(article_id)
     article = Article.find(article_id)
-    Rails.logger.info "Publishing scheduled article #{article_id} at #{Time.current}"
+    Rails.event.notify "publish_scheduled_articles_job.publishing",
+      level: "info",
+      component: "PublishScheduledArticlesJob",
+      article_id: article_id,
+      current_time: Time.current
     article.publish_scheduled
   rescue ActiveRecord::RecordNotFound => e
-    Rails.logger.error("Failed to find article #{article_id} for scheduled publishing: #{e.message}")
+    Rails.event.notify "publish_scheduled_articles_job.article_not_found",
+      level: "error",
+      component: "PublishScheduledArticlesJob",
+      article_id: article_id,
+      error_message: e.message
   end
 
   def self.schedule_at(article)
@@ -30,7 +44,11 @@ class PublishScheduledArticlesJob < ApplicationJob
 
     set(wait_until: scheduled_time).perform_later(article.id)
 
-    Rails.logger.info "Scheduled article #{article.id} for publication at #{scheduled_time}"
+    Rails.event.notify "publish_scheduled_articles_job.scheduled",
+      level: "info",
+      component: "PublishScheduledArticlesJob",
+      article_id: article.id,
+      scheduled_time: scheduled_time
   end
 
   # private

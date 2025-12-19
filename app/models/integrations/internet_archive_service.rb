@@ -111,7 +111,11 @@ module Integrations
 
         response = http.request(request)
 
-        Rails.logger.info "Internet Archive save response: code=#{response.code}, location=#{response['Location']}"
+        Rails.event.notify "internet_archive_service.save_response",
+          level: "info",
+          component: "InternetArchiveService",
+          response_code: response.code,
+          location: response['Location']
 
         # 检查响应
         case response.code
@@ -119,7 +123,10 @@ module Integrations
           # 成功：从响应头或 body 中提取存档 URL
           archived_url = extract_archived_url_from_response(response, url)
           if archived_url
-            Rails.logger.info "Internet Archive archived URL: #{archived_url}"
+            Rails.event.notify "internet_archive_service.archived_url",
+              level: "info",
+              component: "InternetArchiveService",
+              archived_url: archived_url
             archived_url
           else
             # 如果无法从响应中提取，等待后检查
@@ -130,7 +137,10 @@ module Integrations
           # 重定向：通常会重定向到存档页面
           location = response["Location"]
           if location&.include?("web.archive.org/web/")
-            Rails.logger.info "Internet Archive redirect to: #{location}"
+            Rails.event.notify "internet_archive_service.redirect",
+              level: "info",
+              component: "InternetArchiveService",
+              location: location
             location
           else
             # 跟随重定向
@@ -141,16 +151,28 @@ module Integrations
           handle_rate_limit(url, max_retries, retry_count)
         when "523", "520", "521", "522", "524"
           # Cloudflare 错误 - 目标网站可能有问题，但仍可能已存档
-          Rails.logger.warn "Internet Archive received Cloudflare error #{response.code} for #{url}"
+          Rails.event.notify "internet_archive_service.cloudflare_error",
+            level: "warn",
+            component: "InternetArchiveService",
+            response_code: response.code,
+            url: url
           sleep(5)
           check_archived_url(url) || generate_archive_url(url)
         else
-          Rails.logger.error "Failed to save to Wayback Machine: #{response.code} - #{response.body[0..500]}"
+          Rails.event.notify "internet_archive_service.save_failed",
+            level: "error",
+            component: "InternetArchiveService",
+            response_code: response.code,
+            response_body: response.body[0..500]
           # 尝试检查是否已经存档，如果没有则生成预期的存档 URL
           check_archived_url(url) || generate_archive_url(url)
         end
       rescue Net::OpenTimeout, Net::ReadTimeout => e
-        Rails.logger.warn "Internet Archive timeout for #{url}: #{e.message}"
+        Rails.event.notify "internet_archive_service.timeout",
+          level: "warn",
+          component: "InternetArchiveService",
+          url: url,
+          error_message: e.message
         # 超时不一定是失败，可能存档正在进行，检查是否已存档
         sleep(5)
         check_archived_url(url) || generate_archive_url(url)
@@ -162,7 +184,12 @@ module Integrations
     def handle_rate_limit(url, max_retries, retry_count)
       if retry_count < max_retries
         wait_time = calculate_backoff_time(retry_count + 1)
-        Rails.logger.warn "Internet Archive rate limit exceeded, waiting #{wait_time} seconds before retry #{retry_count + 1}/#{max_retries}"
+        Rails.event.notify "internet_archive_service.rate_limit_retry",
+          level: "warn",
+          component: "InternetArchiveService",
+          wait_time: wait_time,
+          retry_count: retry_count + 1,
+          max_retries: max_retries
         ActivityLog.create!(
           action: "rate_limited",
           target: "internet_archive_api",
@@ -172,7 +199,10 @@ module Integrations
         sleep(wait_time)
         save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
       else
-        Rails.logger.error "Internet Archive rate limit exceeded after #{max_retries} retries"
+        Rails.event.notify "internet_archive_service.rate_limit_exceeded",
+          level: "error",
+          component: "InternetArchiveService",
+          max_retries: max_retries
         ActivityLog.create!(
           action: "rate_limited",
           target: "internet_archive_api",
@@ -186,12 +216,21 @@ module Integrations
     def handle_save_error(error, url, max_retries, retry_count)
       if error.message.include?("rate limit") && retry_count < max_retries
         wait_time = calculate_backoff_time(retry_count + 1)
-        Rails.logger.warn "Internet Archive error, retrying in #{wait_time} seconds (attempt #{retry_count + 1}/#{max_retries}): #{error.message}"
+        Rails.event.notify "internet_archive_service.error_retry",
+          level: "warn",
+          component: "InternetArchiveService",
+          wait_time: wait_time,
+          retry_count: retry_count + 1,
+          max_retries: max_retries,
+          error_message: error.message
         sleep(wait_time)
         save_to_wayback(url, max_retries: max_retries, retry_count: retry_count + 1)
       else
-        Rails.logger.error "Error saving to Wayback Machine: #{error.message}"
-        Rails.logger.error error.backtrace.first(5).join("\n")
+        Rails.event.notify "internet_archive_service.save_error",
+          level: "error",
+          component: "InternetArchiveService",
+          error_message: error.message,
+          backtrace: error.backtrace.first(5).join("\n")
         raise error if error.message.include?("rate limit")
         nil
       end
@@ -264,7 +303,10 @@ module Integrations
 
       if response.is_a?(Net::HTTPSuccess)
         data = JSON.parse(response.body)
-        Rails.logger.info "Internet Archive availability check response: #{data.inspect}"
+        Rails.event.notify "internet_archive_service.availability_check",
+          level: "info",
+          component: "InternetArchiveService",
+          response_data: data.inspect
 
         if data.dig("archived_snapshots", "closest", "available")
           archived_url = data.dig("archived_snapshots", "closest", "url")
@@ -274,11 +316,17 @@ module Integrations
           nil
         end
       else
-        Rails.logger.warn "Internet Archive availability check failed: #{response.code}"
+        Rails.event.notify "internet_archive_service.availability_check_failed",
+          level: "warn",
+          component: "InternetArchiveService",
+          response_code: response.code
         nil
       end
     rescue => e
-      Rails.logger.error "Error checking archived URL: #{e.message}"
+      Rails.event.notify "internet_archive_service.availability_check_error",
+        level: "error",
+        component: "InternetArchiveService",
+        error_message: e.message
       nil
     end
   end

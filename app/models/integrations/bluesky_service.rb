@@ -59,16 +59,27 @@ module Integrations
 
       # 获取文章第一张图片
       first_image = article.first_image_attachment
-      Rails.logger.info "Bluesky: first_image_attachment = #{first_image.class}"
+      Rails.event.notify "bluesky_service.first_image",
+        level: "info",
+        component: "BlueskyService",
+        image_type: first_image.class.to_s
 
       embed = nil
 
       if first_image
-        Rails.logger.info "Bluesky: Attempting to upload image of type: #{first_image.class}"
+        Rails.event.notify "bluesky_service.upload_image_attempt",
+          level: "info",
+          component: "BlueskyService",
+          image_type: first_image.class.to_s
         embed = upload_image_embed(first_image)
-        Rails.logger.info "Bluesky: upload_image_embed result = #{embed.present? ? 'success' : 'failed'}"
+        Rails.event.notify "bluesky_service.upload_image_result",
+          level: "info",
+          component: "BlueskyService",
+          result: embed.present? ? 'success' : 'failed'
       else
-        Rails.logger.info "Bluesky: No image found in article"
+        Rails.event.notify "bluesky_service.no_image",
+          level: "info",
+          component: "BlueskyService"
       end
 
       begin
@@ -195,12 +206,19 @@ module Integrations
 
           { comments: comments, rate_limit: rate_limit_info }
         else
-          Rails.logger.error "Failed to fetch Bluesky comments: #{response.code} - #{response.body}"
+          Rails.event.notify "bluesky_service.fetch_comments_failed",
+            level: "error",
+            component: "BlueskyService",
+            response_code: response.code,
+            response_body: response.body[0..200]
           { comments: [], rate_limit: rate_limit_info }
         end
       rescue => e
-        Rails.logger.error "Error fetching Bluesky comments: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "bluesky_service.fetch_comments_error",
+          level: "error",
+          component: "BlueskyService",
+          error_message: e.message,
+          backtrace: e.backtrace.join("\n")
         default_response
       end
     end
@@ -233,7 +251,10 @@ module Integrations
             # 确保 URL 有 scheme 和 host
             next unless uri.scheme && uri.host
           rescue URI::InvalidURIError
-            Rails.logger.warn "Bluesky: Skipping invalid URL in facets: #{url}"
+            Rails.event.notify "bluesky_service.invalid_url_in_facets",
+              level: "warn",
+              component: "BlueskyService",
+              url: url
             next
           end
 
@@ -263,7 +284,11 @@ module Integrations
     # Makes a POST request to the API.
     def post_request(url, body: {}, auth_token: true, content_type: "application/json")
       uri = URI.parse(url)
-      Rails.logger.info "POST request to URL:#{url} and URI:#{uri}"
+      Rails.event.notify "bluesky_service.post_request",
+        level: "info",
+        component: "BlueskyService",
+        url: url,
+        uri: uri.to_s
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = (uri.scheme == "https")
       http.open_timeout = 4
@@ -332,7 +357,10 @@ module Integrations
     end
 
     def upload_image_embed(attachable)
-      Rails.logger.info "Bluesky: upload_image_embed called with attachable: #{attachable.class}"
+      Rails.event.notify "bluesky_service.upload_image_embed_started",
+        level: "info",
+        component: "BlueskyService",
+        attachable_type: attachable.class.to_s
       return nil unless attachable
 
       begin
@@ -342,14 +370,23 @@ module Integrations
 
         # Handle ActiveStorage::Blob
         if attachable.is_a?(ActiveStorage::Blob) && attachable.content_type&.start_with?("image/")
-          Rails.logger.info "Bluesky: Processing ActiveStorage::Blob"
+          Rails.event.notify "bluesky_service.processing_blob",
+            level: "info",
+            component: "BlueskyService",
+            storage_type: "ActiveStorage::Blob"
           blob_data = upload_blob(attachable)
           filename = attachable.filename.to_s if attachable.respond_to?(:filename)
         # Handle RemoteImage
         elsif attachable.class.name == "ActionText::Attachables::RemoteImage"
-          Rails.logger.info "Bluesky: Processing RemoteImage"
+          Rails.event.notify "bluesky_service.processing_remote_image",
+            level: "info",
+            component: "BlueskyService",
+            storage_type: "RemoteImage"
           image_url = attachable.try(:url)
-          Rails.logger.info "Bluesky: RemoteImage URL = #{image_url}"
+          Rails.event.notify "bluesky_service.remote_image_url",
+            level: "info",
+            component: "BlueskyService",
+            image_url: image_url
 
           if image_url.present?
             blob_data = upload_remote_image(image_url)
@@ -359,19 +396,31 @@ module Integrations
               # Ensure we have a valid filename
               filename = "image.jpg" if filename.blank? || filename == "/"
             rescue URI::InvalidURIError => e
-              Rails.logger.warn "Bluesky: Invalid URL for filename extraction: #{image_url}, using default"
+              Rails.event.notify "bluesky_service.invalid_url_for_filename",
+                level: "warn",
+                component: "BlueskyService",
+                image_url: image_url,
+                error_message: e.message
               filename = "image.jpg"
             end
           else
-            Rails.logger.warn "Bluesky: RemoteImage has no URL, skipping"
+            Rails.event.notify "bluesky_service.remote_image_no_url",
+              level: "warn",
+              component: "BlueskyService"
             return nil
           end
         else
-          Rails.logger.warn "Bluesky: Unknown attachable type: #{attachable.class}"
+          Rails.event.notify "bluesky_service.unknown_attachable_type",
+            level: "warn",
+            component: "BlueskyService",
+            attachable_type: attachable.class.to_s
           return nil
         end
 
-        Rails.logger.info "Bluesky: upload blob_data result: #{blob_data.present? ? 'success' : 'failed'}"
+        Rails.event.notify "bluesky_service.upload_blob_result",
+          level: "info",
+          component: "BlueskyService",
+          result: blob_data.present? ? 'success' : 'failed'
         return nil unless blob_data
 
         # 创建图片embed
@@ -384,11 +433,16 @@ module Integrations
             }
           ]
         }
-        Rails.logger.info "Bluesky: Created embed structure successfully"
+        Rails.event.notify "bluesky_service.embed_created",
+          level: "info",
+          component: "BlueskyService"
         embed_result
       rescue => e
-        Rails.logger.error "Error creating image embed for Bluesky: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "bluesky_service.embed_creation_error",
+          level: "error",
+          component: "BlueskyService",
+          error_message: e.message,
+          backtrace: e.backtrace.join("\n")
         nil
       end
     end
@@ -417,11 +471,18 @@ module Integrations
           result = JSON.parse(response.body)
           result["blob"]
         else
-          Rails.logger.error "Failed to upload blob to Bluesky: #{response.code} - #{response.body}"
+          Rails.event.notify "bluesky_service.blob_upload_failed",
+            level: "error",
+            component: "BlueskyService",
+            response_code: response.code,
+            response_body: response.body[0..200]
           nil
         end
       rescue => e
-        Rails.logger.error "Error uploading blob to Bluesky: #{e.message}"
+        Rails.event.notify "bluesky_service.blob_upload_error",
+          level: "error",
+          component: "BlueskyService",
+          error_message: e.message
         nil
       end
     end
@@ -444,7 +505,10 @@ module Integrations
         image_response = fetch_with_redirect(uri)
 
         unless image_response.is_a?(Net::HTTPSuccess)
-          Rails.logger.error "Failed to download remote image: #{image_response.code}"
+          Rails.event.notify "bluesky_service.remote_image_download_failed",
+            level: "error",
+            component: "BlueskyService",
+            response_code: image_response.code
           return nil
         end
 
@@ -464,15 +528,24 @@ module Integrations
 
         if response.is_a?(Net::HTTPSuccess)
           result = JSON.parse(response.body)
-          Rails.logger.info "Bluesky: Successfully uploaded remote image to Bluesky"
+          Rails.event.notify "bluesky_service.remote_image_uploaded",
+            level: "info",
+            component: "BlueskyService"
           result["blob"]
         else
-          Rails.logger.error "Failed to upload remote image to Bluesky: #{response.code} - #{response.body}"
+          Rails.event.notify "bluesky_service.remote_image_upload_failed",
+            level: "error",
+            component: "BlueskyService",
+            response_code: response.code,
+            response_body: response.body[0..200]
           nil
         end
       rescue => e
-        Rails.logger.error "Error uploading remote image to Bluesky: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "bluesky_service.remote_image_upload_error",
+          level: "error",
+          component: "BlueskyService",
+          error_message: e.message,
+          backtrace: e.backtrace.join("\n")
         nil
       end
     end
@@ -498,7 +571,10 @@ module Integrations
         if redirect_uri.relative?
           redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response["location"])
         end
-        Rails.logger.info "Bluesky: Following redirect to #{redirect_uri}"
+        Rails.event.notify "bluesky_service.following_redirect",
+          level: "info",
+          component: "BlueskyService",
+          redirect_uri: redirect_uri.to_s
         fetch_with_redirect(redirect_uri, limit - 1)
       else
         response
@@ -527,11 +603,17 @@ module Integrations
           did = result["did"]
           "at://#{did}/app.bsky.feed.post/#{rkey}"
         else
-          Rails.logger.error "Failed to resolve Bluesky handle: #{handle}"
+          Rails.event.notify "bluesky_service.handle_resolution_failed",
+            level: "error",
+            component: "BlueskyService",
+            handle: handle
           nil
         end
       rescue => e
-        Rails.logger.error "Error resolving Bluesky handle: #{e.message}"
+        Rails.event.notify "bluesky_service.handle_resolution_error",
+          level: "error",
+          component: "BlueskyService",
+          error_message: e.message
         nil
       end
     end
@@ -582,7 +664,12 @@ module Integrations
       # Bluesky has higher limits (3000/5min vs Mastodon 300/5min)
       # So we use different thresholds
       if rate_limit_info[:remaining] < 100
-        Rails.logger.warn "⚠️  Bluesky API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining (resets at #{rate_limit_info[:reset_at]})"
+        Rails.event.notify "bluesky_service.rate_limit_low",
+          level: "warn",
+          component: "BlueskyService",
+          remaining: rate_limit_info[:remaining],
+          limit: rate_limit_info[:limit],
+          reset_at: rate_limit_info[:reset_at]
 
         ActivityLog.create!(
           action: "warning",
@@ -591,7 +678,11 @@ module Integrations
           description: "Bluesky API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
         )
       elsif rate_limit_info[:remaining] < 500
-        Rails.logger.info "Bluesky API rate limit: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+        Rails.event.notify "bluesky_service.rate_limit_status",
+          level: "info",
+          component: "BlueskyService",
+          remaining: rate_limit_info[:remaining],
+          limit: rate_limit_info[:limit]
       end
     end
 
@@ -600,7 +691,11 @@ module Integrations
       reset_time = rate_limit_info[:reset_at] || Time.current + 5.minutes
       wait_seconds = [ (reset_time - Time.current).to_i, 0 ].max
 
-      Rails.logger.error "🚫 Bluesky API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
+      Rails.event.notify "bluesky_service.rate_limit_exceeded",
+        level: "error",
+        component: "BlueskyService",
+        reset_time: reset_time,
+        wait_seconds: wait_seconds
 
       ActivityLog.create!(
         action: "rate_limited",

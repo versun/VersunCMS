@@ -18,7 +18,7 @@ class WordpressExport
 
   def generate
     begin
-      Rails.logger.info "Starting WordPress export..."
+      Rails.event.notify("wordpress_export.export_started", level: "info", component: "WordpressExport")
 
       # 创建WordPress WXR格式的XML文档
       doc = create_wxr_document
@@ -44,13 +44,12 @@ class WordpressExport
       # 创建包含附件的ZIP文件
       create_zip_with_attachments
 
-      Rails.logger.info "WordPress export completed successfully!"
+      Rails.event.notify("wordpress_export.export_completed", level: "info", component: "WordpressExport")
       true
 
     rescue => e
       @error_message = e.message
-      Rails.logger.error "WordPress export failed: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
+      Rails.event.notify("wordpress_export.export_failed", level: "error", component: "WordpressExport", error: e.message, backtrace: e.backtrace.join("\n"))
       false
     end
   end
@@ -359,7 +358,7 @@ class WordpressExport
 
       "#{timestamp}/#{filename}"
     rescue => e
-      Rails.logger.error "Failed to download attachment #{url}: #{e.message}"
+      Rails.event.notify("wordpress_export.attachment_download_failed", level: "error", component: "WordpressExport", url: url, error: e.message)
       nil
     end
   end
@@ -401,7 +400,7 @@ class WordpressExport
       file.write(doc.to_xml)
     end
 
-    Rails.logger.info "WordPress WXR file saved to: #{@export_path}"
+    Rails.event.notify("wordpress_export.wxr_file_saved", level: "info", component: "WordpressExport", path: @export_path)
   end
 
   def create_zip_with_attachments
@@ -430,7 +429,7 @@ class WordpressExport
     FileUtils.rm_rf(@attachments_dir)
     FileUtils.rm(@export_path) if File.exist?(@export_path)
 
-    Rails.logger.info "WordPress export ZIP created: #{zip_path}"
+    Rails.event.notify("wordpress_export.zip_created", level: "info", component: "WordpressExport", path: zip_path)
     zip_path
   end
 end

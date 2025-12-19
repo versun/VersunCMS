@@ -49,8 +49,16 @@ module SmtpConfigurable
     # 设置默认的 from 地址
     ActionMailer::Base.default from: newsletter_setting.from_email
 
-    Rails.logger.info "ActionMailer configured for SMTP: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}, from: #{newsletter_setting.from_email}"
-    Rails.logger.debug "SMTP settings: #{smtp_settings.except(:password).inspect}"
+    Rails.event.notify "smtp_configurable.action_mailer_configured",
+      level: "info",
+      component: "SmtpConfigurable",
+      smtp_address: newsletter_setting.smtp_address,
+      smtp_port: newsletter_setting.smtp_port,
+      from_email: newsletter_setting.from_email
+    Rails.event.notify "smtp_configurable.smtp_settings",
+      level: "debug",
+      component: "SmtpConfigurable",
+      smtp_settings: smtp_settings.except(:password)
   end
 
   def apply_smtp_config_to_mail(mail, newsletter_setting)
@@ -60,7 +68,11 @@ module SmtpConfigurable
     return mail unless smtp_config[:address].present?
 
     mail.delivery_method(:smtp, smtp_config)
-    Rails.logger.info "Mail configured with SMTP: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}"
+    Rails.event.notify "smtp_configurable.mail_configured",
+      level: "info",
+      component: "SmtpConfigurable",
+      smtp_address: newsletter_setting.smtp_address,
+      smtp_port: newsletter_setting.smtp_port
     mail
   end
 end

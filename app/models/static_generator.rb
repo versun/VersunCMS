@@ -80,7 +80,7 @@ class StaticGenerator
 
   # Generate all static files
   def generate_all
-    Rails.logger.info "[StaticGenerator] Starting full static generation..."
+    Rails.event.notify("static_generator.generation_started", level: "info", component: "StaticGenerator")
 
     # Clean old generated files before generating new ones
     clean_generated_files
@@ -98,14 +98,14 @@ class StaticGenerator
     generate_redirects
     copy_user_static_files
 
-    Rails.logger.info "[StaticGenerator] Static generation complete!"
+    Rails.event.notify("static_generator.generation_complete", level: "info", component: "StaticGenerator")
   end
 
   # Generate static search page + index JSON (for fully static hosting)
   def generate_search_files
     generate_search_index
     generate_search_page
-    Rails.logger.info "[StaticGenerator] Generated search files"
+    Rails.event.notify("static_generator.search_files_generated", level: "info", component: "StaticGenerator")
   end
 
   # Copy user uploaded static files from storage/static and StaticFile records to public/static
@@ -134,9 +134,9 @@ class StaticGenerator
         end
         
         file_count += 1
-        Rails.logger.debug "[StaticGenerator] Copied StaticFile: #{static_file.filename}"
+        Rails.event.notify("static_generator.static_file_copied", level: "debug", component: "StaticGenerator", filename: static_file.filename)
       rescue => e
-        Rails.logger.error "[StaticGenerator] Failed to copy StaticFile #{static_file.filename}: #{e.message}"
+        Rails.event.notify("static_generator.static_file_copy_failed", level: "error", component: "StaticGenerator", filename: static_file.filename, error: e.message)
       end
     end
 
@@ -154,17 +154,17 @@ class StaticGenerator
           FileUtils.mkdir_p(File.dirname(dest_file))
           FileUtils.cp(source_file, dest_file)
           file_count += 1
-          Rails.logger.debug "[StaticGenerator] Copied file from storage/static: #{relative_path}"
+          Rails.event.notify("static_generator.storage_file_copied", level: "debug", component: "StaticGenerator", path: relative_path.to_s)
         rescue => e
-          Rails.logger.error "[StaticGenerator] Failed to copy file #{source_file}: #{e.message}"
+          Rails.event.notify("static_generator.file_copy_failed", level: "error", component: "StaticGenerator", file: source_file, error: e.message)
         end
       end
     end
     
     if file_count > 0
-      Rails.logger.info "[StaticGenerator] Copied #{file_count} user static files to static/"
+      Rails.event.notify("static_generator.static_files_copied", level: "info", component: "StaticGenerator", count: file_count)
     else
-      Rails.logger.info "[StaticGenerator] No static files to copy"
+      Rails.event.notify("static_generator.no_static_files", level: "info", component: "StaticGenerator")
     end
   end
 
@@ -182,7 +182,7 @@ class StaticGenerator
       export_rich_text_images(page.content) if page.content.present?
     end
 
-    Rails.logger.info "[StaticGenerator] Exported #{@exported_blobs.size} images"
+    Rails.event.notify("static_generator.images_exported", level: "info", component: "StaticGenerator", count: @exported_blobs.size)
   end
 
   # Generate index pages with pagination (each page has PER_PAGE articles)
@@ -206,7 +206,7 @@ class StaticGenerator
       write_file("page/#{page}.html", html)
     end
 
-    Rails.logger.info "[StaticGenerator] Generated #{total_pages} index pages"
+    Rails.event.notify("static_generator.index_pages_generated", level: "info", component: "StaticGenerator", count: total_pages)
   end
 
   # Generate all article detail pages
@@ -215,7 +215,7 @@ class StaticGenerator
     articles.find_each do |article|
       generate_article(article)
     end
-    Rails.logger.info "[StaticGenerator] Generated #{articles.count} article pages"
+    Rails.event.notify("static_generator.article_pages_generated", level: "info", component: "StaticGenerator", count: articles.count)
   end
 
   # Generate single article page
@@ -238,7 +238,7 @@ class StaticGenerator
     pages.find_each do |page|
       generate_page(page)
     end
-    Rails.logger.info "[StaticGenerator] Generated #{pages.count} page files"
+    Rails.event.notify("static_generator.page_files_generated", level: "info", component: "StaticGenerator", count: pages.count)
   end
 
   # Generate single page
@@ -255,7 +255,7 @@ class StaticGenerator
     tags = Tag.alphabetical.all
     html = render_static_partial("tags/static_index", { tags: tags })
     write_file("tags/index.html", html)
-    Rails.logger.info "[StaticGenerator] Generated tags index page"
+    Rails.event.notify("static_generator.tags_index_generated", level: "info", component: "StaticGenerator")
   end
 
   # Generate all tag pages with pagination
@@ -292,7 +292,7 @@ class StaticGenerator
     articles = Article.published.order(created_at: :desc)
     xml = render_rss_template("articles/index", { articles: articles })
     write_file("feed.xml", xml)
-    Rails.logger.info "[StaticGenerator] Generated RSS feed"
+    Rails.event.notify("static_generator.rss_feed_generated", level: "info", component: "StaticGenerator")
   end
 
   # Generate sitemap
@@ -301,7 +301,7 @@ class StaticGenerator
     pages = Page.published
     xml = render_xml_template("sitemap/index", { articles: articles, pages: pages })
     write_file("sitemap.xml", xml)
-    Rails.logger.info "[StaticGenerator] Generated sitemap"
+    Rails.event.notify("static_generator.sitemap_generated", level: "info", component: "StaticGenerator")
   end
 
   # Generate redirects for static site
@@ -311,11 +311,11 @@ class StaticGenerator
     if redirects.empty?
       # Still generate empty redirects.js to avoid 404 errors
       generate_js_redirect_handler(redirects)
-      Rails.logger.info "[StaticGenerator] No redirects configured, generated empty redirects.js"
+      Rails.event.notify("static_generator.empty_redirects_generated", level: "info", component: "StaticGenerator")
       return
     end
 
-    Rails.logger.info "[StaticGenerator] Generating redirects for #{redirects.count} redirect rules..."
+    Rails.event.notify("static_generator.redirects_generation_started", level: "info", component: "StaticGenerator", count: redirects.count)
 
     # Collect all paths that need redirect pages
     redirect_paths = collect_redirect_paths(redirects)
@@ -334,7 +334,7 @@ class StaticGenerator
     # Generate JavaScript redirect handler for client-side redirects (fallback)
     generate_js_redirect_handler(redirects)
 
-    Rails.logger.info "[StaticGenerator] Generated #{redirect_paths.count} redirect pages and redirect config files"
+    Rails.event.notify("static_generator.redirect_pages_generated", level: "info", component: "StaticGenerator", count: redirect_paths.count)
   end
 
   # Collect all paths that match redirect rules
@@ -449,14 +449,14 @@ class StaticGenerator
           lines << "/#{pattern}/ #{target} #{status}"
         end
       rescue => e
-        Rails.logger.warn "[StaticGenerator] Skipping invalid redirect regex for Netlify: #{redirect.regex} - #{e.message}"
+        Rails.event.notify("static_generator.invalid_redirect_regex", level: "warn", component: "StaticGenerator", regex: redirect.regex, error: e.message, platform: "Netlify")
       end
     end
     
     if lines.any?
       content = lines.join("\n")
       write_file("_redirects", content)
-      Rails.logger.info "[StaticGenerator] Generated _redirects file with #{lines.count} rules"
+      Rails.event.notify("static_generator.netlify_redirects_generated", level: "info", component: "StaticGenerator", count: lines.count)
     end
   end
 
@@ -483,14 +483,14 @@ class StaticGenerator
         
         lines << "RewriteRule ^#{pattern}$ #{target} [L,#{status}]"
       rescue => e
-        Rails.logger.warn "[StaticGenerator] Skipping invalid redirect regex: #{redirect.regex} - #{e.message}"
+        Rails.event.notify("static_generator.invalid_redirect_regex", level: "warn", component: "StaticGenerator", regex: redirect.regex, error: e.message, platform: "Apache")
       end
     end
     
     if lines.length > 4
       content = lines.join("\n")
       write_file(".htaccess", content)
-      Rails.logger.info "[StaticGenerator] Generated .htaccess file with #{lines.length - 4} rules"
+      Rails.event.notify("static_generator.htaccess_generated", level: "info", component: "StaticGenerator", count: lines.length - 4)
     end
   end
 
@@ -540,7 +540,7 @@ class StaticGenerator
     JAVASCRIPT
     
     write_file("redirects.js", js_content)
-    Rails.logger.info "[StaticGenerator] Generated redirects.js fallback handler"
+    Rails.event.notify("static_generator.js_redirects_generated", level: "info", component: "StaticGenerator")
   end
 
   # Regenerate affected pages when content changes
@@ -572,7 +572,7 @@ class StaticGenerator
 
   # Clean all generated static files before regeneration
   def clean_generated_files
-    Rails.logger.info "[StaticGenerator] Cleaning old generated files..."
+    Rails.event.notify("static_generator.cleanup_started", level: "info", component: "StaticGenerator")
 
     files_to_clean = [
       "index.html",
@@ -604,7 +604,7 @@ class StaticGenerator
       path = output_dir.join(file)
       if File.exist?(path)
         File.delete(path)
-        Rails.logger.debug "[StaticGenerator] Deleted: #{file}"
+        Rails.event.notify("static_generator.file_deleted", level: "debug", component: "StaticGenerator", file: file)
       end
     end
 
@@ -613,7 +613,7 @@ class StaticGenerator
       path = output_dir.join(dir)
       if Dir.exist?(path)
         FileUtils.rm_rf(path)
-        Rails.logger.debug "[StaticGenerator] Deleted: #{dir}/"
+        Rails.event.notify("static_generator.directory_deleted", level: "debug", component: "StaticGenerator", directory: "#{dir}/")
       end
     end
 
@@ -625,7 +625,7 @@ class StaticGenerator
         path = output_dir.join("#{article.slug}.html")
         if File.exist?(path)
           File.delete(path)
-          Rails.logger.debug "[StaticGenerator] Deleted: #{article.slug}.html"
+          Rails.event.notify("static_generator.article_file_deleted", level: "debug", component: "StaticGenerator", file: "#{article.slug}.html")
         end
       end
 
@@ -640,11 +640,11 @@ class StaticGenerator
         next if existing_slugs.include?(filename)
 
         File.delete(html_file)
-        Rails.logger.debug "[StaticGenerator] Deleted orphaned: #{File.basename(html_file)}"
+        Rails.event.notify("static_generator.orphaned_file_deleted", level: "debug", component: "StaticGenerator", file: File.basename(html_file))
       end
     end
 
-    Rails.logger.info "[StaticGenerator] Cleanup complete"
+    Rails.event.notify("static_generator.cleanup_complete", level: "info", component: "StaticGenerator")
   end
 
   private
@@ -687,7 +687,7 @@ class StaticGenerator
     FileUtils.rm_rf(dest_assets_dir) if Dir.exist?(dest_assets_dir)
     FileUtils.mkdir_p(output_dir)
     FileUtils.cp_r(source_assets_dir, dest_assets_dir)
-    Rails.logger.info "[StaticGenerator] Copied assets to #{dest_assets_dir}"
+    Rails.event.notify("static_generator.assets_copied", level: "info", component: "StaticGenerator", destination: dest_assets_dir.to_s)
   end
 
   def render_static_partial(partial, assigns = {})
@@ -752,7 +752,7 @@ class StaticGenerator
     end
 
     File.write(full_path, content)
-    Rails.logger.debug "[StaticGenerator] Written: #{relative_path}"
+    Rails.event.notify("static_generator.file_written", level: "debug", component: "StaticGenerator", path: relative_path)
   end
 
   # Export images from ActionText rich text content
@@ -803,11 +803,11 @@ class StaticGenerator
       original_size = blob.byte_size
       compressed_size = File.size(output_path)
       compression_ratio = ((1 - compressed_size.to_f / original_size) * 100).round(1)
-      Rails.logger.debug "[StaticGenerator] Exported and compressed image: #{static_path} (#{compression_ratio}% reduction)"
-      
+      Rails.event.notify("static_generator.image_exported", level: "debug", component: "StaticGenerator", path: static_path, compression_ratio: compression_ratio)
+
       static_path
     rescue => e
-      Rails.logger.error "[StaticGenerator] Failed to export blob #{blob.id}: #{e.message}"
+      Rails.event.notify("static_generator.blob_export_failed", level: "error", component: "StaticGenerator", blob_id: blob.id, error: e.message)
       # Fallback to original if variant processing fails
       begin
         blob.open do |file|
@@ -815,10 +815,10 @@ class StaticGenerator
         end
         static_path = "/uploads/#{filename}"
         @exported_blobs[blob.id] = static_path
-        Rails.logger.warn "[StaticGenerator] Exported original image without compression: #{static_path}"
+        Rails.event.notify("static_generator.original_image_exported", level: "warn", component: "StaticGenerator", path: static_path)
         static_path
       rescue => fallback_error
-        Rails.logger.error "[StaticGenerator] Fallback export also failed: #{fallback_error.message}"
+        Rails.event.notify("static_generator.fallback_export_failed", level: "error", component: "StaticGenerator", error: fallback_error.message)
         nil
       end
     end
@@ -934,7 +934,7 @@ class StaticGenerator
       original
     end
   rescue => e
-    Rails.logger.warn "[StaticGenerator] Could not resolve blob from signed_id: #{e.message}"
+    Rails.event.notify("static_generator.blob_resolve_failed", level: "warn", component: "StaticGenerator", error: e.message)
     original
   end
 end

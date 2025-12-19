@@ -51,7 +51,10 @@ class NativeNewsletterSenderJob < ApplicationJob
 
     # 验证 SMTP 配置
     unless smtp_config[:address].present?
-      Rails.logger.error "SMTP configuration is missing address. Cannot send emails."
+      Rails.event.notify "native_newsletter_sender_job.smtp_config_missing",
+        level: "error",
+        component: "NativeNewsletterSenderJob",
+        article_id: article.id
       ActivityLog.create!(
         action: "failed",
         target: "newsletter",
@@ -67,23 +70,42 @@ class NativeNewsletterSenderJob < ApplicationJob
         configure_action_mailer(newsletter_setting)
 
         mail = NewsletterMailer.article_email(article, subscriber, site_info)
-        Rails.logger.info "Sending newsletter email to #{subscriber.email} using SMTP: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}"
+        Rails.event.notify "native_newsletter_sender_job.sending_email",
+          level: "info",
+          component: "NativeNewsletterSenderJob",
+          subscriber_email: subscriber.email,
+          smtp_address: newsletter_setting.smtp_address,
+          smtp_port: newsletter_setting.smtp_port
 
         # 应用 SMTP 配置到邮件对象（与确认邮件使用相同的方法）
         apply_smtp_config_to_mail(mail, newsletter_setting)
 
         # 记录实际使用的配置（不包含密码）
-        Rails.logger.debug "Using SMTP settings: #{smtp_config.except(:password).inspect}"
+        Rails.event.notify "native_newsletter_sender_job.smtp_config_applied",
+          level: "debug",
+          component: "NativeNewsletterSenderJob",
+          smtp_settings: smtp_config.except(:password)
 
         mail.deliver_now
         success_count += 1
-        Rails.logger.info "Successfully sent newsletter email to #{subscriber.email}"
+        Rails.event.notify "native_newsletter_sender_job.email_sent",
+          level: "info",
+          component: "NativeNewsletterSenderJob",
+          subscriber_email: subscriber.email
       rescue => e
         fail_count += 1
         error_message = "#{e.class.name}: #{e.message}"
-        Rails.logger.error "Failed to send newsletter email to #{subscriber.email}: #{error_message}"
-        Rails.logger.error "SMTP config used: #{smtp_config.except(:password).inspect}"
-        Rails.logger.error e.backtrace.join("\n") if e.backtrace
+        Rails.event.notify "native_newsletter_sender_job.email_failed",
+          level: "error",
+          component: "NativeNewsletterSenderJob",
+          subscriber_email: subscriber.email,
+          error_class: e.class.name,
+          error_message: e.message,
+          smtp_config: smtp_config.except(:password)
+        Rails.event.notify "native_newsletter_sender_job.error_backtrace",
+          level: "error",
+          component: "NativeNewsletterSenderJob",
+          backtrace: e.backtrace.join("\n") if e.backtrace
         ActivityLog.create!(
           action: "failed",
           target: "newsletter",

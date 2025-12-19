@@ -17,10 +17,20 @@ class PasswordResetJob < ApplicationJob
     apply_smtp_config_to_mail(mail, newsletter_setting)
 
     mail.deliver_now
-    Rails.logger.info "Successfully sent password reset email to #{user.email_address}"
+    Rails.event.notify "password_reset_job.email_sent",
+      level: "info",
+      component: "PasswordResetJob",
+      user_email: user.email_address
   rescue => e
-    Rails.logger.error "Failed to send password reset email to #{user.email_address}: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n") if e.backtrace
+    Rails.event.notify "password_reset_job.email_failed",
+      level: "error",
+      component: "PasswordResetJob",
+      user_email: user.email_address,
+      error_message: e.message
+    Rails.event.notify "password_reset_job.error_backtrace",
+      level: "error",
+      component: "PasswordResetJob",
+      backtrace: e.backtrace.join("\n") if e.backtrace
     raise
   end
 end

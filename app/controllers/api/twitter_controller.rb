@@ -122,11 +122,23 @@ module Api
             author_avatar: author_avatar
           }
         else
-          Rails.logger.warn "Twitter oEmbed API failed: #{response.code}"
+          Rails.event.notify(
+            "api.twitter_controller.oembed_api_failed",
+            level: "warn",
+            component: "Api::TwitterController",
+            response_code: response.code,
+            tweet_url: tweet_url
+          )
           nil
         end
       rescue => e
-        Rails.logger.error "Error fetching Twitter oEmbed: #{e.message}"
+        Rails.event.notify(
+          "api.twitter_controller.oembed_fetch_error",
+          level: "error",
+          component: "Api::TwitterController",
+          message: e.message,
+          tweet_url: tweet_url
+        )
         nil
       end
     end
@@ -208,7 +220,13 @@ module Api
           end
         end
       rescue => e
-        Rails.logger.error "Error fetching Twitter user avatar for #{username}: #{e.message}"
+        Rails.event.notify(
+          "api.twitter_controller.user_avatar_fetch_error",
+          level: "error",
+          component: "Api::TwitterController",
+          username: username,
+          message: e.message
+        )
       end
 
       nil

@@ -29,14 +29,14 @@ class Export
       true
     rescue => e
       @error_message = "Database connection failed: #{e.message}"
-      Rails.logger.error @error_message
+      Rails.event.notify("export.database_connection_failed", component: "Export", error: e.message, level: "error")
       false
     end
   end
 
   def generate
     begin
-      Rails.logger.info "Starting data export to: #{@export_dir}"
+      Rails.event.notify("export.generation_started", component: "Export", export_dir: @export_dir, level: "info")
 
       # export_activity_logs
       export_articles
@@ -58,12 +58,11 @@ class Export
       # 创建ZIP文件
       create_zip_file
 
-      Rails.logger.info "Export completed successfully!"
+      Rails.event.notify("export.generation_completed", component: "Export", level: "info")
       true
     rescue => e
       @error_message = e.message
-      Rails.logger.error "Export failed: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
+      Rails.event.notify("export.generation_failed", component: "Export", error: e.message, backtrace: e.backtrace.join("\n"), level: "error")
       false
     end
   end
@@ -71,7 +70,7 @@ class Export
   private
 
   def export_activity_logs
-    Rails.logger.info "Exporting activity_logs..."
+    Rails.event.notify("export.activity_logs_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "activity_logs.csv"), "w", write_headers: true, headers: %w[id action target level description created_at updated_at]) do |csv|
       ActivityLog.order(:id).find_each do |log|
@@ -87,11 +86,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{ActivityLog.count} activity_logs"
+    Rails.event.notify("export.activity_logs_completed", component: "Export", count: ActivityLog.count, level: "info")
   end
 
   def export_articles
-    Rails.logger.info "Exporting articles and attachments..."
+    Rails.event.notify("export.articles_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "articles.csv"), "w", write_headers: true, headers: %w[id title slug description content status scheduled_at created_at updated_at]) do |csv|
       Article.order(:id).find_each do |article|
@@ -112,7 +111,7 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Article.count} articles"
+    Rails.event.notify("export.articles_completed", component: "Export", count: Article.count, level: "info")
   end
 
   def process_article_content(article)
@@ -154,7 +153,7 @@ class Export
 
       return unless content_type&.start_with?("image/") && original_url.present? && filename.present?
 
-      Rails.logger.info "Processing attachment: #{filename} (#{original_url})"
+      Rails.event.notify("export.attachment_processing", component: "Export", filename: filename, url: original_url, level: "info")
 
       # 下载并保存附件
       new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
@@ -168,7 +167,7 @@ class Export
         img["src"] = new_url if img
       end
     rescue => e
-      Rails.logger.error "Error processing attachment element: #{e.message}"
+      Rails.event.notify("export.attachment_processing_failed", component: "Export", error: e.message, level: "error")
     end
   end
 
@@ -183,7 +182,7 @@ class Export
 
       return unless content_type&.start_with?("image/") && original_url.present?
 
-      Rails.logger.info "Processing figure attachment: #{filename} (#{original_url})"
+      Rails.event.notify("export.figure_processing", component: "Export", filename: filename, url: original_url, level: "info")
 
       # 下载并保存附件
       new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
@@ -198,7 +197,7 @@ class Export
         img["src"] = new_url if img
       end
     rescue => e
-      Rails.logger.error "Error processing figure element: #{e.message}"
+      Rails.event.notify("export.figure_processing_failed", component: "Export", error: e.message, level: "error")
     end
   end
 
@@ -209,7 +208,7 @@ class Export
 
       # 检查是否是本地存储的附件URL
       if original_url.include?("/rails/active_storage/blobs/") || original_url.include?("/rails/active_storage/representations/")
-        Rails.logger.info "Processing image element: #{original_url}"
+        Rails.event.notify("export.image_processing", component: "Export", url: original_url, level: "info")
 
         # 尝试从Active Storage获取blob信息
         blob = extract_blob_from_url(original_url)
@@ -220,7 +219,7 @@ class Export
         end
       end
     rescue => e
-      Rails.logger.error "Error processing image element: #{e.message}"
+      Rails.event.notify("export.image_processing_failed", component: "Export", error: e.message, level: "error")
     end
   end
 
@@ -236,7 +235,7 @@ class Export
 
       # 构建完整的URL
       full_url = build_full_url(original_url)
-      Rails.logger.info "Attempting to download from URL: #{full_url}"
+      Rails.event.notify("export.attachment_download_started", component: "Export", url: full_url, level: "info")
 
       # 下载文件
       URI.open(full_url) do |remote_file|
@@ -247,12 +246,11 @@ class Export
 
       # 返回相对路径
       new_url = "attachments/#{record_type}_#{record_id}/#{new_filename}"
-      Rails.logger.info "Successfully downloaded attachment: #{filename} -> #{new_filename}"
+      Rails.event.notify("export.attachment_downloaded", component: "Export", filename: filename, new_filename: new_filename, level: "info")
 
       new_url
     rescue => e
-      Rails.logger.error "Error downloading attachment #{original_url}: #{e.message}"
-      Rails.logger.error "Full URL attempted: #{build_full_url(original_url)}"
+      Rails.event.notify("export.attachment_download_failed", component: "Export", url: original_url, full_url: build_full_url(original_url), error: e.message, level: "error")
       nil
     end
   end
@@ -284,16 +282,16 @@ class Export
     begin
       # 尝试找到对应的blob
       blob = ActiveStorage::Blob.find_signed(signed_id)
-      Rails.logger.info "Found blob for signed_id #{signed_id}: #{blob&.filename}"
+      Rails.event.notify("export.blob_found", component: "Export", signed_id: signed_id, filename: blob&.filename, level: "info")
       blob
     rescue => e
-      Rails.logger.error "Failed to find blob for signed_id #{signed_id}: #{e.message}"
+      Rails.event.notify("export.blob_not_found", component: "Export", signed_id: signed_id, error: e.message, level: "error")
       nil
     end
   end
 
   def export_crossposts
-    Rails.logger.info "Exporting crossposts..."
+    Rails.event.notify("export.crossposts_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "crossposts.csv"), "w", write_headers: true, headers: %w[id platform server_url client_key client_secret access_token access_token_secret api_key api_key_secret username app_password enabled created_at updated_at]) do |csv|
       Crosspost.order(:id).find_each do |crosspost|
@@ -316,11 +314,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Crosspost.count} crossposts"
+    Rails.event.notify("export.crossposts_completed", component: "Export", count: Crosspost.count, level: "info")
   end
 
   def export_listmonks
-    Rails.logger.info "Exporting listmonks..."
+    Rails.event.notify("export.listmonks_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "listmonks.csv"), "w", write_headers: true, headers: %w[id url username api_key list_id template_id enabled created_at updated_at]) do |csv|
       Listmonk.order(:id).find_each do |listmonk|
@@ -338,11 +336,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Listmonk.count} listmonks"
+    Rails.event.notify("export.listmonks_completed", component: "Export", count: Listmonk.count, level: "info")
   end
 
   def export_pages
-    Rails.logger.info "Exporting pages..."
+    Rails.event.notify("export.pages_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "pages.csv"), "w", write_headers: true, headers: %w[id title slug content status redirect_url page_order created_at updated_at]) do |csv|
       Page.order(:id).find_each do |page|
@@ -363,7 +361,7 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Page.count} pages"
+    Rails.event.notify("export.pages_completed", component: "Export", count: Page.count, level: "info")
   end
 
   def process_page_content(page)
@@ -391,7 +389,7 @@ class Export
   end
 
   def export_settings
-    Rails.logger.info "Exporting settings..."
+    Rails.event.notify("export.settings_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "settings.csv"), "w", write_headers: true, headers: %w[id title description author url time_zone head_code custom_css social_links footer tool_code giscus created_at updated_at]) do |csv|
       Setting.order(:id).find_each do |setting|
@@ -417,7 +415,7 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Setting.count} settings"
+    Rails.event.notify("export.settings_completed", component: "Export", count: Setting.count, level: "info")
   end
 
   def process_setting_footer(setting)
@@ -445,7 +443,7 @@ class Export
   end
 
   def export_social_media_posts
-    Rails.logger.info "Exporting social_media_posts..."
+    Rails.event.notify("export.social_media_posts_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "social_media_posts.csv"), "w", write_headers: true, headers: %w[id article_id article_slug platform url created_at updated_at]) do |csv|
       SocialMediaPost.order(:id).find_each do |post|
@@ -461,11 +459,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{SocialMediaPost.count} social_media_posts"
+    Rails.event.notify("export.social_media_posts_completed", component: "Export", count: SocialMediaPost.count, level: "info")
   end
 
   def export_tags
-    Rails.logger.info "Exporting tags..."
+    Rails.event.notify("export.tags_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "tags.csv"), "w", write_headers: true, headers: %w[id name slug created_at updated_at]) do |csv|
       Tag.order(:id).find_each do |tag|
@@ -479,11 +477,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Tag.count} tags"
+    Rails.event.notify("export.tags_completed", component: "Export", count: Tag.count, level: "info")
   end
 
   def export_comments
-    Rails.logger.info "Exporting comments..."
+    Rails.event.notify("export.comments_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "comments.csv"), "w", write_headers: true, headers: %w[id article_id article_slug parent_id author_name author_url author_username author_avatar_url content platform external_id status published_at url created_at updated_at]) do |csv|
       Comment.order(:id).find_each do |comment|
@@ -508,16 +506,16 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Comment.count} comments"
+    Rails.event.notify("export.comments_completed", component: "Export", count: Comment.count, level: "info")
   end
 
   def export_static_files
-    Rails.logger.info "Exporting static_files..."
+    Rails.event.notify("export.static_files_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "static_files.csv"), "w", write_headers: true, headers: %w[id filename blob_filename description created_at updated_at]) do |csv|
       StaticFile.order(:id).find_each do |static_file|
         unless static_file.file.attached?
-          Rails.logger.warn "StaticFile #{static_file.id} has no attached file, skipping..."
+          Rails.event.notify("export.static_file_skipped", component: "Export", static_file_id: static_file.id, reason: "no_attached_file", level: "warn")
           next
         end
 
@@ -540,18 +538,18 @@ class Export
           File.open(file_path, "wb") do |f|
             f.write(blob.download)
           end
-          Rails.logger.info "Exported static file: #{blob_filename}"
+          Rails.event.notify("export.static_file_exported", component: "Export", blob_filename: blob_filename, level: "info")
         rescue => e
-          Rails.logger.error "Error exporting static file #{static_file.id}: #{e.message}"
+          Rails.event.notify("export.static_file_export_failed", component: "Export", static_file_id: static_file.id, error: e.message, level: "error")
         end
       end
     end
 
-    Rails.logger.info "Exported #{StaticFile.count} static_files"
+    Rails.event.notify("export.static_files_completed", component: "Export", count: StaticFile.count, level: "info")
   end
 
   def export_redirects
-    Rails.logger.info "Exporting redirects..."
+    Rails.event.notify("export.redirects_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "redirects.csv"), "w", write_headers: true, headers: %w[id regex replacement enabled permanent created_at updated_at]) do |csv|
       Redirect.order(:id).find_each do |redirect|
@@ -567,11 +565,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Redirect.count} redirects"
+    Rails.event.notify("export.redirects_completed", component: "Export", count: Redirect.count, level: "info")
   end
 
   def export_newsletter_settings
-    Rails.logger.info "Exporting newsletter_settings..."
+    Rails.event.notify("export.newsletter_settings_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "newsletter_settings.csv"), "w", write_headers: true, headers: %w[id provider enabled smtp_address smtp_port smtp_user_name smtp_password smtp_domain smtp_authentication smtp_enable_starttls from_email footer created_at updated_at]) do |csv|
       NewsletterSetting.order(:id).find_each do |setting|
@@ -597,7 +595,7 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{NewsletterSetting.count} newsletter_settings"
+    Rails.event.notify("export.newsletter_settings_completed", component: "Export", count: NewsletterSetting.count, level: "info")
   end
 
   def process_newsletter_setting_footer(setting)
@@ -625,7 +623,7 @@ class Export
   end
 
   def export_subscribers
-    Rails.logger.info "Exporting subscribers..."
+    Rails.event.notify("export.subscribers_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "subscribers.csv"), "w", write_headers: true, headers: %w[id email confirmation_token confirmed_at unsubscribe_token unsubscribed_at created_at updated_at]) do |csv|
       Subscriber.order(:id).find_each do |subscriber|
@@ -642,11 +640,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{Subscriber.count} subscribers"
+    Rails.event.notify("export.subscribers_completed", component: "Export", count: Subscriber.count, level: "info")
   end
 
   def export_article_tags
-    Rails.logger.info "Exporting article_tags..."
+    Rails.event.notify("export.article_tags_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "article_tags.csv"), "w", write_headers: true, headers: %w[id article_id article_slug tag_id tag_name tag_slug created_at updated_at]) do |csv|
       ArticleTag.order(:id).find_each do |article_tag|
@@ -663,11 +661,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{ArticleTag.count} article_tags"
+    Rails.event.notify("export.article_tags_completed", component: "Export", count: ArticleTag.count, level: "info")
   end
 
   def export_subscriber_tags
-    Rails.logger.info "Exporting subscriber_tags..."
+    Rails.event.notify("export.subscriber_tags_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "subscriber_tags.csv"), "w", write_headers: true, headers: %w[id subscriber_id subscriber_email tag_id tag_name tag_slug created_at updated_at]) do |csv|
       SubscriberTag.order(:id).find_each do |subscriber_tag|
@@ -684,11 +682,11 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{SubscriberTag.count} subscriber_tags"
+    Rails.event.notify("export.subscriber_tags_completed", component: "Export", count: SubscriberTag.count, level: "info")
   end
 
   def export_users
-    Rails.logger.info "Exporting users..."
+    Rails.event.notify("export.users_started", component: "Export", level: "info")
 
     CSV.open(File.join(@export_dir, "users.csv"), "w", write_headers: true, headers: %w[id user_name created_at updated_at]) do |csv|
       User.order(:id).find_each do |user|
@@ -701,7 +699,7 @@ class Export
       end
     end
 
-    Rails.logger.info "Exported #{User.count} users"
+    Rails.event.notify("export.users_completed", component: "Export", count: User.count, level: "info")
   end
 
   def create_zip_file
@@ -732,7 +730,7 @@ class Export
       end
     end
 
-    Rails.logger.info "Created ZIP file: #{@zip_path}"
+    Rails.event.notify("export.zip_created", component: "Export", zip_path: @zip_path, level: "info")
 
     # 清理临时目录（可选）
     FileUtils.rm_rf(@export_dir)
@@ -759,11 +757,11 @@ class Export
             if file_mtime < cutoff_time
               File.delete(zip_file)
               deleted_count += 1
-              Rails.logger.info "Deleted old export file: #{File.basename(zip_file)} (age: #{(Time.current - file_mtime).to_i / 86400} days)"
+              Rails.event.notify("export.old_file_deleted", component: "Export", file_type: "export", filename: File.basename(zip_file), age_days: (Time.current - file_mtime).to_i / 86400, level: "info")
             end
           rescue => e
             error_count += 1
-            Rails.logger.error "Error deleting export file #{zip_file}: #{e.message}"
+            Rails.event.notify("export.file_deletion_failed", component: "Export", file_type: "export", zip_file: zip_file, error: e.message, level: "error")
           end
         end
       end
@@ -777,17 +775,17 @@ class Export
             if file_mtime < cutoff_time
               File.delete(import_file)
               deleted_count += 1
-              Rails.logger.info "Deleted old import file: #{File.basename(import_file)} (age: #{(Time.current - file_mtime).to_i / 86400} days)"
+              Rails.event.notify("export.old_file_deleted", component: "Export", file_type: "import", filename: File.basename(import_file), age_days: (Time.current - file_mtime).to_i / 86400, level: "info")
             end
           rescue => e
             error_count += 1
-            Rails.logger.error "Error deleting import file #{import_file}: #{e.message}"
+            Rails.event.notify("export.file_deletion_failed", component: "Export", file_type: "import", import_file: import_file, error: e.message, level: "error")
           end
         end
       end
 
       message = "Cleaned up #{deleted_count} old export/import file(s) older than #{days} days"
-      Rails.logger.info message
+      Rails.event.notify("export.cleanup_completed", component: "Export", deleted_count: deleted_count, error_count: error_count, days: days, level: "info")
 
       {
         deleted: deleted_count,
@@ -796,8 +794,7 @@ class Export
       }
     rescue => e
       error_message = "Error during export/import cleanup: #{e.message}"
-      Rails.logger.error error_message
-      Rails.logger.error e.backtrace.join("\n")
+      Rails.event.notify("export.cleanup_failed", component: "Export", error: e.message, backtrace: e.backtrace.join("\n"), level: "error")
 
       {
         deleted: deleted_count,

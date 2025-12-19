@@ -33,7 +33,13 @@ class GenerateStaticFilesJob < ApplicationJob
       debounced: true
     )
 
-    Rails.logger.info "[GenerateStaticFilesJob] Scheduled debounced generation for #{type}:#{id} at #{scheduled_at} (delay: #{delay})"
+    Rails.event.notify "generate_static_files_job.scheduled",
+      level: "info",
+      component: "GenerateStaticFilesJob",
+      type: type,
+      id: id,
+      scheduled_at: scheduled_at,
+      delay: delay
   end
 
   def self.debounce_cache_key(type, id)
@@ -52,7 +58,12 @@ class GenerateStaticFilesJob < ApplicationJob
       latest_scheduled = Rails.cache.read(cache_key)
 
       if latest_scheduled && latest_scheduled.to_f > scheduled_at.to_f
-        Rails.logger.info "[GenerateStaticFilesJob] Skipping outdated job for #{type}:#{id} (newer job scheduled)"
+        Rails.event.notify "generate_static_files_job.skipped",
+          level: "info",
+          component: "GenerateStaticFilesJob",
+          type: type,
+          id: id,
+          reason: "newer job scheduled"
         return
       end
     end
@@ -62,8 +73,14 @@ class GenerateStaticFilesJob < ApplicationJob
       execute_generation(type, id)
     end
   rescue => e
-    Rails.logger.error "[GenerateStaticFilesJob] Error: #{e.message}"
-    Rails.logger.error e.backtrace.first(10).join("\n")
+    Rails.event.notify "generate_static_files_job.error",
+      level: "error",
+      component: "GenerateStaticFilesJob",
+      error_message: e.message
+    Rails.event.notify "generate_static_files_job.error_backtrace",
+      level: "error",
+      component: "GenerateStaticFilesJob",
+      backtrace: e.backtrace.first(10).join("\n")
 
     ActivityLog.create!(
       action: "failed",
@@ -108,7 +125,10 @@ class GenerateStaticFilesJob < ApplicationJob
     when "sitemap"
       generator.generate_sitemap
     else
-      Rails.logger.warn "[GenerateStaticFilesJob] Unknown type: #{type}"
+      Rails.event.notify "generate_static_files_job.unknown_type",
+        level: "warn",
+        component: "GenerateStaticFilesJob",
+        type: type
       return
     end
 
@@ -146,7 +166,9 @@ class GenerateStaticFilesJob < ApplicationJob
           f.flock(File::LOCK_UN)
         end
       else
-        Rails.logger.info "[GenerateStaticFilesJob] Another generation is running, waiting..."
+        Rails.event.notify "generate_static_files_job.waiting_for_lock",
+          level: "info",
+          component: "GenerateStaticFilesJob"
         f.flock(File::LOCK_EX) # Wait for lock
         begin
           yield

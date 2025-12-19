@@ -17,14 +17,23 @@ class ExportWordpressJob < ApplicationJob
         description: "WordPress Export Completed: #{download_url}"
       )
 
-      Rails.logger.info "WordPress export completed successfully. File saved to: #{download_url}"
+      Rails.event.notify "export_wordpress_job.completed",
+        level: "info",
+        component: "ExportWordpressJob",
+        download_url: download_url
     else
       handle_error(exporter.error_message)
     end
   rescue => e
     handle_error(e.message)
-    Rails.logger.error "WordPress export job failed: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
+    Rails.event.notify "export_wordpress_job.failed",
+      level: "error",
+      component: "ExportWordpressJob",
+      error_message: e.message
+    Rails.event.notify "export_wordpress_job.error_backtrace",
+      level: "error",
+      component: "ExportWordpressJob",
+      backtrace: e.backtrace.join("\n")
   end
 
   private

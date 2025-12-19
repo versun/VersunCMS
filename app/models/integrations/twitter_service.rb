@@ -50,20 +50,33 @@ module Integrations
 
         # 获取文章第一张图片
         first_image = article.first_image_attachment
-        Rails.logger.info "Twitter: first_image_attachment = #{first_image.class}"
+        Rails.event.notify "twitter_service.first_image",
+          level: "info",
+          component: "TwitterService",
+          image_type: first_image.class.to_s
 
         media_ids = []
         if first_image
-          Rails.logger.info "Twitter: Attempting to upload image of type: #{first_image.class}"
+          Rails.event.notify "twitter_service.upload_image_attempt",
+            level: "info",
+            component: "TwitterService",
+            image_type: first_image.class.to_s
           media_id = upload_image(client, first_image)
           if media_id
             media_ids << media_id
-            Rails.logger.info "Twitter: Image uploaded successfully with media_id: #{media_id}"
+            Rails.event.notify "twitter_service.image_uploaded",
+              level: "info",
+              component: "TwitterService",
+              media_id: media_id
           else
-            Rails.logger.warn "Twitter: Image upload failed"
+            Rails.event.notify "twitter_service.image_upload_failed",
+              level: "warn",
+              component: "TwitterService"
           end
         else
-          Rails.logger.info "Twitter: No image found in article"
+          Rails.event.notify "twitter_service.no_image",
+            level: "info",
+            component: "TwitterService"
         end
 
         # 构建推文数据
@@ -74,7 +87,10 @@ module Integrations
           }
         end
 
-        Rails.logger.info "Twitter: Sending tweet with data: #{tweet_data.inspect}"
+        Rails.event.notify "twitter_service.sending_tweet",
+          level: "info",
+          component: "TwitterService",
+          tweet_data: tweet_data.inspect
         response = client.post("tweets", tweet_data.to_json)
 
         if response && response["data"] && response["data"]["id"]
@@ -87,21 +103,31 @@ module Integrations
           )
         else
           error_message = response&.dig("errors")&.first&.dig("message") || "Unknown error"
-          Rails.logger.error "Twitter: Failed to create tweet - #{error_message}"
+          Rails.event.notify "twitter_service.tweet_failed",
+            level: "error",
+            component: "TwitterService",
+            error_message: error_message
 
           # 如果带媒体的推文失败，尝试发送纯文本推文
           if media_ids.any? && error_message.include?("media")
-            Rails.logger.warn "Twitter: Media tweet failed, trying text-only tweet"
+            Rails.event.notify "twitter_service.media_tweet_failed",
+              level: "warn",
+              component: "TwitterService"
 
             text_only_data = { text: tweet }
-            Rails.logger.info "Twitter: Sending text-only tweet: #{text_only_data.inspect}"
+            Rails.event.notify "twitter_service.sending_text_only",
+              level: "info",
+              component: "TwitterService",
+              tweet_data: text_only_data.inspect
 
             begin
               fallback_response = client.post("tweets", text_only_data.to_json)
 
               if fallback_response && fallback_response["data"] && fallback_response["data"]["id"]
                 id = fallback_response["data"]["id"]
-                Rails.logger.warn "Twitter: Text-only tweet succeeded, media was skipped"
+                Rails.event.notify "twitter_service.text_only_succeeded",
+                  level: "warn",
+                  component: "TwitterService"
 
                 ActivityLog.create!(
                   action: "completed",
@@ -113,7 +139,10 @@ module Integrations
                 raise "Fallback text tweet also failed"
               end
             rescue => fallback_error
-              Rails.logger.error "Twitter: Fallback text tweet also failed - #{fallback_error.message}"
+              Rails.event.notify "twitter_service.fallback_failed",
+                level: "error",
+                component: "TwitterService",
+                error_message: fallback_error.message
 
               ActivityLog.create!(
                 action: "failed",
@@ -136,7 +165,10 @@ module Integrations
 
         "https://x.com/#{username}/status/#{id}" if username && id
       rescue => e
-        Rails.logger.error "Twitter: Error posting tweet - #{e.message}"
+        Rails.event.notify "twitter_service.post_error",
+          level: "error",
+          component: "TwitterService",
+          error_message: e.message
         ActivityLog.create!(
           action: "failed",
           target: "crosspost",
@@ -196,10 +228,17 @@ module Integrations
 
             if quote_response && quote_response["data"]
               quote_tweets = process_tweets(quote_response, tweet_id)
-              Rails.logger.info "Found #{quote_tweets.length} quote tweets for tweet #{tweet_id}"
+              Rails.event.notify "twitter_service.quote_tweets_found",
+                level: "info",
+                component: "TwitterService",
+                count: quote_tweets.length,
+                tweet_id: tweet_id
             end
           rescue => e
-            Rails.logger.warn "Failed to fetch quote tweets (may require higher API tier): #{e.message}"
+            Rails.event.notify "twitter_service.quote_tweets_failed",
+              level: "warn",
+              component: "TwitterService",
+              error_message: e.message
             # Continue without quote tweets - we can still fetch direct replies
           end
 
@@ -233,12 +272,18 @@ module Integrations
 
           { comments: comments, rate_limit: rate_limit_info }
         else
-          Rails.logger.error "Failed to fetch Twitter post details: #{response.inspect}"
+          Rails.event.notify "twitter_service.fetch_post_failed",
+            level: "error",
+            component: "TwitterService",
+            response: response.inspect
           default_response
         end
       rescue => e
-        Rails.logger.error "Error fetching Twitter comments: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.event.notify "twitter_service.fetch_comments_error",
+          level: "error",
+          component: "TwitterService",
+          error_message: e.message,
+          backtrace: e.backtrace.join("\n")
         default_response
       end
     end
@@ -344,7 +389,10 @@ module Integrations
 
         media_id
       rescue => e
-        Rails.logger.error "Twitter: Error uploading image - #{e.message}"
+        Rails.event.notify "twitter_service.upload_image_error",
+          level: "error",
+          component: "TwitterService",
+          error_message: e.message
         nil
       end
     end
@@ -373,19 +421,31 @@ module Integrations
         # 使用 v1.1 上传端点
         response = v1_client.post("media/upload.json", upload_body, headers: headers)
 
-        Rails.logger.info "Twitter: Media upload response - #{response.inspect}"
+        Rails.event.notify "twitter_service.media_upload_response",
+          level: "info",
+          component: "TwitterService",
+          response: response.inspect
 
         if response && (response["media_id"] || response["media_id_string"])
           media_id = response["media_id_string"] || response["media_id"].to_s
-          Rails.logger.info "Twitter: Media uploaded successfully with ID: #{media_id}"
+          Rails.event.notify "twitter_service.media_uploaded",
+            level: "info",
+            component: "TwitterService",
+            media_id: media_id
           media_id
         else
-          Rails.logger.error "Twitter: Media upload failed - #{response.inspect}"
+          Rails.event.notify "twitter_service.media_upload_failed",
+            level: "error",
+            component: "TwitterService",
+            response: response.inspect
           nil
         end
       rescue => e
-        Rails.logger.error "Twitter: Error in upload_media_to_twitter - #{e.message}"
-        Rails.logger.error "Twitter: Error backtrace - #{e.backtrace.first(5).join("\n")}"
+        Rails.event.notify "twitter_service.media_upload_error",
+          level: "error",
+          component: "TwitterService",
+          error_message: e.message,
+          backtrace: e.backtrace.first(5).join("\n")
         nil
       end
     end
@@ -411,7 +471,10 @@ module Integrations
         temp_file.rewind
         temp_file
       rescue => e
-        Rails.logger.error "Twitter: Error creating temp image file - #{e.message}"
+        Rails.event.notify "twitter_service.temp_file_error",
+          level: "error",
+          component: "TwitterService",
+          error_message: e.message
         nil
       end
     end
@@ -435,11 +498,17 @@ module Integrations
       if response.is_a?(Net::HTTPSuccess)
         response.body
       else
-        Rails.logger.error "Twitter: Failed to download remote image: #{response.code}"
+        Rails.event.notify "twitter_service.download_remote_image_failed",
+          level: "error",
+          component: "TwitterService",
+          response_code: response.code
         nil
       end
     rescue => e
-      Rails.logger.error "Twitter: Error downloading remote image - #{e.message}"
+      Rails.event.notify "twitter_service.download_remote_image_error",
+        level: "error",
+        component: "TwitterService",
+        error_message: e.message
       nil
     end
 
@@ -463,7 +532,10 @@ module Integrations
         if redirect_uri.relative?
           redirect_uri = URI.join("#{uri.scheme}://#{uri.host}:#{uri.port}", response["location"])
         end
-        Rails.logger.info "Twitter: Following redirect to #{redirect_uri}"
+        Rails.event.notify "twitter_service.following_redirect",
+          level: "info",
+          component: "TwitterService",
+          redirect_uri: redirect_uri.to_s
         fetch_with_redirect(redirect_uri, limit - 1)
       else
         response
@@ -524,7 +596,7 @@ module Integrations
       # 实际的状态检查可能需要更高级的API访问权限
       return true unless media_id
 
-      Rails.logger.info "Twitter: Skipping detailed media status check due to API limitations"
+      Rails.event.notify("twitter_service.media_status_check_skipped", level: "info", component: "TwitterService", media_id: media_id, reason: "API limitations")
       true
     end
 
@@ -573,11 +645,19 @@ module Integrations
           retries += 1
           if retries <= max_retries
             wait_time = calculate_backoff_time(retries)
-            Rails.logger.warn "Twitter API rate limit hit, waiting #{wait_time} seconds before retry #{retries}/#{max_retries}"
+            Rails.event.notify "twitter_service.rate_limit_retry",
+              level: "warn",
+              component: "TwitterService",
+              wait_time: wait_time,
+              retry_count: retries,
+              max_retries: max_retries
             sleep(wait_time)
             retry
           else
-            Rails.logger.error "Twitter API rate limit exceeded after #{max_retries} retries"
+            Rails.event.notify "twitter_service.rate_limit_exceeded",
+              level: "error",
+              component: "TwitterService",
+              max_retries: max_retries
             handle_rate_limit_exceeded({
               limit: 180,
               remaining: 0,
@@ -631,7 +711,12 @@ module Integrations
           retries += 1
           if retries <= max_retries
             wait_time = calculate_backoff_time(retries)
-            Rails.logger.warn "Twitter API rate limit hit, waiting #{wait_time} seconds before retry #{retries}/#{max_retries}"
+            Rails.event.notify "twitter_service.rate_limit_hit",
+              level: "warn",
+              component: "TwitterService",
+              wait_time: wait_time,
+              retry_count: retries,
+              max_retries: max_retries
 
             # Log rate limit exceeded
             handle_rate_limit_exceeded({
@@ -643,7 +728,10 @@ module Integrations
             sleep(wait_time)
             retry
           else
-            Rails.logger.error "Twitter API rate limit exceeded after #{max_retries} retries"
+            Rails.event.notify "twitter_service.rate_limit_max_retries",
+              level: "error",
+              component: "TwitterService",
+              max_retries: max_retries
             handle_rate_limit_exceeded({
               limit: 180,
               remaining: 0,
@@ -669,7 +757,11 @@ module Integrations
       reset_time = rate_limit_info[:reset_at] || Time.current + 15.minutes
       wait_seconds = [ (reset_time - Time.current).to_i, 0 ].max
 
-      Rails.logger.error "🚫 Twitter API rate limit exceeded. Resets at #{reset_time} (in #{wait_seconds} seconds)"
+      Rails.event.notify "twitter_service.rate_limit_exceeded_event",
+        level: "error",
+        component: "TwitterService",
+        reset_time: reset_time,
+        wait_seconds: wait_seconds
 
       ActivityLog.create!(
         action: "rate_limited",
@@ -684,7 +776,12 @@ module Integrations
       return unless rate_limit_info[:remaining]
 
       if rate_limit_info[:remaining] < 20
-        Rails.logger.warn "⚠️  Twitter API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining (resets at #{rate_limit_info[:reset_at]})"
+        Rails.event.notify "twitter_service.rate_limit_low",
+          level: "warn",
+          component: "TwitterService",
+          remaining: rate_limit_info[:remaining],
+          limit: rate_limit_info[:limit],
+          reset_at: rate_limit_info[:reset_at]
 
         ActivityLog.create!(
           action: "warning",
@@ -693,7 +790,11 @@ module Integrations
           description: "Twitter API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
         )
       elsif rate_limit_info[:remaining] < 50
-        Rails.logger.info "Twitter API rate limit: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+        Rails.event.notify "twitter_service.rate_limit_status",
+          level: "info",
+          component: "TwitterService",
+          remaining: rate_limit_info[:remaining],
+          limit: rate_limit_info[:limit]
       end
     end
   end

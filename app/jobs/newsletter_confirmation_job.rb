@@ -19,10 +19,20 @@ class NewsletterConfirmationJob < ApplicationJob
     apply_smtp_config_to_mail(mail, newsletter_setting)
 
     mail.deliver_now
-    Rails.logger.info "Successfully sent confirmation email to #{subscriber.email}"
+    Rails.event.notify "newsletter_confirmation_job.email_sent",
+      level: "info",
+      component: "NewsletterConfirmationJob",
+      subscriber_email: subscriber.email
   rescue => e
-    Rails.logger.error "Failed to send confirmation email to #{subscriber.email}: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n") if e.backtrace
+    Rails.event.notify "newsletter_confirmation_job.email_failed",
+      level: "error",
+      component: "NewsletterConfirmationJob",
+      subscriber_email: subscriber.email,
+      error_message: e.message
+    Rails.event.notify "newsletter_confirmation_job.error_backtrace",
+      level: "error",
+      component: "NewsletterConfirmationJob",
+      backtrace: e.backtrace.join("\n") if e.backtrace
     raise
   end
 end

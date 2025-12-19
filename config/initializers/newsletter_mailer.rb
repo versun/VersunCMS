@@ -22,17 +22,29 @@ Rails.application.config.after_initialize do
         # 设置默认的 from 地址
         ActionMailer::Base.default from: newsletter_setting.from_email
 
-        Rails.logger.info "Newsletter mailer configured: #{newsletter_setting.smtp_address}:#{newsletter_setting.smtp_port}"
+        Rails.event.notify "newsletter.mailer.configured",
+          level: "info",
+          component: "newsletter_mailer_initializer",
+          smtp_address: newsletter_setting.smtp_address,
+          smtp_port: newsletter_setting.smtp_port,
+          from_email: newsletter_setting.from_email
       else
         # 即使没有配置 newsletter，也设置一个默认的 delivery_method 避免回退到 localhost:25
         unless Rails.application.config.action_mailer.delivery_method
           Rails.application.config.action_mailer.delivery_method = :smtp
-          Rails.logger.info "Set default delivery_method to SMTP (newsletter not configured)"
+          Rails.event.notify "newsletter.mailer.default_configured",
+            level: "info",
+            component: "newsletter_mailer_initializer",
+            reason: "newsletter_not_configured"
         end
       end
     end
   rescue => e
-    Rails.logger.error "Failed to configure newsletter mailer: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n") if e.backtrace
+    Rails.event.notify "newsletter.mailer.configuration_failed",
+      level: "error",
+      component: "newsletter_mailer_initializer",
+      error_message: e.message,
+      error_class: e.class.name,
+      backtrace: e.backtrace&.join("\n")
   end
 end

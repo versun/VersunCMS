@@ -10,7 +10,10 @@ class CleanOldExportsJob < ApplicationJob
     else
              7
     end
-    Rails.logger.info "Starting cleanup of old export/import files (keeping files newer than #{days} days)..."
+    Rails.event.notify "clean_old_exports_job.started",
+      level: "info",
+      component: "CleanOldExportsJob",
+      days: days
 
     result = Export.cleanup_old_exports(days: days)
 
@@ -22,7 +25,11 @@ class CleanOldExportsJob < ApplicationJob
       description: result[:message]
     )
 
-    Rails.logger.info result[:message]
+    Rails.event.notify "clean_old_exports_job.completed",
+      level: "info",
+      component: "CleanOldExportsJob",
+      message: result[:message],
+      errors: result[:errors]
     result
   end
 end

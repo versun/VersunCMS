@@ -16,7 +16,11 @@ class ArchiveSourceUrlJob < ApplicationJob
 
     # 验证 URL 格式
     unless valid_url?(article.source_url)
-      Rails.logger.warn "Invalid source URL for article #{article.id}: #{article.source_url}"
+      Rails.event.notify "archive_source_url_job.invalid_url",
+        level: "warn",
+        component: "ArchiveSourceUrlJob",
+        article_id: article.id,
+        source_url: article.source_url
       return
     end
 
@@ -27,10 +31,18 @@ class ArchiveSourceUrlJob < ApplicationJob
       # Update without triggering callbacks to avoid infinite loop
       article.update_column(:source_archive_url, result[:archived_url])
 
-      Rails.logger.info "Successfully archived source URL for article #{article.id}: #{result[:archived_url]}"
+      Rails.event.notify "archive_source_url_job.archived",
+        level: "info",
+        component: "ArchiveSourceUrlJob",
+        article_id: article.id,
+        archived_url: result[:archived_url]
     else
       error_msg = result[:error] || "Unknown error"
-      Rails.logger.warn "Failed to archive source URL for article #{article.id}: #{error_msg}"
+      Rails.event.notify "archive_source_url_job.archive_failed",
+        level: "warn",
+        component: "ArchiveSourceUrlJob",
+        article_id: article.id,
+        error_message: error_msg
 
       # Re-raise to trigger retry for rate limiting errors
       if error_msg.include?("rate limit")
