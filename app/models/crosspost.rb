@@ -19,8 +19,6 @@ class Crosspost < ApplicationRecord
   validates :username, :app_password, presence: true, if: -> { bluesky? && enabled? }
   # Internet Archive 不需要额外的验证字段
 
-  after_save :update_comment_fetch_schedule, if: :comment_fetch_settings_changed?
-
   scope :mastodon, -> { find_or_create_by(platform: "mastodon") }
   scope :twitter, -> { find_or_create_by(platform: "twitter") }
   scope :bluesky, -> { find_or_create_by(platform: "bluesky") }
@@ -65,17 +63,5 @@ class Crosspost < ApplicationRecord
   # 获取有效的最大字符数（如果未设置则使用默认值）
   def effective_max_characters
     max_characters || default_max_characters
-  end
-
-  private
-
-  def comment_fetch_settings_changed?
-    saved_change_to_enabled? ||
-      saved_change_to_auto_fetch_comments? ||
-      saved_change_to_comment_fetch_schedule?
-  end
-
-  def update_comment_fetch_schedule
-    ScheduledFetchSocialCommentsJob.update_schedule
   end
 end
