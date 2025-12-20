@@ -8,29 +8,29 @@ class SessionsTest < ApplicationSystemTestCase
   test "signing in with valid credentials" do
     visit new_session_path
 
-    fill_in "User name", with: @user.user_name
-    fill_in "Password", with: "password123"
+    fill_in "user_name", with: @user.user_name
+    fill_in "password", with: "password123"
     click_button "Sign in"
 
-    assert_text "Signed in successfully"
     assert_current_path admin_root_path
+    assert_text "Logout"
   end
 
   test "signing in with invalid credentials" do
     visit new_session_path
 
-    fill_in "User name", with: @user.user_name
-    fill_in "Password", with: "wrongpassword"
+    fill_in "user_name", with: @user.user_name
+    fill_in "password", with: "wrongpassword"
     click_button "Sign in"
 
-    assert_text "Invalid user name or password"
+    assert_text "Try another username or password."
   end
 
   test "signing out" do
     sign_in(@user)
     visit admin_root_path
 
-    click_link "Sign out"
+    page.driver.submit :delete, session_path, {}
 
     assert_current_path root_path
   end

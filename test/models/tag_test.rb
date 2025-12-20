@@ -59,12 +59,13 @@ class TagTest < ActiveSupport::TestCase
   end
 
   test "find_or_create_by_names should create tags from comma-separated string" do
-    tags = Tag.find_or_create_by_names("ruby, rails, javascript")
+    # Use names that don't exist in fixtures
+    tags = Tag.find_or_create_by_names("python, golang, typescript")
 
     assert_equal 3, tags.count
-    assert tags.map(&:name).include?("ruby")
-    assert tags.map(&:name).include?("rails")
-    assert tags.map(&:name).include?("javascript")
+    assert tags.map(&:name).include?("python")
+    assert tags.map(&:name).include?("golang")
+    assert tags.map(&:name).include?("typescript")
   end
 
   test "find_or_create_by_names should reuse existing tags" do
@@ -86,10 +87,10 @@ class TagTest < ActiveSupport::TestCase
   end
 
   test "find_or_create_by_names should strip whitespace" do
-    tags = Tag.find_or_create_by_names("  ruby  ,  rails  ")
+    tags = Tag.find_or_create_by_names("  python  ,  golang  ")
     assert_equal 2, tags.count
-    assert tags.map(&:name).include?("ruby")
-    assert tags.map(&:name).include?("rails")
+    assert tags.map(&:name).include?("python")
+    assert tags.map(&:name).include?("golang")
   end
 
   test "find_or_create_by_names should remove duplicates" do

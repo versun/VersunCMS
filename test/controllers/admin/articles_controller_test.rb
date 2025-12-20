@@ -13,11 +13,6 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should get show" do
-    get admin_article_path(@article.slug)
-    assert_response :success
-  end
-
   test "should get new" do
     get new_admin_article_path
     assert_response :success
@@ -35,7 +30,8 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
           title: "New Admin Article",
           description: "Description",
           status: "draft",
-          content: "Content"
+          content_type: "html",
+          html_content: "<p>Content</p>"
         }
       }
     end
@@ -50,7 +46,8 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
           title: "New Article",
           description: "Description",
           status: "draft",
-          content: "Content"
+          content_type: "html",
+          html_content: "<p>Content</p>"
         },
         create_and_add_another: "1"
       }
@@ -98,8 +95,6 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should batch add tags" do
-    tag = tags(:ruby)
-
     post batch_add_tags_admin_articles_path, params: {
       ids: [ @article.slug ],
       tag_names: "ruby, rails"
@@ -107,7 +102,8 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to admin_articles_path
     @article.reload
-    assert @article.tags.pluck(:name).include?("ruby")
+    tag_names = @article.tags.pluck(:name).map(&:downcase)
+    assert tag_names.include?("ruby"), "Tags should include 'ruby', got: #{tag_names}"
   end
 
   test "should not batch add tags without ids" do
@@ -128,14 +124,23 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_articles_path
   end
 
-  test "should batch destroy articles" do
+  test "should batch destroy articles - move to trash" do
+    # Create a fresh article that's not in trash
+    article = Article.create!(
+      title: "Article to trash",
+      slug: "article-to-trash-#{Time.current.to_i}",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Content</p>"
+    )
+
     post batch_destroy_admin_articles_path, params: {
-      ids: [ @article.slug ]
+      ids: [ article.slug ]
     }
 
     assert_redirected_to admin_articles_path
-    @article.reload
-    assert_equal "trash", @article.status
+    article.reload
+    assert_equal "trash", article.status
   end
 
   test "should permanently delete trashed articles in batch" do

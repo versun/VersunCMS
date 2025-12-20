@@ -3,6 +3,8 @@ published_article:
   slug: "published-article"
   description: "This is a published article"
   status: publish
+  content_type: html
+  html_content: "<p>Published article content</p>"
   created_at: <%= 2.days.ago %>
   updated_at: <%= 2.days.ago %>
 
@@ -11,6 +13,8 @@ draft_article:
   slug: "draft-article"
   description: "This is a draft article"
   status: draft
+  content_type: html
+  html_content: "<p>Draft article content</p>"
   created_at: <%= 1.day.ago %>
   updated_at: <%= 1.day.ago %>
 
@@ -20,6 +24,8 @@ scheduled_article:
   description: "This is a scheduled article"
   status: schedule
   scheduled_at: <%= 1.day.from_now %>
+  content_type: html
+  html_content: "<p>Scheduled article content</p>"
   created_at: <%= 1.day.ago %>
   updated_at: <%= 1.day.ago %>
 
@@ -28,6 +34,8 @@ trash_article:
   slug: "trash-article"
   description: "This is a trashed article"
   status: trash
+  content_type: html
+  html_content: "<p>Trashed article content</p>"
   created_at: <%= 3.days.ago %>
   updated_at: <%= 3.days.ago %>
 
@@ -36,6 +44,7 @@ shared_article:
   slug: "shared-article"
   description: "This is a shared article"
   status: shared
+  content_type: html
+  html_content: "<p>Shared article content</p>"
   created_at: <%= 1.day.ago %>
   updated_at: <%= 1.day.ago %>
-

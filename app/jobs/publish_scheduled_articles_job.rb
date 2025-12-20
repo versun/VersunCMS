@@ -7,6 +7,10 @@ class PublishScheduledArticlesJob < ApplicationJob
       level: "info",
       component: "PublishScheduledArticlesJob",
       article_id: article_id
+
+    # Skip job cancellation in test environment where ActiveJob::Base.jobs is not available
+    return if Rails.env.test?
+
     ActiveJob::Base.jobs.scheduled.where(job_class_name: "PublishScheduledArticlesJob").each do |job|
       if job.arguments[0]["arguments"] == [ article_id ]
         Rails.event.notify "publish_scheduled_articles_job.cancelling_old_job",

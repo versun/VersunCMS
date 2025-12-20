@@ -5,7 +5,9 @@ class PageTest < ActiveSupport::TestCase
     @page = Page.new(
       title: "Test Page",
       slug: "test-page",
-      status: :draft
+      status: :draft,
+      content_type: :html,
+      html_content: "<p>Test content</p>"
     )
   end
 
@@ -19,11 +21,15 @@ class PageTest < ActiveSupport::TestCase
   end
 
   test "should require unique slug" do
-    existing_page = Page.create!(
+    existing_page = Page.new(
       title: "Existing",
       slug: "existing-page",
-      status: :draft
+      status: :draft,
+      content_type: :html,
+      html_content: "<p>Existing content</p>"
     )
+    existing_page.save!
+
     @page.slug = existing_page.slug
     assert_not @page.valid?
   end
@@ -33,17 +39,23 @@ class PageTest < ActiveSupport::TestCase
   end
 
   test "should have published scope" do
-    published_page = Page.create!(
+    published_page = Page.new(
       title: "Published Page",
       slug: "published-page",
-      status: :publish
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Published content</p>"
     )
+    published_page.save!
 
-    draft_page = Page.create!(
+    draft_page = Page.new(
       title: "Draft Page",
       slug: "draft-page",
-      status: :draft
+      status: :draft,
+      content_type: :html,
+      html_content: "<p>Draft content</p>"
     )
+    draft_page.save!
 
     published = Page.published
     assert_includes published, published_page

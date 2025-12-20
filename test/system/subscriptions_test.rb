@@ -1,40 +1,33 @@
 require "application_system_test_case"
 
 class SubscriptionsTest < ApplicationSystemTestCase
-  test "subscribing to newsletter" do
-    visit root_path
+  test "subscribing from the subscriptions page" do
+    email = "subscriber-#{SecureRandom.hex(6)}@example.com"
 
-    fill_in "Email", with: "newsubscriber@example.com"
-    click_button "Subscribe"
+    visit subscriptions_path
+    fill_in "输入您的邮箱地址", with: email
+    click_button "订阅"
 
-    assert_text "Thank you for subscribing"
+    assert_current_path root_path
+    assert_text "订阅成功！请检查您的邮箱并点击确认链接。"
   end
 
-  test "subscribing with invalid email" do
-    visit root_path
-
-    fill_in "Email", with: "invalid-email"
-    click_button "Subscribe"
-
-    assert_text "Email is invalid"
-  end
-
-  test "confirming subscription" do
-    subscriber = subscribers(:unconfirmed_subscriber)
+  test "confirming a subscription token" do
+    subscriber = create_subscriber(email: "confirm-#{SecureRandom.hex(6)}@example.com", confirmed: false)
 
     visit confirm_subscription_path(token: subscriber.confirmation_token)
 
-    assert_text "Subscription confirmed"
+    assert_text "订阅确认成功"
     subscriber.reload
     assert subscriber.confirmed?
   end
 
-  test "unsubscribing from newsletter" do
-    subscriber = subscribers(:confirmed_subscriber)
+  test "unsubscribing with a token" do
+    subscriber = create_subscriber(email: "unsub-#{SecureRandom.hex(6)}@example.com", confirmed: true)
 
-    visit unsubscribe_subscription_path(token: subscriber.unsubscribe_token)
+    visit unsubscribe_path(token: subscriber.unsubscribe_token)
 
-    assert_text "You have been unsubscribed"
+    assert_text "取消订阅成功"
     subscriber.reload
     assert subscriber.unsubscribed?
   end

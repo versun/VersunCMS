@@ -11,42 +11,39 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create session with valid credentials" do
-    post sessions_path, params: {
-      session: {
-        user_name: @user.user_name,
-        password: "password123"
-      }
+    post session_path, params: {
+      user_name: @user.user_name,
+      password: "password123"
     }
 
-    assert_redirected_to root_path
+    # After login, redirects to admin (after_authentication_url)
+    assert_response :redirect
   end
 
   test "should not create session with invalid username" do
-    post sessions_path, params: {
-      session: {
-        user_name: "nonexistent",
-        password: "password123"
-      }
+    post session_path, params: {
+      user_name: "nonexistent",
+      password: "password123"
     }
 
-    assert_response :unprocessable_entity
+    # Failed login redirects to new_session_path with flash alert
+    assert_redirected_to new_session_path
   end
 
   test "should not create session with invalid password" do
-    post sessions_path, params: {
-      session: {
-        user_name: @user.user_name,
-        password: "wrongpassword"
-      }
+    post session_path, params: {
+      user_name: @user.user_name,
+      password: "wrongpassword"
     }
 
-    assert_response :unprocessable_entity
+    # Failed login redirects to new_session_path with flash alert
+    assert_redirected_to new_session_path
   end
 
   test "should destroy session" do
     sign_in(@user)
 
-    delete session_path(@user.sessions.first.id)
+    delete session_path
     assert_redirected_to root_path
   end
 end

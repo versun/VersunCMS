@@ -39,23 +39,22 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should get new when authenticated" do
+  test "should get new when authenticated via admin" do
     sign_in(@user)
-    get new_article_path
+    get new_admin_article_path
     assert_response :success
   end
 
-  test "should redirect to login when accessing new without authentication" do
-    get new_article_path
-    # Assuming authentication redirects to login
-    # Adjust based on your authentication implementation
+  test "should redirect to login when accessing admin new without authentication" do
+    get new_admin_article_path
+    assert_redirected_to new_session_path
   end
 
-  test "should create article when authenticated" do
+  test "should create article when authenticated via admin" do
     sign_in(@user)
 
     assert_difference "Article.count", 1 do
-      post articles_path, params: {
+      post admin_articles_path, params: {
         article: {
           title: "New Article",
           description: "New description",
@@ -68,11 +67,11 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_articles_path
   end
 
-  test "should not create article with invalid params" do
+  test "should not create article with invalid params via admin" do
     sign_in(@user)
 
     assert_no_difference "Article.count" do
-      post articles_path, params: {
+      post admin_articles_path, params: {
         article: {
           title: "",
           status: "draft"
@@ -81,16 +80,16 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should get edit when authenticated" do
+  test "should get edit when authenticated via admin" do
     sign_in(@user)
-    get edit_article_path(@article.slug)
+    get edit_admin_article_path(@article)
     assert_response :success
   end
 
-  test "should update article when authenticated" do
+  test "should update article when authenticated via admin" do
     sign_in(@user)
 
-    patch article_path(@article.slug), params: {
+    patch admin_article_path(@article), params: {
       article: {
         title: "Updated Title",
         description: "Updated description"
@@ -102,23 +101,23 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Title", @article.title
   end
 
-  test "should move article to trash when destroying" do
+  test "should move article to trash when destroying via admin" do
     sign_in(@user)
 
     assert_no_difference "Article.count" do
-      delete article_path(@article.slug)
+      delete admin_article_path(@article)
     end
 
     @article.reload
     assert_equal "trash", @article.status
   end
 
-  test "should permanently delete article from trash" do
+  test "should permanently delete article from trash via admin" do
     sign_in(@user)
     trash_article = articles(:trash_article)
 
     assert_difference "Article.count", -1 do
-      delete article_path(trash_article.slug)
+      delete admin_article_path(trash_article)
     end
   end
 

@@ -66,12 +66,16 @@
   - 退订流程
 
 ### 4. 系统测试 (`test/system/`)
-端到端的浏览器测试：
+端到端的功能测试（默认无需真实浏览器）：
 
 - **articles_test.rb** - 文章系统测试
   - 用户界面交互
   - 表单提交
   - 页面导航
+
+- **admin_articles_test.rb** - 后台文章系统测试
+  - 登录后发布文章
+  - 将文章移入垃圾箱
 
 - **sessions_test.rb** - 会话系统测试
   - 登录流程
@@ -126,8 +130,14 @@ bin/rails test test/models/article_test.rb:10
 
 ### 运行系统测试
 ```bash
-bin/rails test:system
+bin/rails test test/system
 ```
+
+默认使用 `rack_test` driver（无需 Chrome/Selenium）。如需使用浏览器驱动：
+```bash
+SYSTEM_TEST_DRIVER=selenium bin/rails test test/system
+```
+注：测试环境默认不启用 `public_file_server`，避免 `public/` 下已提交的静态站点文件覆盖动态路由。
 
 ### 并行运行测试
 测试已配置为并行运行，使用所有可用的CPU核心。
@@ -167,15 +177,11 @@ bin/rails test:system
 ## 最佳实践
 
 1. **测试隔离** - 每个测试应该独立运行，不依赖其他测试的状态
-2. **使用Fixtures** - 优先使用fixtures而非在测试中创建数据
+2. **数据可控** - 系统测试优先创建自己需要的数据，避免依赖历史数据/静态产物
 3. **测试命名** - 使用描述性的测试名称，说明测试的目的
 4. **断言清晰** - 使用明确的断言消息
 5. **避免测试实现细节** - 测试行为而非实现
 
 ## 持续集成
 
-测试套件设计为在CI/CD环境中运行。确保：
-- 测试数据库正确配置
-- 所有依赖已安装
-- 系统测试的浏览器驱动已配置
-
+测试套件设计为在CI/CD环境中运行。系统测试默认无需浏览器；如启用 Selenium，请确保浏览器与驱动已安装。
