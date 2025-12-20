@@ -15,7 +15,11 @@ class StaticGenerator
       settings = Setting.first_or_create
       case settings.static_generation_destination
       when "local"
-        settings.local_generation_path.present? ? Pathname.new(settings.local_generation_path) : PUBLIC_DIR
+        if settings.local_generation_path.present?
+          normalize_output_dir(settings.local_generation_path)
+        else
+          PUBLIC_DIR
+        end
       when "github"
         # GitHub mode: always generate to tmp directory to avoid polluting public/
         GITHUB_OUTPUT_DIR
@@ -79,12 +83,12 @@ class StaticGenerator
   end
 
   # Generate all static files
-  def generate_all
+  def generate_all(precompile_assets: true)
     Rails.event.notify("static_generator.generation_started", level: "info", component: "StaticGenerator")
 
     # Clean old generated files before generating new ones
     clean_generated_files
-    ensure_assets_available!
+    ensure_assets_available!(precompile: precompile_assets)
 
     export_all_images
     generate_index_pages
@@ -649,6 +653,10 @@ class StaticGenerator
 
   private
 
+  def normalize_output_dir(path)
+    Pathname.new(path.to_s).expand_path(Rails.root).cleanpath
+  end
+
   def generate_search_index
     articles = Article.published.includes(:rich_text_content, :tags).order(created_at: :desc)
 
@@ -677,17 +685,70 @@ class StaticGenerator
     write_file("search.html", html)
   end
 
-  def ensure_assets_available!
-    return if output_dir.to_s == PUBLIC_DIR.to_s
-
+  def ensure_assets_available!(precompile: true)
     source_assets_dir = PUBLIC_DIR.join("assets")
-    return unless Dir.exist?(source_assets_dir)
+    unless assets_present?(source_assets_dir)
+      if precompile
+        precompile_assets!
+      else
+        Rails.event.notify(
+          "static_generator.assets_missing",
+          level: "warn",
+          component: "StaticGenerator",
+          source: source_assets_dir.to_s
+        )
+        return
+      end
+    end
+
+    unless assets_present?(source_assets_dir)
+      Rails.event.notify(
+        "static_generator.assets_still_missing",
+        level: "error",
+        component: "StaticGenerator",
+        source: source_assets_dir.to_s
+      )
+      raise "Assets are missing after precompile: #{source_assets_dir}"
+    end
+
+    return if output_dir.to_s == PUBLIC_DIR.to_s
 
     dest_assets_dir = output_dir.join("assets")
     FileUtils.rm_rf(dest_assets_dir) if Dir.exist?(dest_assets_dir)
     FileUtils.mkdir_p(output_dir)
     FileUtils.cp_r(source_assets_dir, dest_assets_dir)
     Rails.event.notify("static_generator.assets_copied", level: "info", component: "StaticGenerator", destination: dest_assets_dir.to_s)
+  end
+
+  def assets_present?(assets_dir)
+    return false unless Dir.exist?(assets_dir)
+
+    manifest = Dir.glob(assets_dir.join(".sprockets-manifest*.json")).first ||
+      Dir.glob(assets_dir.join(".manifest.json")).first
+    return true if manifest.present?
+
+    Dir.glob(assets_dir.join("**/*")).any? { |path| File.file?(path) }
+  end
+
+  def precompile_assets!
+    Rails.event.notify("static_generator.assets_precompile_started", level: "info", component: "StaticGenerator")
+
+    require "rake"
+    Rails.application.load_tasks unless Rake::Task.task_defined?("assets:precompile")
+
+    task = Rake::Task["assets:precompile"]
+    task.reenable
+    task.invoke
+
+    Rails.event.notify("static_generator.assets_precompile_complete", level: "info", component: "StaticGenerator")
+  rescue => e
+    Rails.event.notify(
+      "static_generator.assets_precompile_failed",
+      level: "error",
+      component: "StaticGenerator",
+      error: e.message
+    )
+    raise
   end
 
   def render_static_partial(partial, assigns = {})
@@ -772,28 +833,28 @@ class StaticGenerator
   def export_blob(blob, options = {})
     return @exported_blobs[blob.id] if @exported_blobs[blob.id] && !options[:force]
 
-    # Only process images
-    return nil unless blob.representable?
-
     # Generate unique filename: id-filename.ext
     filename = "#{blob.id}-#{blob.filename}"
     output_path = uploads_dir.join(filename)
+    FileUtils.mkdir_p(uploads_dir)
 
     begin
-      # For images, use variant to compress and resize
-      # Optimize for index pages: max width 1200px, quality 85%
-      # This balances quality and file size for faster page loads
-      variant = blob.variant(
-        resize_to_limit: [ 1200, 1200 ],
-        saver: {
-          quality: 85,
-          strip: true  # Remove metadata to reduce file size
-        }
-      )
+      if blob.image? && blob.variable?
+        # Optimize for index pages: max width 1200px, quality 85%
+        # This balances quality and file size for faster page loads
+        variant = blob.variant(
+          resize_to_limit: [ 1200, 1200 ],
+          saver: {
+            quality: 85,
+            strip: true # Remove metadata to reduce file size
+          }
+        )
 
-      # Download processed variant and save to file
-      variant.download do |file|
-        FileUtils.cp(file.path, output_path)
+        File.binwrite(output_path, variant.processed.download)
+      else
+        blob.open do |file|
+          FileUtils.cp(file.path, output_path)
+        end
       end
 
       static_path = "/uploads/#{filename}"
@@ -802,8 +863,18 @@ class StaticGenerator
       # Log compression info
       original_size = blob.byte_size
       compressed_size = File.size(output_path)
-      compression_ratio = ((1 - compressed_size.to_f / original_size) * 100).round(1)
-      Rails.event.notify("static_generator.image_exported", level: "debug", component: "StaticGenerator", path: static_path, compression_ratio: compression_ratio)
+      compression_ratio = if original_size.to_i.positive?
+        ((1 - compressed_size.to_f / original_size) * 100).round(1)
+      end
+
+      Rails.event.notify(
+        "static_generator.image_exported",
+        level: "debug",
+        component: "StaticGenerator",
+        content_type: blob.content_type,
+        path: static_path,
+        compression_ratio: compression_ratio
+      )
 
       static_path
     rescue => e

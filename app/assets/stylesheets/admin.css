@@ -511,26 +511,6 @@ textarea.description-compact {
     flex: 1;
 }
 
-/* Lexxy Editor Resizable */
-lexxy-editor {
-    min-height: 300px;
-    max-height: none;
-    resize: vertical;
-    overflow: auto;
-    display: block;
-}
-
-/* Ensure the editor container inside allows proper sizing */
-lexxy-editor .lexxy-editor-container,
-lexxy-editor .lexxy-editor-root {
-    min-height: 300px;
-}
-
-/* Make sure the field wrapper doesn't interfere with resizing */
-.field lexxy-editor {
-    width: 100%;
-}
-
 /* Info Text */
 .info-text {
     font-size: 11px;

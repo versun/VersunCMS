@@ -485,6 +485,28 @@ h2 {
     height: auto;
 }
 
+/* Article Content - Link Styles */
+/* Override lexxy's link color variable and styles */
+.lexxy-content,
+.article-content {
+    --lexxy-color-link: #c04000;
+}
+
+.lexxy-content a,
+.article-content a:not(.social-link-card__link),
+.post-content a {
+    color: #c04000 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 2px;
+}
+
+.lexxy-content a:hover,
+.article-content a:not(.social-link-card__link):hover,
+.post-content a:hover {
+    color: #a03000 !important;
+    text-decoration-thickness: 2px;
+}
+
 /* Social Link Cards (in article content) */
 .social-link-card {
     margin: 16px 0;
@@ -1105,6 +1127,11 @@ h2 {
     color: var(--text-color);
 }
 
+[data-theme="dark"] .lexxy-content {
+    --lexxy-color-link: var(--accent-color);
+}
+
+[data-theme="dark"] .lexxy-content a,
 [data-theme="dark"] .article-content a {
     color: var(--accent-color);
 }

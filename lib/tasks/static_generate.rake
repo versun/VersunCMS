@@ -10,11 +10,12 @@ namespace :static do
 
     # Step 2: Generate HTML pages, export images, and copy user static files
     puts "\n[2/2] Generating HTML pages and exporting images..."
-    StaticGenerator.new.generate_all
+    generator = StaticGenerator.new
+    generator.generate_all
 
     elapsed = Time.current - start_time
     puts "\n✓ Static site generation completed in #{elapsed.round(2)} seconds"
-    puts "  Output directory: #{Rails.root.join('public')}"
+    puts "  Output directory: #{generator.output_dir}"
   end
 
   desc "Generate HTML pages only (without asset precompilation)"
@@ -22,10 +23,12 @@ namespace :static do
     puts "Starting HTML generation..."
     start_time = Time.current
 
-    StaticGenerator.new.generate_all
+    generator = StaticGenerator.new
+    generator.generate_all(precompile_assets: false)
 
     elapsed = Time.current - start_time
     puts "HTML generation completed in #{elapsed.round(2)} seconds"
+    puts "  Output directory: #{generator.output_dir}"
   end
 
   desc "Generate only index pages"
@@ -96,12 +99,12 @@ namespace :static do
     FileUtils.rm_rf(export_dir)
     FileUtils.mkdir_p(export_dir)
 
-    public_dir = Rails.root.join("public")
+    source_dir = StaticGenerator.new.output_dir
     exported = 0
 
     # Use shared deployable items list
     StaticGenerator.deployable_items.each do |item|
-      source = public_dir.join(item)
+      source = source_dir.join(item)
       next unless File.exist?(source)
 
       dest = export_dir.join(item)
@@ -111,6 +114,7 @@ namespace :static do
     end
 
     puts "\n✓ Static site exported to: #{export_dir} (#{exported} items)"
+    puts "  Source directory: #{source_dir}"
     puts "  You can deploy this directory to any static hosting service."
   end
 end
