@@ -30,7 +30,8 @@ class SessionsTest < ApplicationSystemTestCase
     sign_in(@user)
     visit admin_root_path
 
-    page.driver.submit :delete, session_path, {}
+    # Click the logout link/button in the page
+    click_link "Logout"
 
     assert_current_path root_path
   end

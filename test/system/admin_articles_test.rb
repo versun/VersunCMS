@@ -5,7 +5,7 @@ class AdminArticlesTest < ApplicationSystemTestCase
     @user = users(:admin)
   end
 
-  test "publishing and trashing an article" do
+  test "publishing an article" do
     article = create_draft_article(title: "Admin Flow Draft", content: "Draft body")
 
     sign_in(@user)
@@ -17,8 +17,22 @@ class AdminArticlesTest < ApplicationSystemTestCase
     assert_text "Article was successfully updated."
     article.reload
     assert article.publish?
+  end
 
-    page.driver.submit :delete, admin_article_path(article), {}
+  test "trashing an article" do
+    skip "This test requires JavaScript support (Selenium)" unless self.class.use_selenium?
+
+    article = create_draft_article(title: "Article to Trash", content: "Draft body")
+
+    sign_in(@user)
+
+    # Navigate to admin articles list and delete the article
+    visit admin_articles_path
+    # Find the article row and click delete (using accept_confirm to handle JS confirmation)
+    accept_confirm do
+      find("tr", text: article.title).click_link("Delete")
+    end
+
     assert_text "Article was successfully moved to trash."
 
     article.reload

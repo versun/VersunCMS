@@ -2,6 +2,23 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
+# Clean up parallel test database files after all tests complete
+Minitest.after_run do
+  db_dir = Rails.root.join("db")
+  parallel_db_patterns = [
+    "test.sqlite3_*",
+    "test_cache.sqlite3_*",
+    "test_queue.sqlite3_*",
+    "test_cable.sqlite3_*"
+  ]
+
+  parallel_db_patterns.each do |pattern|
+    Dir.glob(db_dir.join(pattern)).each do |file|
+      File.delete(file) if File.exist?(file)
+    end
+  end
+end
+
 class ActiveSupport::TestCase
   # Run tests in parallel with specified workers
   parallelize(workers: :number_of_processors)

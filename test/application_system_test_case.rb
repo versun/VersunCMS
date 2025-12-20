@@ -46,4 +46,49 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     fill_in "password", with: "password123"
     click_button "Sign in"
   end
+
+  # Helper method to create a published article
+  def create_published_article(attributes = {})
+    default_attributes = {
+      title: "Test Article #{Time.current.to_i}-#{rand(10000)}",
+      slug: "test-article-#{Time.current.to_i}-#{rand(10000)}",
+      description: "Test description",
+      status: :publish,
+      content_type: :html,
+      html_content: attributes[:content] || "<p>Test content</p>"
+    }
+    Article.create!(default_attributes.merge(attributes.except(:content)))
+  end
+
+  # Helper method to create a draft article
+  def create_draft_article(attributes = {})
+    default_attributes = {
+      title: "Draft Article #{Time.current.to_i}-#{rand(10000)}",
+      slug: "draft-article-#{Time.current.to_i}-#{rand(10000)}",
+      description: "Draft description",
+      status: :draft,
+      content_type: :html,
+      html_content: attributes[:content] || "<p>Draft content</p>"
+    }
+    Article.create!(default_attributes.merge(attributes.except(:content)))
+  end
+
+  # Helper method to create a tag
+  def create_tag(name: "test-tag", slug: nil)
+    Tag.create!(
+      name: name,
+      slug: slug || name.parameterize
+    )
+  end
+
+  # Helper method to create a subscriber
+  def create_subscriber(email: "test#{Time.current.to_i}#{rand(10000)}@example.com", confirmed: true)
+    subscriber = Subscriber.create!(
+      email: email,
+      confirmation_token: SecureRandom.urlsafe_base64(32),
+      unsubscribe_token: SecureRandom.urlsafe_base64(32)
+    )
+    subscriber.update!(confirmed_at: Time.current) if confirmed
+    subscriber
+  end
 end

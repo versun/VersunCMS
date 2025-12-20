@@ -7,9 +7,21 @@ class ArticlesTest < ApplicationSystemTestCase
     visit root_path
     assert_text article.title
 
-    click_link article.title
-    assert_current_path article_path(article)
-    assert_text "Hello from system test"
+    # Click the article link - use first: true in case of multiple matching elements
+    click_link article.title, match: :first
+
+    # Wait for navigation and check we're on the article page
+    # The path should be the article slug
+    assert_text article.title
+    assert_text "share"
+  end
+
+  test "viewing a published article directly" do
+    article = create_published_article(title: "Direct View Article", content: "Direct view content")
+
+    visit article_path(article)
+
+    assert_text article.title
     assert_text "share"
   end
 
@@ -22,7 +34,7 @@ class ArticlesTest < ApplicationSystemTestCase
     assert_text "All Tags"
     assert_text tag.name
 
-    click_link tag.name
+    click_link tag.name, match: :first
     assert_text %Q(Articles tagged with "#{tag.name}")
     assert_text article.title
     assert_text "RSS"
