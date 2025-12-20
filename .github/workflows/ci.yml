@@ -85,6 +85,7 @@ jobs:
         - name: Run tests
           env:
             RAILS_ENV: test
+            SYSTEM_TEST_DRIVER: rack_test
             # REDIS_URL: redis://localhost:6379/0
           run: bin/rails db:test:prepare test test:system
 
