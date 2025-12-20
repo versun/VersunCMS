@@ -24,9 +24,9 @@ module Rables
     config.mission_control.jobs.base_controller_class = "AdminController"
     config.mission_control.jobs.http_basic_auth_enabled = false
 
-    # Add redirect middleware early in the stack to handle redirects before routing
-    # This ensures redirects work even for unmatched routes (404s)
-    config.middleware.insert_after ActionDispatch::Static, RedirectMiddleware
+    # Add redirect middleware early in the stack (and after static serving, if enabled)
+    # so redirects work even for unmatched routes (404s).
+    config.middleware.insert_before ActionDispatch::Executor, RedirectMiddleware
 
     # Configuration for the application, engines, and railties goes here.
     #
