@@ -16,7 +16,9 @@ class Tag < ApplicationRecord
     return [] if names_string.blank?
 
     names_string.split(",").map(&:strip).reject(&:blank?).uniq.map do |name|
-      find_or_create_by(name: name)
+      # Case-insensitive search to match validation behavior
+      existing = where("LOWER(name) = ?", name.downcase).first
+      existing || create(name: name)
     end
   end
 
