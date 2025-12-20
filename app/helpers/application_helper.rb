@@ -10,6 +10,7 @@ module ApplicationHelper
     api_url = ENV.fetch("RAILS_API_URL", nil)
     if api_url.present?
       api_url = api_url.chomp("/")
+      api_url = "https://#{api_url}" unless api_url.match?(%r{^https?://})
       # In development, force HTTP for localhost to avoid SSL connection errors
       if Rails.env.development? && api_url.include?("localhost") && api_url.start_with?("https://")
         api_url = api_url.sub("https://", "http://")

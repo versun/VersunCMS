@@ -1,3 +1,5 @@
+require "uri"
+
 class NewsletterMailer < ApplicationMailer
   def article_email(article, subscriber, site_info)
     @article = article
@@ -41,10 +43,18 @@ class NewsletterMailer < ApplicationMailer
   def confirmation_email(subscriber, site_info)
     @subscriber = subscriber
     @site_info = site_info
-    @confirmation_url = Rails.application.routes.url_helpers.confirm_subscription_url(
-      token: subscriber.confirmation_token,
-      host: site_info[:url]&.gsub(/^https?:\/\//, "") || "example.com"
-    )
+    api_uri = URI.parse(ApplicationController.helpers.rails_api_url)
+    port = api_uri.port
+    port = nil if (api_uri.scheme == "http" && port == 80) || (api_uri.scheme == "https" && port == 443)
+
+    script_name = api_uri.path.presence
+    script_name = nil if script_name == "/"
+
+    url_options = { token: subscriber.confirmation_token, host: api_uri.host, protocol: api_uri.scheme }
+    url_options[:port] = port if port
+    url_options[:script_name] = script_name if script_name
+
+    @confirmation_url = Rails.application.routes.url_helpers.confirm_subscription_url(**url_options)
 
     newsletter_setting = NewsletterSetting.instance
     from_email = newsletter_setting.from_email || "noreply@example.com"
