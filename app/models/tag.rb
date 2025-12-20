@@ -53,11 +53,11 @@ class Tag < ApplicationRecord
   end
 
   def trigger_static_generation
-    GenerateStaticFilesJob.perform_later(type: "tag", id: id)
+    GenerateStaticFilesJob.schedule(type: "tag", id: id)
   end
 
   def trigger_static_regeneration_on_destroy
     # Regenerate tags index when a tag is destroyed
-    GenerateStaticFilesJob.perform_later(type: "all")
+    GenerateStaticFilesJob.schedule(type: "all")
   end
 end

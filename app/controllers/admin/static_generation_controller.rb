@@ -1,6 +1,6 @@
 class Admin::StaticGenerationController < Admin::BaseController
   def create
-    GenerateStaticFilesJob.perform_later(type: "all")
+    GenerateStaticFilesJob.schedule(type: "all")
 
     ActivityLog.create!(
       action: "queued",

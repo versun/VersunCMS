@@ -75,6 +75,6 @@ class Setting < ApplicationRecord
 
   def trigger_static_generation
     # Regenerate all static pages when footer or layout settings change
-    GenerateStaticFilesJob.perform_later(type: "all")
+    GenerateStaticFilesJob.schedule(type: "all")
   end
 end

@@ -312,11 +312,11 @@ class Article < ApplicationRecord
   end
 
   def trigger_static_generation
-    GenerateStaticFilesJob.perform_later(type: "article", id: id)
+    GenerateStaticFilesJob.schedule(type: "article", id: id)
   end
 
   def trigger_static_regeneration_on_destroy
     # Regenerate index and related pages when article is destroyed
-    GenerateStaticFilesJob.perform_later(type: "index")
+    GenerateStaticFilesJob.schedule(type: "index")
   end
 end

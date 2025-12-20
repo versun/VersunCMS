@@ -8,10 +8,35 @@
 class GenerateStaticFilesJob < ApplicationJob
   queue_as :default
 
-  DEBOUNCE_DELAY = 1.minute
+  DEFAULT_DELAY = 2.minutes
+  DEBOUNCE_DELAY = DEFAULT_DELAY
   CACHE_KEY_PREFIX = "static_gen_scheduled"
   LOCK_KEY = "static_generation_lock"
   LOCK_TIMEOUT = 10.minutes
+
+  # Schedule a static generation with a default delay
+  # @param type [String] Type of generation
+  # @param id [Integer, nil] ID of the record
+  # @param delay [ActiveSupport::Duration] Delay before execution (default: DEFAULT_DELAY)
+  def self.schedule(type:, id: nil, delay: DEFAULT_DELAY)
+    scheduled_at = Time.current + delay
+
+    set(wait: delay).perform_later(
+      type: type,
+      id: id,
+      scheduled_at: scheduled_at.to_f,
+      debounced: false
+    )
+
+    Rails.event.notify "generate_static_files_job.scheduled",
+      level: "info",
+      component: "GenerateStaticFilesJob",
+      type: type,
+      id: id,
+      scheduled_at: scheduled_at,
+      delay: delay,
+      debounced: false
+  end
 
   # Schedule a debounced static generation
   # Multiple calls within delay period will result in only one execution
@@ -39,7 +64,8 @@ class GenerateStaticFilesJob < ApplicationJob
       type: type,
       id: id,
       scheduled_at: scheduled_at,
-      delay: delay
+      delay: delay,
+      debounced: true
   end
 
   def self.debounce_cache_key(type, id)

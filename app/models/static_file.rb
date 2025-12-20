@@ -57,11 +57,11 @@ class StaticFile < ApplicationRecord
 
   def trigger_static_generation_on_create
     # Regenerate all static files when a new static file is uploaded
-    GenerateStaticFilesJob.perform_later(type: "all")
+    GenerateStaticFilesJob.schedule(type: "all")
   end
 
   def trigger_static_generation_on_update
     # Regenerate all static files when a static file is updated
-    GenerateStaticFilesJob.perform_later(type: "all")
+    GenerateStaticFilesJob.schedule(type: "all")
   end
 end

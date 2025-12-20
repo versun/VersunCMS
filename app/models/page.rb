@@ -64,10 +64,10 @@ class Page < ApplicationRecord
   end
 
   def trigger_static_generation
-    GenerateStaticFilesJob.perform_later(type: "page", id: id)
+    GenerateStaticFilesJob.schedule(type: "page", id: id)
   end
 
   def trigger_static_regeneration_on_destroy
-    GenerateStaticFilesJob.perform_later(type: "sitemap")
+    GenerateStaticFilesJob.schedule(type: "sitemap")
   end
 end
