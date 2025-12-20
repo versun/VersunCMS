@@ -25,4 +25,3 @@ class AdminArticlesTest < ApplicationSystemTestCase
     assert article.trash?
   end
 end
-
