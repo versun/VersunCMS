@@ -21,6 +21,7 @@ class Article < ApplicationRecord
   validate :rich_text_content_presence
 
   scope :published, -> { where(status: :publish) }
+  scope :scheduled, -> { where(status: :schedule) }
   scope :by_status, ->(status) { where(status: status) }
   # scope :paginate, ->(page, per_page) { offset((page - 1) * per_page).limit(per_page) }
   scope :publishable, -> { where(status: :schedule).where("scheduled_at <= ?", Time.current) }
