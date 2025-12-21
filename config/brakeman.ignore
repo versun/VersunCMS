@@ -3,26 +3,26 @@
     {
       "warning_type": "File Access",
       "warning_code": 16,
-      "fingerprint": "19007fb5d54096ed9bd60f775e577941eaa7f2832cb791e2af19155432853eb6",
-      "check_name": "FileAccess",
+      "fingerprint": "f498601b81d6583bbec4a92f9b7d8f6cf9ba0dccc0f1915ec3814b07bc55994a",
+      "check_name": "SendFile",
       "message": "Parameter value used in file name",
-      "file": "app/controllers/settings_controller.rb",
-      "line": 34,
+      "file": "app/controllers/admin/downloads_controller.rb",
+      "line": 39,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
-      "code": "File.delete(Rails.public_path.join(params[:filename].to_s))",
+      "code": "send_file(Rails.root.join(\"tmp\", \"exports\").join(File.basename(params[:filename].to_s)), :filename => File.basename(params[:filename].to_s), :type => \"application/octet-stream\", :disposition => \"attachment\")",
       "render_path": null,
       "location": {
         "type": "method",
-        "class": "SettingsController",
-        "method": "destroy"
+        "class": "Admin::DownloadsController",
+        "method": "show"
       },
       "user_input": "params[:filename].to_s",
       "confidence": "Weak",
       "cwe_id": [
         22
       ],
-      "note": ""
+      "note": "False positive: File.basename strips path components, empty/dotfile names are rejected, file existence is verified, and realpath comparison prevents symlink attacks"
     }
   ],
-  "brakeman_version": "7.0.0"
+  "brakeman_version": "7.1.1"
 }

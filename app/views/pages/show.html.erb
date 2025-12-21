@@ -4,7 +4,7 @@
 <article>
   <div class="article-content">
     <% if @page.html? %>
-      <%= raw @page.html_content %>
+      <%= safe_html_content(@page.html_content) %>
     <% else %>
       <%= @page.content %>
     <% end %>

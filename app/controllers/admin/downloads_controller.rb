@@ -1,23 +1,41 @@
 class Admin::DownloadsController < Admin::BaseController
+  EXPORTS_DIR = Rails.root.join("tmp", "exports").freeze
+
   def show
+    # Sanitize filename by removing any path components
     filename = File.basename(params[:filename].to_s)
 
-    # 安全检查：只允许下载特定目录下的文件
-    safe_path = Rails.root.join("tmp", "exports", filename)
+    # Reject empty or suspicious filenames
+    if filename.blank? || filename.start_with?(".")
+      flash[:alert] = "无效的文件名"
+      redirect_to admin_migrates_path and return
+    end
 
-    # 验证文件是否存在且在我们的预期目录下
-    unless safe_path.exist? || safe_path.file?
+    # Construct the safe path
+    safe_path = EXPORTS_DIR.join(filename)
+
+    # Verify file exists and is a regular file
+    unless safe_path.exist? && safe_path.file?
       flash[:alert] = "文件不存在"
-      redirect_to admin_exports_path and return
+      redirect_to admin_migrates_path and return
     end
 
-    # 验证文件路径确实在我们的tmp/exports目录下
-    unless safe_path.to_s.start_with?(Rails.root.join("tmp", "exports").to_s)
-      flash[:alert] = "不允许下载此文件"
-      redirect_to admin_exports_path and return
+    # Verify the resolved path is within the exports directory
+    # This prevents symlink attacks
+    begin
+      real_path = safe_path.realpath
+      exports_real_path = EXPORTS_DIR.realpath
+      unless real_path.to_s.start_with?(exports_real_path.to_s + File::SEPARATOR) ||
+             real_path.to_s == exports_real_path.to_s
+        flash[:alert] = "不允许下载此文件"
+        redirect_to admin_migrates_path and return
+      end
+    rescue Errno::ENOENT
+      flash[:alert] = "文件不存在"
+      redirect_to admin_migrates_path and return
     end
 
-    # 发送文件
+    # Send the file
     send_file safe_path,
               filename: filename,
               type: "application/octet-stream",
@@ -31,6 +49,6 @@ class Admin::DownloadsController < Admin::BaseController
       filename: params[:filename]
     )
     flash[:alert] = "下载失败: #{e.message}"
-    redirect_to admin_exports_path
+    redirect_to admin_migrates_path
   end
 end

@@ -79,20 +79,24 @@ class Admin::MigratesController < Admin::BaseController
   def import_from_zip
     uploaded_file = params[:zip_file]
 
-    # 验证文件类型
-    unless uploaded_file.content_type == "application/zip" || uploaded_file.original_filename.end_with?(".zip")
+    # Validate file type
+    unless uploaded_file.content_type == "application/zip" || uploaded_file.original_filename.to_s.end_with?(".zip")
       raise "Only ZIP files are allowed for import"
     end
 
-    # 保存上传的文件到临时位置
-    temp_file = Rails.root.join("tmp", "uploads", "import_#{Time.current.to_i}_#{File.basename(uploaded_file.original_filename)}")
-    FileUtils.mkdir_p(File.dirname(temp_file))
+    # Generate a secure temporary filename using SecureRandom to avoid
+    # any potential issues with user-provided filenames
+    secure_filename = "import_#{Time.current.to_i}_#{SecureRandom.hex(8)}.zip"
+    uploads_dir = Rails.root.join("tmp", "uploads")
+    FileUtils.mkdir_p(uploads_dir)
+
+    temp_file = uploads_dir.join(secure_filename)
 
     File.open(temp_file, "wb") do |f|
       IO.copy_stream(uploaded_file, f)
     end
 
-    # 执行导入任务
+    # Execute import job
     ImportFromZipJob.perform_later(temp_file.to_s)
 
     redirect_to admin_migrates_path, notice: "ZIP Import in progress, please check the logs for details"

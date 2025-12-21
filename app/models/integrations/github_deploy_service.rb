@@ -66,21 +66,21 @@ module Integrations
       repo_url = build_authenticated_url
 
       # Try clone with specified branch first
-      output, status = git("clone --depth 1 --branch #{branch} #{repo_url} #{DEPLOY_DIR}")
+      output, status = git("clone", "--depth", "1", "--branch", branch, repo_url, DEPLOY_DIR.to_s)
 
       unless status.success?
         # Branch might not exist, try default branch then create target branch
         FileUtils.rm_rf(DEPLOY_DIR)
-        output, status = git("clone --depth 1 #{repo_url} #{DEPLOY_DIR}")
+        output, status = git("clone", "--depth", "1", repo_url, DEPLOY_DIR.to_s)
         raise "克隆仓库失败: #{mask_token(output)}" unless status.success?
 
-        Dir.chdir(DEPLOY_DIR) { git("checkout -b #{branch}") }
+        Dir.chdir(DEPLOY_DIR) { git("checkout", "-b", branch) }
       end
 
       # Configure git user
       Dir.chdir(DEPLOY_DIR) do
-        git('config user.email "bot@versun.me"')
-        git('config user.name "Rables Bot"')
+        git("config", "user.email", "bot@versun.me")
+        git("config", "user.name", "Rables Bot")
       end
     end
 
@@ -115,10 +115,10 @@ module Integrations
 
     def commit_and_push
       Dir.chdir(DEPLOY_DIR) do
-        git("add -A")
+        git("add", "-A")
 
         # Skip if no changes
-        output, = git("status --porcelain")
+        output, = git("status", "--porcelain")
         if output.strip.empty?
           Rails.event.notify "github_deploy_service.no_changes",
             level: "info",
@@ -128,16 +128,16 @@ module Integrations
 
         # Commit
         timestamp = Time.current.strftime("%Y-%m-%d %H:%M:%S")
-        output, status = git("commit -m \"Deploy - #{timestamp}\"")
+        output, status = git("commit", "-m", "Deploy - #{timestamp}")
         raise "提交失败: #{mask_token(output)}" unless status.success?
 
         # Push (with force fallback for first push)
         repo_url = build_authenticated_url
-        output, status = git("push #{repo_url} #{branch}")
+        output, status = git("push", repo_url, branch)
 
         unless status.success?
           if output.include?("rejected") || output.include?("non-fast-forward")
-            output, status = git("push --force #{repo_url} #{branch}")
+            output, status = git("push", "--force", repo_url, branch)
           end
           raise "推送失败: #{mask_token(output)}" unless status.success?
         end
@@ -163,13 +163,15 @@ module Integrations
       end
     end
 
-    def git(args)
-      cmd = "git #{args} 2>&1"
+    def git(*args)
+      # Use array-based arguments to prevent command injection
+      # Open3.capture2e with array args doesn't invoke shell
+      cmd_for_log = "git #{args.join(' ')}"
       Rails.event.notify "github_deploy_service.git_command",
         level: "debug",
         component: "GithubDeployService",
-        command: mask_token(cmd)
-      output, status = Open3.capture2e(cmd)
+        command: mask_token(cmd_for_log)
+      output, status = Open3.capture2e("git", *args)
       [ output, status ]
     end
 
