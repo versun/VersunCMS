@@ -22,39 +22,46 @@
 
     <div class="form-section">
       <div class="field">
-        <%= form.label :static_generation_destination, "Save Destination" %>
-        <%= form.select :static_generation_destination,
-                     options_for_select([
-                       ["Local", "local"],
-                       ["GitHub Repository", "github"]
-                     ], @setting.static_generation_destination || "local"),
+        <%= form.label :deploy_provider, "Deploy Destination" %>
+        <%
+          effective_provider = @setting.deploy_provider_effective
+          provider_options = [["Local", "local"]]
+          GitIntegration::PROVIDERS.each do |provider|
+            integration = @git_integrations_by_provider[provider]
+            label = integration&.display_name || GitIntegration::PROVIDER_NAMES.fetch(provider)
+
+            if integration&.enabled? || effective_provider == provider
+              provider_options << [integration&.enabled? ? label : "#{label} (未配置)", provider]
+            else
+              provider_options << ["#{label} (未配置)", provider, { disabled: true }]
+            end
+          end
+        %>
+        <%= form.select :deploy_provider,
+                     options_for_select(provider_options, effective_provider || "local"),
                      {},
-                     { id: "setting_static_generation_destination" } %>
-        <small>Choose where to save the generated static files: local public directory or GitHub repository</small>
+                     { id: "setting_deploy_provider" } %>
+        <small>选择静态文件的保存目标：本地目录或 Git 仓库。<%= link_to "配置 Git 集成", admin_git_integrations_path %></small>
       </div>
     </div>
 
-    <div class="form-section" id="local-settings" style="<%= 'display: none;' unless @setting.static_generation_destination == 'local' %>">
+    <div class="form-section" id="local-settings" style="<%= 'display: none;' unless effective_provider.blank? || effective_provider == 'local' %>">
       <div class="field">
         <%= form.label :local_generation_path, "Generation Path" %>
         <%= form.text_field :local_generation_path, placeholder: Rails.root.join("public").to_s %>
       </div>
     </div>
 
-    <div class="form-section" id="github-settings" style="<%= 'display: none;' unless @setting.static_generation_destination == 'github' %>">
+    <div class="form-section" id="git-settings" style="<%= 'display: none;' if effective_provider.blank? || effective_provider == 'local' %>">
       <div class="field">
-        <%= form.label :github_repo_url, "GitHub Repository URL" %>
-        <%= form.text_field :github_repo_url, placeholder: "https://github.com/username/repo.git" %>
+        <%= form.label :deploy_repo_url, "Repository URL" %>
+        <%= form.text_field :deploy_repo_url, placeholder: "https://github.com/username/repo.git 或 user/repo" %>
+        <small>仓库 URL，支持 HTTPS 或简写格式（如 user/repo）</small>
       </div>
 
       <div class="field">
-        <%= form.label :github_token, "GitHub Token" %>
-        <%= form.text_field :github_token, type: "password", placeholder: "GitHub Personal Access Token (requires repo permissions)：ghp_xxxxxxxxxx" %>
-      </div>
-
-      <div class="field">
-        <%= form.label :github_backup_branch, "Branch Name" %>
-        <%= form.text_field :github_backup_branch, placeholder: "main" %>
+        <%= form.label :deploy_branch, "Branch Name" %>
+        <%= form.text_field :deploy_branch, placeholder: "main" %>
       </div>
     </div>
 
@@ -110,27 +117,23 @@
 
 <script>
   document.addEventListener('turbo:load', function() {
-    const destinationSelect = document.querySelector('#setting_static_generation_destination');
+    const providerSelect = document.querySelector('#setting_deploy_provider');
     const localSettings = document.getElementById('local-settings');
-    const githubSettings = document.getElementById('github-settings');
-    
-    if (destinationSelect) {
-      // 初始化显示状态
+    const gitSettings = document.getElementById('git-settings');
+
+    if (providerSelect) {
       function updateSettingsVisibility() {
-        if (destinationSelect.value === 'local') {
+        if (providerSelect.value === 'local' || providerSelect.value === '') {
           if (localSettings) localSettings.style.display = 'block';
-          if (githubSettings) githubSettings.style.display = 'none';
-        } else if (destinationSelect.value === 'github') {
+          if (gitSettings) gitSettings.style.display = 'none';
+        } else {
           if (localSettings) localSettings.style.display = 'none';
-          if (githubSettings) githubSettings.style.display = 'block';
+          if (gitSettings) gitSettings.style.display = 'block';
         }
       }
-      
-      // 页面加载时立即更新一次
+
       updateSettingsVisibility();
-      
-      // 监听选择变化
-      destinationSelect.addEventListener('change', updateSettingsVisibility);
+      providerSelect.addEventListener('change', updateSettingsVisibility);
     }
   });
 </script>

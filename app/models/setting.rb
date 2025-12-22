@@ -8,7 +8,19 @@ class Setting < ApplicationRecord
   attr_accessor :social_links_json
 
   # Validate local_generation_path is absolute path
-  validate :validate_local_generation_path, if: -> { static_generation_destination == "local" && local_generation_path.present? }
+  validate :validate_local_generation_path, if: -> { deploy_provider_effective == "local" && local_generation_path.present? }
+
+  def deploy_provider_effective
+    return deploy_provider if deploy_provider.present?
+    return "github" if static_generation_destination == "github"
+
+    "local"
+  end
+
+  def deploys_to_git?
+    provider = deploy_provider_effective
+    provider.present? && provider != "local"
+  end
 
   # Check if initial setup is incomplete
   def self.setup_incomplete?
@@ -43,7 +55,7 @@ class Setting < ApplicationRecord
   private
 
   def set_default_local_generation_path
-    if static_generation_destination == "local" && local_generation_path.blank?
+    if deploy_provider_effective == "local" && local_generation_path.blank?
       self.local_generation_path = Rails.root.join("public").to_s
     end
   end

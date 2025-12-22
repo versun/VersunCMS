@@ -95,6 +95,11 @@ Rails.application.routes.draw do
         post :verify
       end
     end
+    resources :git_integrations, only: [ :index, :update ] do
+      member do
+        post :verify
+      end
+    end
 
     # Activity logs
     resources :activities, only: [ :index ]

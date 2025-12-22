@@ -4,26 +4,26 @@ require "stringio"
 class StaticGeneratorTest < ActiveSupport::TestCase
   def setup
     @settings = Setting.first_or_create
-    @original_destination = @settings.static_generation_destination
+    @original_deploy_provider = @settings.deploy_provider
     @original_path = @settings.local_generation_path
   end
 
   def teardown
     @settings.update!(
-      static_generation_destination: @original_destination,
+      deploy_provider: @original_deploy_provider,
       local_generation_path: @original_path
     )
   end
 
   test "output_dir normalizes relative local_generation_path to Rails.root" do
     messy_public_path = "#{Rails.root.join('public')}/"
-    @settings.update!(static_generation_destination: "local", local_generation_path: messy_public_path)
+    @settings.update!(deploy_provider: "local", local_generation_path: messy_public_path)
     assert_equal StaticGenerator::PUBLIC_DIR.to_s, StaticGenerator.new.output_dir.to_s
   end
 
   test "output_dir normalizes dot segments" do
     messy_public_path = "#{Rails.root.join('public')}/./"
-    @settings.update!(static_generation_destination: "local", local_generation_path: messy_public_path)
+    @settings.update!(deploy_provider: "local", local_generation_path: messy_public_path)
     assert_equal StaticGenerator::PUBLIC_DIR.to_s, StaticGenerator.new.output_dir.to_s
   end
 
@@ -32,7 +32,7 @@ class StaticGeneratorTest < ActiveSupport::TestCase
     FileUtils.rm_rf(output_dir)
 
     @settings.update!(
-      static_generation_destination: "local",
+      deploy_provider: "local",
       local_generation_path: output_dir.to_s
     )
 

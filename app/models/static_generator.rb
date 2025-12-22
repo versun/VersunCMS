@@ -1,7 +1,7 @@
 # Static site generator - PORO for generating static HTML files
-# Output directory depends on static_generation_destination setting:
-# - 'local': uses local_generation_path or public/
-# - 'github': uses tmp/static_output/ to avoid polluting public/
+# Output directory depends on deploy settings:
+# - Local deploy: uses local_generation_path or public/
+# - Git deploy: uses tmp/static_output/ to avoid polluting public/
 class StaticGenerator
   include Rails.application.routes.url_helpers
 
@@ -13,18 +13,15 @@ class StaticGenerator
   def output_dir
     @output_dir ||= begin
       settings = Setting.first_or_create
-      case settings.static_generation_destination
-      when "local"
+      if settings.deploys_to_git?
+        # Git deploy: always generate to tmp directory to avoid polluting public/
+        GITHUB_OUTPUT_DIR
+      else
         if settings.local_generation_path.present?
           normalize_output_dir(settings.local_generation_path)
         else
           PUBLIC_DIR
         end
-      when "github"
-        # GitHub mode: always generate to tmp directory to avoid polluting public/
-        GITHUB_OUTPUT_DIR
-      else
-        PUBLIC_DIR
       end
     end
   end

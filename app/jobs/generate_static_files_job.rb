@@ -169,12 +169,18 @@ class GenerateStaticFilesJob < ApplicationJob
       description: "静态文件生成完成 (类型: #{type}, 耗时: #{elapsed}秒)"
     )
 
-    # Deploy to GitHub if configured
-    deploy_to_github_if_configured
+    deploy_if_configured
   end
 
-  def deploy_to_github_if_configured
+  def deploy_if_configured
     settings = Setting.first_or_create
+
+    if settings.deploy_provider.present? && settings.deploy_provider != "local"
+      Integrations::GitDeployService.new.deploy
+      return
+    end
+
+    return unless settings.deploy_provider.blank?
     return unless settings.static_generation_destination == "github"
 
     Integrations::GithubDeployService.new.deploy

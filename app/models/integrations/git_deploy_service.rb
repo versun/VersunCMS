@@ -4,22 +4,22 @@ require "pathname"
 require "tmpdir"
 
 module Integrations
-  # Service for deploying static files to GitHub repository
-  # Used when static_generation_destination is set to 'github'
-  class GithubDeployService
+  # Generic Git deploy service for deploying static files to any Git provider
+  # Supports: GitHub, GitLab, Gitea, Codeberg, Bitbucket
+  class GitDeployService
     def initialize
       @settings = Setting.first_or_create
     end
 
-    # Deploy static files to GitHub repository
+    # Deploy static files to Git repository
     # @return [Hash] Result with :success and :message keys
     def deploy
-      unless github_configured?
-        log_activity(:warn, "GitHub 配置不完整：请检查仓库 URL 和 Token")
-        return failure("GitHub 配置不完整：请检查仓库 URL 和 Token")
+      unless deploy_configured?
+        log_activity(:warn, "Git 部署配置不完整：请检查仓库 URL 和认证设置")
+        return failure("Git 部署配置不完整：请检查仓库 URL 和认证设置")
       end
 
-      log_activity(:info, "开始推送静态文件到 GitHub")
+      log_activity(:info, "开始推送静态文件到 #{provider_name}")
 
       begin
         prepare_deploy_directory
@@ -28,33 +28,49 @@ module Integrations
         copy_static_files
         commit_and_push
 
-        log_activity(:info, "成功推送到 GitHub: #{@settings.github_repo_url}")
-        success("成功推送静态文件到 GitHub 仓库")
+        log_activity(:info, "成功推送到 #{provider_name}: #{@settings.deploy_repo_url}")
+        success("成功推送静态文件到 #{provider_name} 仓库")
       rescue => e
-        Rails.event.notify "github_deploy_service.deploy_error",
+        Rails.event.notify "git_deploy_service.deploy_error",
           level: "error",
-          component: "GithubDeployService",
+          component: "GitDeployService",
+          provider: deploy_provider,
           error_message: e.message,
           backtrace: e.backtrace.first(10).join("\n")
-        log_activity(:error, "GitHub 推送失败: #{e.message}")
-        failure("推送到 GitHub 失败: #{e.message}")
+        log_activity(:error, "#{provider_name} 推送失败: #{e.message}")
+        failure("推送到 #{provider_name} 失败: #{e.message}")
       ensure
         cleanup_deploy_directory
       end
     end
 
-    def github_configured?
-      @settings.github_repo_url.present? && @settings.github_token.present?
+    def deploy_configured?
+      return false if @settings.deploy_provider.blank? || @settings.deploy_provider == "local"
+      return false if @settings.deploy_repo_url.blank?
+
+      git_integration&.configured?
     end
 
     private
 
+    def deploy_provider
+      @settings.deploy_provider
+    end
+
+    def provider_name
+      GitIntegration::PROVIDER_NAMES[deploy_provider] || deploy_provider&.titleize || "Git"
+    end
+
+    def git_integration
+      @git_integration ||= GitIntegration.active_for_deploy(deploy_provider)
+    end
+
     def branch
-      @settings.github_backup_branch.presence || "main"
+      @settings.deploy_branch.presence || "main"
     end
 
     def prepare_deploy_directory
-      @deploy_dir = Pathname.new(Dir.mktmpdir("github_deploy-", Rails.root.join("tmp")))
+      @deploy_dir = Pathname.new(Dir.mktmpdir("git_deploy-", Rails.root.join("tmp")))
     end
 
     def cleanup_deploy_directory
@@ -66,7 +82,7 @@ module Integrations
     end
 
     def clone_repository
-      repo_url = build_authenticated_url
+      repo_url = git_integration.build_authenticated_url(@settings.deploy_repo_url)
 
       # Try clone with specified branch first
       output, status = git("clone", "--depth", "1", "--branch", branch, repo_url, @deploy_dir.to_s)
@@ -77,7 +93,10 @@ module Integrations
         output, status = git("clone", "--depth", "1", repo_url, @deploy_dir.to_s)
         raise "克隆仓库失败: #{mask_token(output)}" unless status.success?
 
-        Dir.chdir(@deploy_dir) { git("checkout", "-b", branch) }
+        Dir.chdir(@deploy_dir) do
+          output, status = git("checkout", "-b", branch)
+          raise "创建分支失败: #{mask_token(output)}" unless status.success?
+        end
       end
 
       # Configure git user
@@ -96,7 +115,7 @@ module Integrations
     end
 
     def copy_static_files
-      # GitHub mode always uses tmp/static_output directory
+      # Git deploy mode always uses tmp/static_output directory
       source_dir = StaticGenerator::GITHUB_OUTPUT_DIR
       copied = 0
 
@@ -109,9 +128,10 @@ module Integrations
         copied += 1
       end
 
-      Rails.event.notify "github_deploy_service.files_copied",
+      Rails.event.notify "git_deploy_service.files_copied",
         level: "info",
-        component: "GithubDeployService",
+        component: "GitDeployService",
+        provider: deploy_provider,
         copied_items: copied,
         source_dir: source_dir.to_s
     end
@@ -123,9 +143,10 @@ module Integrations
         # Skip if no changes
         output, = git("status", "--porcelain")
         if output.strip.empty?
-          Rails.event.notify "github_deploy_service.no_changes",
+          Rails.event.notify "git_deploy_service.no_changes",
             level: "info",
-            component: "GithubDeployService"
+            component: "GitDeployService",
+            provider: deploy_provider
           return
         end
 
@@ -135,44 +156,29 @@ module Integrations
         raise "提交失败: #{mask_token(output)}" unless status.success?
 
         # Push (with force fallback for first push)
-        repo_url = build_authenticated_url
+        repo_url = git_integration.build_authenticated_url(@settings.deploy_repo_url)
         output, status = git("push", repo_url, "HEAD:refs/heads/#{branch}")
 
         unless status.success?
           if output.include?("rejected") || output.include?("non-fast-forward")
-            output, status = git("push", "--force", repo_url, "HEAD:refs/heads/#{branch}")
+            output, status = git("push", "--force-with-lease", repo_url, "HEAD:refs/heads/#{branch}")
           end
           raise "推送失败: #{mask_token(output)}" unless status.success?
         end
 
-        Rails.event.notify "github_deploy_service.pushed",
+        Rails.event.notify "git_deploy_service.pushed",
           level: "info",
-          component: "GithubDeployService",
+          component: "GitDeployService",
+          provider: deploy_provider,
           branch: branch
       end
     end
 
-    def build_authenticated_url
-      url = @settings.github_repo_url
-      token = @settings.github_token
-
-      case
-      when url.start_with?("https://")
-        url.sub("https://", "https://#{token}@")
-      when url.start_with?("git@")
-        url.sub(/git@([^:]+):/, "https://#{token}@\\1/")
-      else
-        "https://#{token}@github.com/#{url}.git"
-      end
-    end
-
     def git(*args)
-      # Use array-based arguments to prevent command injection
-      # Open3.capture2e with array args doesn't invoke shell
       cmd_for_log = "git #{args.join(' ')}"
-      Rails.event.notify "github_deploy_service.git_command",
+      Rails.event.notify "git_deploy_service.git_command",
         level: "debug",
-        component: "GithubDeployService",
+        component: "GitDeployService",
         command: mask_token(cmd_for_log)
       env = { "GIT_TERMINAL_PROMPT" => "0" }
       output, status = Open3.capture2e(env, "git", *args)
@@ -180,16 +186,13 @@ module Integrations
     end
 
     def mask_token(text)
-      text.to_s
-          .gsub(%r{https://[^@/]+@}, "https://[REDACTED]@")
-          .gsub(/ghp_[a-zA-Z0-9]+/, "[REDACTED]")
-          .gsub(/github_pat_[a-zA-Z0-9_]+/, "[REDACTED]")
+      git_integration&.mask_token(text) || text
     end
 
     def log_activity(level, description)
       ActivityLog.create!(
-        action: level == :error ? "failed" : "github_deploy",
-        target: "github_deploy",
+        action: level == :error ? "failed" : "git_deploy",
+        target: "git_deploy",
         level: level,
         description: description
       )

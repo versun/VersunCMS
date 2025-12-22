@@ -4,7 +4,7 @@ require "stringio"
 class StaticGeneratorIntegrationTest < ActionDispatch::IntegrationTest
   def setup
     @settings = Setting.first_or_create
-    @original_destination = @settings.static_generation_destination
+    @original_deploy_provider = @settings.deploy_provider
     @original_path = @settings.local_generation_path
     @original_prefix = Rails.application.config.x.article_route_prefix
 
@@ -14,14 +14,14 @@ class StaticGeneratorIntegrationTest < ActionDispatch::IntegrationTest
     FileUtils.mkdir_p(@test_output_dir)
 
     @settings.update!(
-      static_generation_destination: "local",
+      deploy_provider: "local",
       local_generation_path: @test_output_dir.to_s
     )
   end
 
   def teardown
     @settings.update!(
-      static_generation_destination: @original_destination,
+      deploy_provider: @original_deploy_provider,
       local_generation_path: @original_path
     )
     Rails.application.config.x.article_route_prefix = @original_prefix

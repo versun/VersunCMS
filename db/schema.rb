@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_21_014524) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_22_080003) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -133,6 +133,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_21_014524) do
     t.index ["platform"], name: "index_crossposts_on_platform", unique: true
   end
 
+  create_table "git_integrations", force: :cascade do |t|
+    t.string "access_token"
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: false, null: false
+    t.string "name", null: false
+    t.string "provider", null: false
+    t.string "server_url"
+    t.datetime "updated_at", null: false
+    t.string "username"
+    t.index ["provider"], name: "index_git_integrations_on_provider", unique: true
+  end
+
   create_table "listmonks", force: :cascade do |t|
     t.string "api_key"
     t.datetime "created_at", null: false
@@ -197,6 +209,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_21_014524) do
     t.json "auto_regenerate_triggers", default: []
     t.datetime "created_at", null: false
     t.text "custom_css"
+    t.string "deploy_branch", default: "main"
+    t.string "deploy_provider"
+    t.string "deploy_repo_url"
     t.text "description"
     t.text "giscus"
     t.string "github_backup_branch", default: "main"
