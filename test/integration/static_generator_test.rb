@@ -374,6 +374,9 @@ class StaticGeneratorIntegrationTest < ActionDispatch::IntegrationTest
   end
 
   test "generates RSS feed" do
+    @settings.update!(url: "https://example.com")
+    CacheableSettings.refresh_site_info
+
     create_published_article(title: "RSS Article", slug: "rss-article")
 
     setup_mock_assets
@@ -386,9 +389,30 @@ class StaticGeneratorIntegrationTest < ActionDispatch::IntegrationTest
     feed_content = File.read(feed_file)
     assert_includes feed_content, "RSS Article", "Feed should contain article title"
     assert_includes feed_content, "<rss", "Feed should be valid RSS"
+    assert_match %r{<link>https://example\.com/(?:[^<]*/)?rss-article\.html</link>}, feed_content,
+      "Feed item link should include .html for static hosting"
+  end
+
+  test "RSS feed includes prefix and .html when configured" do
+    @settings.update!(url: "https://example.com")
+    CacheableSettings.refresh_site_info
+    Rails.application.config.x.article_route_prefix = "posts"
+
+    create_published_article(title: "Prefixed RSS Article", slug: "prefixed-rss-article")
+
+    setup_mock_assets
+    generator = StaticGenerator.new
+    generator.generate_all(precompile_assets: false)
+
+    feed_content = File.read(@test_output_dir.join("feed.xml"))
+    assert_match %r{<link>https://example\.com/posts/prefixed-rss-article\.html</link>}, feed_content,
+      "Feed item link should include prefix and .html"
   end
 
   test "generates sitemap" do
+    @settings.update!(url: "https://example.com")
+    CacheableSettings.refresh_site_info
+
     article = create_published_article(title: "Sitemap Article", slug: "sitemap-article")
 
     setup_mock_assets
@@ -401,6 +425,65 @@ class StaticGeneratorIntegrationTest < ActionDispatch::IntegrationTest
     sitemap_content = File.read(sitemap_file)
     assert_includes sitemap_content, "sitemap-article", "Sitemap should contain article slug"
     assert_includes sitemap_content, "<urlset", "Sitemap should be valid XML"
+    assert_match %r{<loc>https://example\.com/(?:[^<]*/)?sitemap-article\.html</loc>}, sitemap_content,
+      "Sitemap loc should include .html for static hosting"
+  end
+
+  test "sitemap includes prefix and .html when configured" do
+    @settings.update!(url: "https://example.com")
+    CacheableSettings.refresh_site_info
+    Rails.application.config.x.article_route_prefix = "posts"
+
+    create_published_article(title: "Prefixed Sitemap Article", slug: "prefixed-sitemap-article")
+
+    setup_mock_assets
+    generator = StaticGenerator.new
+    generator.generate_all(precompile_assets: false)
+
+    sitemap_content = File.read(@test_output_dir.join("sitemap.xml"))
+    assert_match %r{<loc>https://example\.com/posts/prefixed-sitemap-article\.html</loc>}, sitemap_content,
+      "Sitemap loc should include prefix and .html"
+  end
+
+  test "generated article page share URL includes .html" do
+    @settings.update!(url: "https://example.com")
+    CacheableSettings.refresh_site_info
+
+    article = create_published_article(title: "Share Link Article", slug: "share-link-article")
+
+    setup_mock_assets
+    generator = StaticGenerator.new
+    generator.generate_all(precompile_assets: false)
+
+    article_file = @test_output_dir.join("#{article.slug}.html")
+    assert File.exist?(article_file), "Article HTML file should exist"
+
+    content = File.read(article_file)
+    assert_match %r{<meta property="og:url" content="https://example\.com/share-link-article\.html">}, content,
+      "OG URL should include .html"
+    assert_match %r{copyToClipboard\('https://example\.com/share-link-article\.html'\)}, content,
+      "Share copy link should include .html"
+  end
+
+  test "generated article page share URL includes prefix and .html" do
+    @settings.update!(url: "https://example.com")
+    CacheableSettings.refresh_site_info
+    Rails.application.config.x.article_route_prefix = "posts"
+
+    article = create_published_article(title: "Prefixed Share Link", slug: "prefixed-share-link")
+
+    setup_mock_assets
+    generator = StaticGenerator.new
+    generator.generate_all(precompile_assets: false)
+
+    article_file = @test_output_dir.join("posts", "#{article.slug}.html")
+    assert File.exist?(article_file), "Prefixed article HTML file should exist"
+
+    content = File.read(article_file)
+    assert_match %r{<meta property="og:url" content="https://example\.com/posts/prefixed-share-link\.html">}, content,
+      "OG URL should include prefix and .html"
+    assert_match %r{copyToClipboard\('https://example\.com/posts/prefixed-share-link\.html'\)}, content,
+      "Share copy link should include prefix and .html"
   end
 
   test "search.json contains correct URLs based on article prefix" do
