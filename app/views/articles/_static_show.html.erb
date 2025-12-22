@@ -10,9 +10,9 @@
     site_url = "https://#{site_url}" unless site_url.match?(%r{^https?://})
     article_route_prefix = Rails.application.config.x.article_route_prefix 
     if article_route_prefix.present?
-      article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}"
+      article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}.html"
     else
-      article_full_url = "#{site_url}/#{@article.slug}"
+      article_full_url = "#{site_url}/#{@article.slug}.html"
     end
     
     meta_title = @article.seo_meta_title
@@ -63,9 +63,9 @@
     site_url = "https://#{site_url}" unless site_url.match?(%r{^https?://})
     article_route_prefix = Rails.application.config.x.article_route_prefix 
     if article_route_prefix.present?
-      article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}"
+      article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}.html"
     else
-      article_full_url = "#{site_url}/#{@article.slug}"
+      article_full_url = "#{site_url}/#{@article.slug}.html"
     end
   %>
   <div class="article-header" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.25rem;">
@@ -207,4 +207,3 @@
     }
   });
 </script>
-
