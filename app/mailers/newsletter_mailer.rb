@@ -8,6 +8,20 @@ class NewsletterMailer < ApplicationMailer
     @newsletter_setting = NewsletterSetting.instance
     @footer = @newsletter_setting.footer
 
+    # Build unsubscribe URL using rails_api_url
+    api_uri = URI.parse(ApplicationController.helpers.rails_api_url)
+    port = api_uri.port
+    port = nil if (api_uri.scheme == "http" && port == 80) || (api_uri.scheme == "https" && port == 443)
+
+    script_name = api_uri.path.presence
+    script_name = nil if script_name == "/"
+
+    url_options = { token: subscriber.unsubscribe_token, host: api_uri.host, protocol: api_uri.scheme }
+    url_options[:port] = port if port
+    url_options[:script_name] = script_name if script_name
+
+    @unsubscribe_url = Rails.application.routes.url_helpers.unsubscribe_url(**url_options)
+
     from_email = @newsletter_setting.from_email
     if from_email.blank?
       Rails.event.notify "newsletter.mailer.missing_from_email",

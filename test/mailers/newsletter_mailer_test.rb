@@ -58,6 +58,93 @@ class NewsletterMailerTest < ActionMailer::TestCase
     end
   end
 
+  test "confirmation_email subscribe url starts with rails_api_url" do
+    subscriber = subscribers(:unconfirmed_subscriber)
+    site_info = { title: "Frontend", url: "https://frontend.example.com" }
+
+    with_env("RAILS_API_URL" => "https://api.example.com") do
+      email = NewsletterMailer.confirmation_email(subscriber, site_info)
+
+      text_body = email.text_part.body.decoded
+      html_body = email.html_part.body.decoded
+
+      # Extract the subscribe URL from the email body
+      # The subscribe URL is the confirmation URL
+      assert_match %r{https://api\.example\.com/confirm}, text_body,
+        "Subscribe URL in text part should start with rails_api_url"
+      assert_match %r{https://api\.example\.com/confirm}, html_body,
+        "Subscribe URL in html part should start with rails_api_url"
+
+      # Ensure it does NOT use the frontend URL
+      assert_not_includes text_body, "frontend.example.com/confirm",
+        "Subscribe URL should not use frontend URL"
+      assert_not_includes html_body, "frontend.example.com/confirm",
+        "Subscribe URL should not use frontend URL"
+    end
+  end
+
+  test "confirmation_email subscribe url starts with rails_api_url with path prefix" do
+    subscriber = subscribers(:unconfirmed_subscriber)
+    site_info = { title: "Frontend", url: "https://frontend.example.com" }
+
+    with_env("RAILS_API_URL" => "https://api.example.com/api/v1") do
+      email = NewsletterMailer.confirmation_email(subscriber, site_info)
+
+      text_body = email.text_part.body.decoded
+      html_body = email.html_part.body.decoded
+
+      # The subscribe URL should include the path prefix
+      assert_match %r{https://api\.example\.com/api/v1/confirm}, text_body,
+        "Subscribe URL with path prefix should start with rails_api_url including path"
+      assert_match %r{https://api\.example\.com/api/v1/confirm}, html_body,
+        "Subscribe URL with path prefix should start with rails_api_url including path"
+    end
+  end
+
+  test "article_email unsubscribe url starts with rails_api_url" do
+    article = articles(:published_article)
+    subscriber = subscribers(:confirmed_subscriber)
+    site_info = { title: "My Blog", url: "https://frontend.example.com" }
+
+    with_env("RAILS_API_URL" => "https://api.example.com") do
+      email = NewsletterMailer.article_email(article, subscriber, site_info)
+
+      text_body = email.text_part.body.decoded
+      html_body = email.html_part.body.decoded
+
+      # The unsubscribe URL should start with rails_api_url
+      assert_match %r{https://api\.example\.com/unsubscribe}, text_body,
+        "Unsubscribe URL in text part should start with rails_api_url"
+      assert_match %r{https://api\.example\.com/unsubscribe}, html_body,
+        "Unsubscribe URL in html part should start with rails_api_url"
+
+      # Ensure it does NOT use the frontend URL
+      assert_not_includes text_body, "frontend.example.com/unsubscribe",
+        "Unsubscribe URL should not use frontend URL"
+      assert_not_includes html_body, "frontend.example.com/unsubscribe",
+        "Unsubscribe URL should not use frontend URL"
+    end
+  end
+
+  test "article_email unsubscribe url starts with rails_api_url with path prefix" do
+    article = articles(:published_article)
+    subscriber = subscribers(:confirmed_subscriber)
+    site_info = { title: "My Blog", url: "https://frontend.example.com" }
+
+    with_env("RAILS_API_URL" => "https://api.example.com/api/v1") do
+      email = NewsletterMailer.article_email(article, subscriber, site_info)
+
+      text_body = email.text_part.body.decoded
+      html_body = email.html_part.body.decoded
+
+      # The unsubscribe URL should include the path prefix
+      assert_match %r{https://api\.example\.com/api/v1/unsubscribe}, text_body,
+        "Unsubscribe URL with path prefix should start with rails_api_url including path"
+      assert_match %r{https://api\.example\.com/api/v1/unsubscribe}, html_body,
+        "Unsubscribe URL with path prefix should start with rails_api_url including path"
+    end
+  end
+
   private
 
   def with_env(env)

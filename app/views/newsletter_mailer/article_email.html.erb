@@ -64,8 +64,7 @@
     <div class="unsubscribe">
       <p>
         不想再收到这些邮件？
-        <% unsubscribe_url = "#{@site_info[:url]}/unsubscribe?token=#{@subscriber.unsubscribe_token}" %>
-        <a href="<%= unsubscribe_url %>">取消订阅</a>
+        <a href="<%= @unsubscribe_url %>">取消订阅</a>
       </p>
     </div>
   </body>

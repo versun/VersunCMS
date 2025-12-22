@@ -16,5 +16,5 @@
 <%= ActionView::Base.full_sanitizer.sanitize(@footer.to_s) %>
 <% end %>
 
-不想再收到这些邮件？取消订阅: <%= @site_info[:url] %>/unsubscribe?token=<%= @subscriber.unsubscribe_token %>
+不想再收到这些邮件？取消订阅: <%= @unsubscribe_url %>
 
