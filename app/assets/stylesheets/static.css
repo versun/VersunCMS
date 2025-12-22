@@ -317,11 +317,11 @@ footer {
 .article-list.timeline::before {
     content: "";
     position: absolute;
-    left: 8px;
+    left: 6px;
     top: 12px;
     bottom: 0;
-    width: 1px;
-    background-color: #e0e0e0;
+    width: 4px;
+    background-color: #ebebeb;
 }
 
 .timeline-item {
@@ -337,10 +337,10 @@ footer {
 /* Timeline marker/dot */
 .timeline-marker {
     position: absolute;
-    left: -20px;
-    top: 6px;
-    width: 8px;
-    height: 8px;
+    left: -24px;
+    top: 1px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background-color: #999;
     border: 2px solid #fff;
