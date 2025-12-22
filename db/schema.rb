@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_18_010525) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_21_014524) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -208,6 +208,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_18_010525) do
     t.boolean "setup_completed", default: false
     t.json "social_links"
     t.json "static_files", default: {}
+    t.string "static_generation_delay"
     t.string "static_generation_destination", default: "local"
     t.string "time_zone", default: "UTC"
     t.string "title"

@@ -21,6 +21,25 @@ class Setting < ApplicationRecord
     triggers.include?(trigger.to_s)
   end
 
+  # Convert static_generation_delay string to ActiveSupport::Duration
+  # Returns duration object for use with job scheduling
+  def generation_delay_duration
+    case static_generation_delay
+    when "0s"
+      0.seconds
+    when "30s"
+      30.seconds
+    when "2m"
+      2.minutes
+    when "5m"
+      5.minutes
+    when "15m"
+      15.minutes
+    else
+      2.minutes # default fallback
+    end
+  end
+
   private
 
   def set_default_local_generation_path

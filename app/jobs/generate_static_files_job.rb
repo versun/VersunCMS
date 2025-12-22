@@ -17,8 +17,9 @@ class GenerateStaticFilesJob < ApplicationJob
   # Schedule a static generation with a default delay
   # @param type [String] Type of generation
   # @param id [Integer, nil] ID of the record
-  # @param delay [ActiveSupport::Duration] Delay before execution (default: DEFAULT_DELAY)
-  def self.schedule(type:, id: nil, delay: DEFAULT_DELAY)
+  # @param delay [ActiveSupport::Duration, nil] Delay before execution (default: from settings or DEFAULT_DELAY)
+  def self.schedule(type:, id: nil, delay: nil)
+    delay ||= Setting.first_or_create.generation_delay_duration
     scheduled_at = Time.current + delay
 
     set(wait: delay).perform_later(
@@ -42,8 +43,9 @@ class GenerateStaticFilesJob < ApplicationJob
   # Multiple calls within delay period will result in only one execution
   # @param type [String] Type of generation
   # @param id [Integer, nil] ID of the record
-  # @param delay [ActiveSupport::Duration] Delay before execution (default: DEBOUNCE_DELAY)
-  def self.schedule_debounced(type:, id: nil, delay: DEBOUNCE_DELAY)
+  # @param delay [ActiveSupport::Duration, nil] Delay before execution (default: from settings or DEBOUNCE_DELAY)
+  def self.schedule_debounced(type:, id: nil, delay: nil)
+    delay ||= Setting.first_or_create.generation_delay_duration
     cache_key = debounce_cache_key(type, id)
     scheduled_at = Time.current + delay
 

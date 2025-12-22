@@ -39,6 +39,6 @@ class Admin::GeneratesController < Admin::BaseController
   private
 
   def generate_params
-    params.require(:setting).permit(:static_generation_destination, :local_generation_path, :github_repo_url, :github_token, :github_backup_branch, auto_regenerate_triggers: [])
+    params.require(:setting).permit(:static_generation_destination, :local_generation_path, :github_repo_url, :github_token, :github_backup_branch, :static_generation_delay, auto_regenerate_triggers: [])
   end
 end

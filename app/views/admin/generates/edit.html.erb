@@ -38,7 +38,6 @@
       <div class="field">
         <%= form.label :local_generation_path, "Generation Path" %>
         <%= form.text_field :local_generation_path, placeholder: Rails.root.join("public").to_s %>
-        <small>Absolute path for static file generation (default: <%= Rails.root.join("public").to_s %>). Must use absolute path, not relative path.</small>
       </div>
     </div>
 
@@ -46,19 +45,33 @@
       <div class="field">
         <%= form.label :github_repo_url, "GitHub Repository URL" %>
         <%= form.text_field :github_repo_url, placeholder: "https://github.com/username/repo.git" %>
-        <small>Full URL of the GitHub repository (e.g. https://github.com/username/repo.git)</small>
       </div>
 
       <div class="field">
         <%= form.label :github_token, "GitHub Token" %>
-        <%= form.text_field :github_token, type: "password", placeholder: "ghp_xxxxxxxxxxxx" %>
-        <small>GitHub Personal Access Token (requires repo permissions)</small>
+        <%= form.text_field :github_token, type: "password", placeholder: "GitHub Personal Access Token (requires repo permissions)：ghp_xxxxxxxxxx" %>
       </div>
 
       <div class="field">
         <%= form.label :github_backup_branch, "Branch Name" %>
         <%= form.text_field :github_backup_branch, placeholder: "main" %>
-        <small>Target branch for pushing files (default: main)</small>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="field">
+        <%= form.label :static_generation_delay, "Generation Delay" %>
+        <%= form.select :static_generation_delay,
+                     options_for_select([
+                       ["立即 (Immediately)", "0s"],
+                       ["30秒后 (30 seconds)", "30s"],
+                       ["2分钟后 (2 minutes)", "2m"],
+                       ["5分钟后 (5 minutes)", "5m"],
+                       ["15分钟后 (15 minutes)", "15m"]
+                     ], @setting.static_generation_delay || "2m"),
+                     {},
+                     { id: "setting_static_generation_delay" } %>
+        <small>延迟时间可以避免频繁更新时重复生成静态文件</small>
       </div>
     </div>
 
@@ -67,7 +80,7 @@
 
       <div class="field">
         <div class="checkbox-group">
-          <% 
+          <%
             triggers = @setting.auto_regenerate_triggers || []
             trigger_options = [
               ['article_update', 'Article Update'],
