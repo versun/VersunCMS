@@ -486,23 +486,22 @@ h2 {
 }
 
 /* Article Content - Link Styles */
-/* Override lexxy's link color variable and styles */
-.lexxy-content,
+/* Override lexxy's link color variable and styles (only within articles) */
+.lexxy-content {
+    --lexxy-color-link: inherit;
+}
+
 .article-content {
     --lexxy-color-link: #c04000;
 }
 
-.lexxy-content a,
-.article-content a:not(.social-link-card__link),
-.post-content a {
+.article-content a:not(.social-link-card__link) {
     color: #c04000 !important;
     text-decoration: underline !important;
     text-underline-offset: 2px;
 }
 
-.lexxy-content a:hover,
-.article-content a:not(.social-link-card__link):hover,
-.post-content a:hover {
+.article-content a:not(.social-link-card__link):hover {
     color: #a03000 !important;
     text-decoration-thickness: 2px;
 }
@@ -1041,14 +1040,6 @@ h2 {
     color: var(--text-color);
 }
 
-[data-theme="dark"] .post-content a {
-    color: var(--accent-color);
-}
-
-[data-theme="dark"] .post-content a:hover {
-    color: #ff8c5a;
-}
-
 [data-theme="dark"] .post-content code {
     background-color: #2a2a2a;
     color: var(--text-color);
@@ -1127,17 +1118,16 @@ h2 {
     color: var(--text-color);
 }
 
-[data-theme="dark"] .lexxy-content {
+[data-theme="dark"] .article-content {
     --lexxy-color-link: var(--accent-color);
 }
 
-[data-theme="dark"] .lexxy-content a,
-[data-theme="dark"] .article-content a {
-    color: var(--accent-color);
+[data-theme="dark"] .article-content a:not(.social-link-card__link) {
+    color: var(--accent-color) !important;
 }
 
-[data-theme="dark"] .article-content a:hover {
-    color: #ff8c5a;
+[data-theme="dark"] .article-content a:not(.social-link-card__link):hover {
+    color: #ff8c5a !important;
 }
 
 [data-theme="dark"] .article-content code {
