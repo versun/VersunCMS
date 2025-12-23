@@ -106,6 +106,7 @@ Rails.application.routes.draw do
 
     # Source reference API
     post "sources/archive", to: "sources#archive"
+    post "sources/fetch_twitter", to: "sources#fetch_twitter"
 
     # Static site generation
     post "generate_static", to: "static_generation#create", as: :generate_static
@@ -123,11 +124,6 @@ Rails.application.routes.draw do
   # Static files public access
   get "/static/*filename", to: "static_files#show", as: :static_file, format: false
 
-  # API endpoints
-  namespace :api do
-    get "twitter/oembed", to: "twitter#oembed"
-    match "twitter/oembed", to: "twitter#options", via: :options
-  end
 
   # Health check and feeds
   get "up" => "rails/health#show", as: :rails_health_check

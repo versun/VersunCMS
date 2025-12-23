@@ -1,6 +1,7 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
+require "active_job/test_helper"
 
 # Clean up parallel test database files after all tests complete
 Minitest.after_run do
@@ -20,6 +21,13 @@ Minitest.after_run do
 end
 
 class ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  setup do
+    clear_enqueued_jobs
+    clear_performed_jobs
+  end
+
   # Run tests in parallel with specified workers
   parallelize(workers: :number_of_processors)
 
@@ -71,6 +79,13 @@ class ActiveSupport::TestCase
 end
 
 class ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
+  setup do
+    clear_enqueued_jobs
+    clear_performed_jobs
+  end
+
   # Helper method to sign in a user for integration tests
   def sign_in(user)
     post session_path, params: {

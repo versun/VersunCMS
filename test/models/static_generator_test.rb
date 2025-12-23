@@ -1,4 +1,5 @@
 require "test_helper"
+require "securerandom"
 require "stringio"
 
 class StaticGeneratorTest < ActiveSupport::TestCase
@@ -28,7 +29,7 @@ class StaticGeneratorTest < ActiveSupport::TestCase
   end
 
   test "export_blob exports non-variable images like SVG" do
-    output_dir = Rails.root.join("tmp", "static_generator_test_output")
+    output_dir = Rails.root.join("tmp", "static_generator_test_output_#{Process.pid}_#{SecureRandom.hex(4)}")
     FileUtils.rm_rf(output_dir)
 
     @settings.update!(

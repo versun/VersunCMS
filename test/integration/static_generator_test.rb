@@ -502,6 +502,41 @@ class StaticGeneratorIntegrationTest < ActionDispatch::IntegrationTest
       "URL should include article route prefix"
   end
 
+  test "copy_user_static_files copies both StaticFile records and storage/static directory" do
+    # Create a StaticFile record (ActiveStorage-backed)
+    static_file = StaticFile.new(filename: "nested/from-db.txt")
+    static_file.file.attach(
+      io: StringIO.new("from-db"),
+      filename: "from-db.txt",
+      content_type: "text/plain"
+    )
+    static_file.save!
+
+    # Create a manual file in storage/static
+    source_dir = Rails.root.join("storage", "static")
+    FileUtils.mkdir_p(source_dir)
+    source_file = source_dir.join("from-storage-#{Process.pid}.txt")
+    File.write(source_file, "from-storage")
+
+    # Seed an existing output file that should be removed on copy
+    existing_output = @test_output_dir.join("static", "old.txt")
+    FileUtils.mkdir_p(existing_output.dirname)
+    File.write(existing_output, "old")
+
+    generator = StaticGenerator.new
+    generator.copy_user_static_files
+
+    assert File.exist?(@test_output_dir.join("static", "nested", "from-db.txt"))
+    assert_equal "from-db", File.read(@test_output_dir.join("static", "nested", "from-db.txt"))
+
+    assert File.exist?(@test_output_dir.join("static", source_file.basename))
+    assert_equal "from-storage", File.read(@test_output_dir.join("static", source_file.basename))
+
+    refute File.exist?(existing_output), "Old output static files should be cleaned before copying"
+  ensure
+    File.delete(source_file) if defined?(source_file) && source_file && File.exist?(source_file)
+  end
+
   test "cleans old files before regeneration" do
     # First generation
     setup_mock_assets

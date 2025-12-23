@@ -46,6 +46,9 @@
           <div class="field">
             <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
               <%= form.text_field :source_url, placeholder: "Source URL & Archive", style: "flex: 1;", data: { source_reference_target: "url" } %>
+              <button type="button" class="btn btn-secondary" data-action="click->source-reference#fetchTwitter" data-source-reference-target="fetchBtn" style="white-space: nowrap;">
+                <i class="fab fa-twitter"></i> Fetch
+              </button>
               <button type="button" class="btn btn-secondary" data-action="click->source-reference#archiveUrl" data-source-reference-target="archiveBtn" style="white-space: nowrap;">
                 <i class="fas fa-archive"></i> Archive
               </button>

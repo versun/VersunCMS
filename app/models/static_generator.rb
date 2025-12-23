@@ -76,7 +76,17 @@ class StaticGenerator
     @site_settings = CacheableSettings.site_info
     @navbar_items = CacheableSettings.navbar_items
     @article_route_prefix = Rails.application.config.x.article_route_prefix
-    @exported_blobs = {} # Cache of exported blob paths
+
+    @blob_exporter = StaticGeneration::BlobExporter.new(uploads_dir: uploads_dir, event: Rails.event)
+    @content_rewriter = StaticGeneration::ContentRewriter.new(
+      site_url: @site_settings[:url],
+      resolve_signed_id: lambda { |signed_id, original|
+        @blob_exporter.static_path_for_signed_id(signed_id, original: original)
+      }
+    )
+    @file_writer = StaticGeneration::FileWriter.new(output_dir: output_dir, rewriter: @content_rewriter, event: Rails.event)
+    @renderer = StaticGeneration::Renderer.new
+    @assets_manager = StaticGeneration::AssetsManager.new(public_dir: PUBLIC_DIR, event: Rails.event)
   end
 
   # Generate all static files
@@ -85,7 +95,7 @@ class StaticGenerator
 
     # Clean old generated files before generating new ones
     clean_generated_files
-    ensure_assets_available!(precompile: precompile_assets)
+    @assets_manager.ensure_available!(output_dir: output_dir, precompile: precompile_assets)
 
     export_all_images
     generate_index_pages
@@ -175,15 +185,15 @@ class StaticGenerator
 
     # Export images from published articles
     Article.published.includes(:rich_text_content).find_each do |article|
-      export_rich_text_images(article.content) if article.content.present?
+      @blob_exporter.export_from_rich_text(article.content) if article.content.present?
     end
 
     # Export images from published pages
     Page.published.includes(:rich_text_content).find_each do |page|
-      export_rich_text_images(page.content) if page.content.present?
+      @blob_exporter.export_from_rich_text(page.content) if page.content.present?
     end
 
-    Rails.event.notify("static_generator.images_exported", level: "info", component: "StaticGenerator", count: @exported_blobs.size)
+    Rails.event.notify("static_generator.images_exported", level: "info", component: "StaticGenerator", count: @blob_exporter.exported_count)
   end
 
   # Generate index pages with pagination (each page has PER_PAGE articles)
@@ -547,7 +557,7 @@ class StaticGenerator
   # Regenerate affected pages when content changes
   def regenerate_for_article(article)
     # Export images from this article first
-    export_rich_text_images(article.content) if article.content.present?
+    @blob_exporter.export_from_rich_text(article.content) if article.content.present?
 
     generate_article(article)
     generate_index_pages
@@ -560,7 +570,7 @@ class StaticGenerator
 
   def regenerate_for_page(page)
     # Export images from this page first
-    export_rich_text_images(page.content) if page.content.present?
+    @blob_exporter.export_from_rich_text(page.content) if page.content.present?
 
     generate_page(page)
     generate_sitemap
@@ -682,367 +692,25 @@ class StaticGenerator
     write_file("search.html", html)
   end
 
-  def ensure_assets_available!(precompile: true)
-    source_assets_dir = PUBLIC_DIR.join("assets")
-    unless assets_present?(source_assets_dir)
-      if precompile
-        precompile_assets!
-      else
-        Rails.event.notify(
-          "static_generator.assets_missing",
-          level: "warn",
-          component: "StaticGenerator",
-          source: source_assets_dir.to_s
-        )
-        return
-      end
-    end
-
-    unless assets_present?(source_assets_dir)
-      Rails.event.notify(
-        "static_generator.assets_still_missing",
-        level: "error",
-        component: "StaticGenerator",
-        source: source_assets_dir.to_s
-      )
-      raise "Assets are missing after precompile: #{source_assets_dir}"
-    end
-
-    return if output_dir.to_s == PUBLIC_DIR.to_s
-
-    dest_assets_dir = output_dir.join("assets")
-    FileUtils.rm_rf(dest_assets_dir) if Dir.exist?(dest_assets_dir)
-    FileUtils.mkdir_p(output_dir)
-    FileUtils.cp_r(source_assets_dir, dest_assets_dir)
-    Rails.event.notify("static_generator.assets_copied", level: "info", component: "StaticGenerator", destination: dest_assets_dir.to_s)
-  end
-
-  def assets_present?(assets_dir)
-    return false unless Dir.exist?(assets_dir)
-
-    manifest = Dir.glob(assets_dir.join(".sprockets-manifest*.json")).first ||
-      Dir.glob(assets_dir.join(".manifest.json")).first
-    return true if manifest.present?
-
-    Dir.glob(assets_dir.join("**/*")).any? { |path| File.file?(path) }
-  end
-
-  def precompile_assets!
-    Rails.event.notify("static_generator.assets_precompile_started", level: "info", component: "StaticGenerator")
-
-    require "rake"
-    Rails.application.load_tasks unless Rake::Task.task_defined?("assets:precompile")
-
-    task = Rake::Task["assets:precompile"]
-    task.reenable
-    task.invoke
-
-    Rails.event.notify("static_generator.assets_precompile_complete", level: "info", component: "StaticGenerator")
-  rescue => e
-    Rails.event.notify(
-      "static_generator.assets_precompile_failed",
-      level: "error",
-      component: "StaticGenerator",
-      error: e.message
-    )
-    raise
-  end
-
   def render_static_partial(partial, assigns = {})
-    # Disable template annotations for cleaner output
-    original_annotate = ActionView::Base.annotate_rendered_view_with_filenames
-    ActionView::Base.annotate_rendered_view_with_filenames = false
-
-    begin
-      controller = StaticRenderController.new
-      assigns.each { |k, v| controller.instance_variable_set("@#{k}", v) }
-
-      # Render layout + partial in a single pass so `content_for` works.
-      controller.instance_variable_set(:@static_partial, partial)
-      controller.instance_variable_set(:@static_locals, assigns)
-      controller.render_to_string(
-        template: "static_generator/render",
-        layout: "static"
-      )
-    ensure
-      ActionView::Base.annotate_rendered_view_with_filenames = original_annotate
-    end
+    @renderer.render_static_partial(partial, assigns)
   end
 
   def render_rss_template(template, assigns = {})
-    controller = StaticRenderController.new
-    assigns.each { |k, v| controller.instance_variable_set("@#{k}", v) }
-
-    controller.render_to_string(
-      template: template,
-      formats: [ :rss ],
-      layout: false
-    )
+    @renderer.render_rss_template(template, assigns)
   end
 
   def render_xml_template(template, assigns = {})
-    controller = StaticRenderController.new
-    assigns.each { |k, v| controller.instance_variable_set("@#{k}", v) }
-
-    controller.render_to_string(
-      template: template,
-      formats: [ :xml ],
-      layout: false
-    )
+    @renderer.render_xml_template(template, assigns)
   end
 
   def write_file(relative_path, content)
-    full_path = output_dir.join(relative_path)
-    FileUtils.mkdir_p(File.dirname(full_path))
-
-    # Replace ActiveStorage URLs with static paths in HTML and XML content
-    if relative_path.end_with?(".html")
-      content = replace_active_storage_urls(content)
-    elsif relative_path == "feed.xml"
-      content = replace_active_storage_urls_for_rss(content)
-    end
-
-    File.write(full_path, content)
-    Rails.event.notify("static_generator.file_written", level: "debug", component: "StaticGenerator", path: relative_path)
-  end
-
-  # Export images from ActionText rich text content
-  def export_rich_text_images(rich_text)
-    return unless rich_text&.body&.attachments
-
-    rich_text.body.attachments.each do |attachment|
-      next unless attachment.attachable.is_a?(ActiveStorage::Blob)
-
-      blob = attachment.attachable
-      export_blob(blob)
-    end
+    @file_writer.write(relative_path, content)
   end
 
   # Export a single ActiveStorage blob to public/uploads
   # Compresses images for faster loading, especially for index pages
   def export_blob(blob, options = {})
-    return @exported_blobs[blob.id] if @exported_blobs[blob.id] && !options[:force]
-
-    # Generate unique filename: id-filename.ext
-    filename = "#{blob.id}-#{blob.filename}"
-    output_path = uploads_dir.join(filename)
-    FileUtils.mkdir_p(uploads_dir)
-
-    begin
-      if blob.image? && blob.variable?
-        # Optimize for index pages: max width 1200px, quality 85%
-        # This balances quality and file size for faster page loads
-        variant = blob.variant(
-          resize_to_limit: [ 1200, 1200 ],
-          saver: {
-            quality: 85,
-            strip: true # Remove metadata to reduce file size
-          }
-        )
-
-        File.binwrite(output_path, variant.processed.download)
-      else
-        blob.open do |file|
-          FileUtils.cp(file.path, output_path)
-        end
-      end
-
-      static_path = "/uploads/#{filename}"
-      @exported_blobs[blob.id] = static_path
-
-      # Log compression info
-      original_size = blob.byte_size
-      compressed_size = File.size(output_path)
-      compression_ratio = if original_size.to_i.positive?
-        ((1 - compressed_size.to_f / original_size) * 100).round(1)
-      end
-
-      Rails.event.notify(
-        "static_generator.image_exported",
-        level: "debug",
-        component: "StaticGenerator",
-        content_type: blob.content_type,
-        path: static_path,
-        compression_ratio: compression_ratio
-      )
-
-      static_path
-    rescue => e
-      Rails.event.notify("static_generator.blob_export_failed", level: "error", component: "StaticGenerator", blob_id: blob.id, error: e.message)
-      # Fallback to original if variant processing fails
-      begin
-        blob.open do |file|
-          FileUtils.cp(file.path, output_path)
-        end
-        static_path = "/uploads/#{filename}"
-        @exported_blobs[blob.id] = static_path
-        Rails.event.notify("static_generator.original_image_exported", level: "warn", component: "StaticGenerator", path: static_path)
-        static_path
-      rescue => fallback_error
-        Rails.event.notify("static_generator.fallback_export_failed", level: "error", component: "StaticGenerator", error: fallback_error.message)
-        nil
-      end
-    end
-  end
-
-  # Replace ActiveStorage URLs in HTML with static paths
-  def replace_active_storage_urls(html)
-    return html if html.blank?
-
-    # Pattern 1: /rails/active_storage/blobs/redirect/:signed_id/*filename
-    html = html.gsub(%r{(https?://[^/]+)?/rails/active_storage/(blobs|representations)/(redirect/)?([^/"'\s]+)/[^"'\s]+}) do |match|
-      signed_id = $4
-      replace_blob_url(signed_id, match)
-    end
-
-    # Pattern 2: Full URLs with /uploads/ path that have wrong host
-    # Replace http://example.org/uploads/xxx or http://127.0.0.1:3000/uploads/xxx with /uploads/xxx
-    html = html.gsub(%r{https?://[^/]+(/uploads/[^"'\s]+)}) do |match|
-      $1 # Return just the /uploads/xxx part
-    end
-
-    # Pattern 3: action-text-attachment url attribute
-    html = html.gsub(/<action-text-attachment([^>]*)url="([^"]+)"/) do |match|
-      attrs = $1
-      original_url = $2
-      new_url = replace_attachment_url(original_url)
-      "<action-text-attachment#{attrs}url=\"#{new_url}\""
-    end
-
-    # Pattern 4: action-text-attachment url attribute (single quotes)
-    html = html.gsub(/<action-text-attachment([^>]*)url='([^']+)'/) do |match|
-      attrs = $1
-      original_url = $2
-      new_url = replace_attachment_url(original_url)
-      "<action-text-attachment#{attrs}url='#{new_url}'"
-    end
-
-    # Add lazy loading to all images for better performance
-    html = add_lazy_loading_to_images(html)
-
-    html
-  end
-
-  # Add loading="lazy" attribute to img tags that don't already have it
-  def add_lazy_loading_to_images(html)
-    return html if html.blank?
-
-    # Match img tags and add loading="lazy" if not present
-    html.gsub(/<img\s+([^>]*?)(\s*\/?>)/i) do |match|
-      attrs = $1
-      closing = $2
-
-      # Skip if already has loading attribute
-      if attrs.include?("loading=")
-        match
-      else
-        # Add loading="lazy" and decoding="async" for better performance
-        "<img #{attrs} loading=\"lazy\" decoding=\"async\"#{closing}"
-      end
-    end
-  end
-
-  # Replace ActiveStorage URLs in RSS XML with static paths (full URLs)
-  def replace_active_storage_urls_for_rss(xml)
-    return xml if xml.blank?
-
-    site_url = @site_settings[:url].to_s.chomp("/")
-
-    # Pattern 1: /rails/active_storage/blobs/redirect/:signed_id/*filename
-    xml = xml.gsub(%r{(https?://[^/]+)?/rails/active_storage/(blobs|representations)/(redirect/)?([^/"'\s]+)/[^"'\s]+}) do |match|
-      signed_id = $4
-      static_path = replace_blob_url(signed_id, match)
-      # Convert relative path to full URL
-      static_path.start_with?("http") ? static_path : "#{site_url}#{static_path}"
-    end
-
-    # Pattern 2: action-text-attachment url attribute
-    xml = xml.gsub(/<action-text-attachment([^>]*)url="([^"]+)"/) do |match|
-      attrs = $1
-      original_url = $2
-      new_url = replace_attachment_url(original_url)
-      # Convert relative path to full URL
-      new_url = "#{site_url}#{new_url}" if new_url.start_with?("/")
-      "<action-text-attachment#{attrs}url=\"#{new_url}\""
-    end
-
-    # Pattern 3: action-text-attachment url attribute (single quotes)
-    xml = xml.gsub(/<action-text-attachment([^>]*)url='([^']+)'/) do |match|
-      attrs = $1
-      original_url = $2
-      new_url = replace_attachment_url(original_url)
-      # Convert relative path to full URL
-      new_url = "#{site_url}#{new_url}" if new_url.start_with?("/")
-      "<action-text-attachment#{attrs}url='#{new_url}'"
-    end
-
-    # Pattern 4: img src in action-text-attachment
-    xml = xml.gsub(%r{<img([^>]*)src="([^"]+)"}) do |match|
-      attrs = $1
-      original_src = $2
-      new_src = replace_attachment_url(original_src)
-      # Convert relative path to full URL
-      new_src = "#{site_url}#{new_src}" if new_src.start_with?("/")
-      "<img#{attrs}src=\"#{new_src}\""
-    end
-
-    xml
-  end
-
-  # Replace a single attachment URL (from action-text-attachment or img src)
-  def replace_attachment_url(original_url)
-    return original_url if original_url.blank?
-
-    # If it's already a static path, return as is
-    return original_url if original_url.start_with?("/uploads/")
-
-    # If it's an Active Storage URL (full URL or path), try to extract blob and replace
-    match = original_url.match(%r{(?:https?://[^/]+)?/rails/active_storage/(blobs|representations)/(redirect/)?([^/"'\s]+)/})
-    if match
-      signed_id = match[3]
-      replace_blob_url(signed_id, original_url)
-    else
-      original_url
-    end
-  end
-
-  def replace_blob_url(signed_id, original)
-    blob = ActiveStorage::Blob.find_signed(signed_id)
-    if blob && @exported_blobs[blob.id]
-      @exported_blobs[blob.id]
-    elsif blob
-      static_path = export_blob(blob)
-      static_path || original
-    else
-      original
-    end
-  rescue => e
-    Rails.event.notify("static_generator.blob_resolve_failed", level: "warn", component: "StaticGenerator", error: e.message)
-    original
-  end
-end
-
-# Internal controller for rendering static pages
-class StaticRenderController < ActionController::Base
-  include ApplicationHelper
-  include ArticlesHelper
-  include PagesHelper
-
-  helper_method :site_settings, :navbar_items, :authenticated?, :flash, :rails_api_url
-
-  def site_settings
-    CacheableSettings.site_info
-  end
-
-  def navbar_items
-    CacheableSettings.navbar_items
-  end
-
-  def authenticated?
-    false
-  end
-
-  def flash
-    {}
+    @blob_exporter.export_blob(blob, force: options[:force])
   end
 end

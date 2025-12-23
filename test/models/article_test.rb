@@ -206,4 +206,200 @@ class ArticleTest < ActiveSupport::TestCase
       article.destroy
     end
   end
+
+  # Crosspost job tests
+  test "should enqueue crosspost job when publishing with crosspost enabled" do
+    # Setup: enable mastodon crosspost platform
+    Crosspost.find_or_create_by(platform: "mastodon").update!(
+      enabled: true,
+      client_key: "test_key",
+      client_secret: "test_secret",
+      access_token: "test_token"
+    )
+
+    article = Article.new(
+      title: "Crosspost Test Article",
+      slug: "crosspost-test-publish",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Test content</p>",
+      crosspost_mastodon: "1"
+    )
+
+    assert_enqueued_with(job: CrosspostArticleJob) do
+      article.save!
+    end
+  end
+
+  test "should enqueue crosspost job when saving as shared with crosspost enabled" do
+    # Setup: enable mastodon crosspost platform
+    Crosspost.find_or_create_by(platform: "mastodon").update!(
+      enabled: true,
+      client_key: "test_key",
+      client_secret: "test_secret",
+      access_token: "test_token"
+    )
+
+    article = Article.new(
+      title: "Shared Crosspost Test",
+      slug: "crosspost-test-shared",
+      status: :shared,
+      content_type: :html,
+      html_content: "<p>Shared content</p>",
+      crosspost_mastodon: "1"
+    )
+
+    # shared status should NOT trigger crosspost (only publish does)
+    assert_no_enqueued_jobs(only: CrosspostArticleJob) do
+      article.save!
+    end
+  end
+
+  test "should not enqueue crosspost job when crosspost not checked" do
+    # Setup: enable mastodon crosspost platform
+    Crosspost.find_or_create_by(platform: "mastodon").update!(
+      enabled: true,
+      client_key: "test_key",
+      client_secret: "test_secret",
+      access_token: "test_token"
+    )
+
+    article = Article.new(
+      title: "No Crosspost Article",
+      slug: "no-crosspost-test",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Test content</p>",
+      crosspost_mastodon: "0"  # Not checked
+    )
+
+    assert_no_enqueued_jobs(only: CrosspostArticleJob) do
+      article.save!
+    end
+  end
+
+  test "should not enqueue crosspost job when platform not enabled" do
+    # Setup: disable mastodon crosspost platform
+    Crosspost.find_or_create_by(platform: "mastodon").update!(enabled: false)
+
+    article = Article.new(
+      title: "Platform Disabled Article",
+      slug: "platform-disabled-test",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Test content</p>",
+      crosspost_mastodon: "1"  # Checked but platform disabled
+    )
+
+    assert_no_enqueued_jobs(only: CrosspostArticleJob) do
+      article.save!
+    end
+  end
+
+  test "should enqueue multiple crosspost jobs for multiple platforms" do
+    # Setup: enable multiple crosspost platforms
+    Crosspost.find_or_create_by(platform: "mastodon").update!(
+      enabled: true,
+      client_key: "test_key",
+      client_secret: "test_secret",
+      access_token: "test_token"
+    )
+    Crosspost.find_or_create_by(platform: "bluesky").update!(
+      enabled: true,
+      username: "test@bsky.social",
+      app_password: "test_password"
+    )
+
+    article = Article.new(
+      title: "Multi Crosspost Article",
+      slug: "multi-crosspost-test",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Test content</p>",
+      crosspost_mastodon: "1",
+      crosspost_bluesky: "1"
+    )
+
+    assert_difference -> { enqueued_jobs.count { |j| j["job_class"] == "CrosspostArticleJob" } }, 2 do
+      article.save!
+    end
+  end
+
+  # Scheduled article crosspost tests
+  test "should enqueue crosspost job when scheduled article is published" do
+    # Setup: enable mastodon crosspost platform
+    Crosspost.find_or_create_by(platform: "mastodon").update!(
+      enabled: true,
+      client_key: "test_key",
+      client_secret: "test_secret",
+      access_token: "test_token"
+    )
+
+    # Create scheduled article with crosspost enabled
+    article = Article.create!(
+      title: "Scheduled Crosspost Article",
+      slug: "scheduled-crosspost-test",
+      status: :schedule,
+      scheduled_at: 1.hour.ago,  # Already past scheduled time
+      content_type: :html,
+      html_content: "<p>Scheduled content</p>",
+      crosspost_mastodon: "1"
+    )
+
+    # Verify no crosspost job is enqueued during scheduling
+    assert_no_enqueued_jobs(only: CrosspostArticleJob)
+
+    # Now set the crosspost flag again and call publish_scheduled
+    article.crosspost_mastodon = "1"
+
+    # When publish_scheduled is called, it should trigger crosspost
+    assert_enqueued_with(job: CrosspostArticleJob) do
+      article.publish_scheduled
+    end
+  end
+
+  test "should schedule publication job for scheduled article" do
+    article = Article.new(
+      title: "Schedule Job Test",
+      slug: "schedule-job-test",
+      status: :schedule,
+      scheduled_at: 1.hour.from_now,
+      content_type: :html,
+      html_content: "<p>Scheduled content</p>"
+    )
+
+    assert_enqueued_with(job: PublishScheduledArticlesJob) do
+      article.save!
+    end
+  end
+
+  test "scheduled article should transition to publish status when publish_scheduled is called" do
+    # Setup: enable mastodon crosspost platform
+    Crosspost.find_or_create_by(platform: "mastodon").update!(
+      enabled: true,
+      client_key: "test_key",
+      client_secret: "test_secret",
+      access_token: "test_token"
+    )
+
+    # Create article with schedule status and past scheduled_at
+    article = Article.create!(
+      title: "Transition Test Article",
+      slug: "transition-test",
+      status: :schedule,
+      scheduled_at: 1.hour.ago,
+      content_type: :html,
+      html_content: "<p>Test content</p>"
+    )
+
+    # Set crosspost flag before publishing
+    article.crosspost_mastodon = "1"
+
+    # Call publish_scheduled (this happens when PublishScheduledArticlesJob runs)
+    article.publish_scheduled
+
+    # Verify article is now published
+    assert article.publish?, "Article should be in publish status"
+    assert_nil article.scheduled_at, "scheduled_at should be nil after publishing"
+  end
 end

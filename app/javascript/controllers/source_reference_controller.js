@@ -1,10 +1,72 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["url", "archiveUrl", "archiveBtn", "status"]
+  static targets = ["url", "archiveUrl", "archiveBtn", "fetchBtn", "author", "content", "status"]
 
   connect() {
     // Controller initialized
+  }
+
+  async fetchTwitter(event) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const url = this.urlTarget.value.trim()
+
+    if (!url) {
+      this.showStatus("Please enter a Source URL first", "error")
+      return
+    }
+
+    // Check if it's a Twitter/X URL
+    if (!this.isTwitterUrl(url)) {
+      this.showStatus("Not a Twitter/X URL", "error")
+      return
+    }
+
+    this.setLoading(this.fetchBtnTarget, true)
+    this.showStatus("Fetching tweet content...", "info")
+
+    try {
+      const response = await fetch("/admin/sources/fetch_twitter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": this.csrfToken,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ url: url })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        if (this.hasAuthorTarget && data.author) {
+          this.authorTarget.value = data.author
+        }
+        if (this.hasContentTarget && data.content) {
+          this.contentTarget.value = data.content
+        }
+        this.showStatus("Tweet content fetched!", "success")
+      } else {
+        this.showStatus(data.error || "Failed to fetch tweet", "error")
+      }
+    } catch (error) {
+      console.error("Fetch error:", error)
+      this.showStatus(`Network error: ${error.message}`, "error")
+    } finally {
+      this.setLoading(this.fetchBtnTarget, false)
+    }
+  }
+
+  isTwitterUrl(url) {
+    try {
+      const uri = new URL(url)
+      const host = uri.hostname.toLowerCase()
+      return ["twitter.com", "www.twitter.com", "x.com", "www.x.com"].includes(host)
+    } catch (e) {
+      return false
+    }
   }
 
   async archiveUrl(event) {
