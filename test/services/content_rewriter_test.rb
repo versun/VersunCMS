@@ -66,4 +66,3 @@ class StaticGeneration::ContentRewriterTest < ActiveSupport::TestCase
     refute_includes rewritten, "/rails/active_storage/"
   end
 end
-

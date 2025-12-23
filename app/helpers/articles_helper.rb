@@ -248,5 +248,4 @@ module ArticlesHelper
 
     wrapper
   end
-
 end

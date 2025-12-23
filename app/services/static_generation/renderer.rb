@@ -42,4 +42,3 @@ module StaticGeneration
     end
   end
 end
-

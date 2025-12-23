@@ -64,4 +64,3 @@ class StaticGeneration::AssetsManagerTest < ActiveSupport::TestCase
     end
   end
 end
-

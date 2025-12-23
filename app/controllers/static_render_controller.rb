@@ -21,4 +21,3 @@ class StaticRenderController < ActionController::Base
     {}
   end
 end
-
