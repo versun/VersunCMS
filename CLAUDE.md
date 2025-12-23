@@ -54,7 +54,7 @@ bin/rails jobs:work               # Process jobs
 - Generates index pages with pagination, article pages, tag pages, RSS feed, sitemap
 
 ### Social Media Integration
-Located in `app/models/integrations/`:
+Located in `app/services/services/` (`Services::*` namespace):
 - **TwitterService**: X/Twitter posting with media upload
 - **MastodonService**: Mastodon posting
 - **BlueskyService**: Bluesky posting with rich text facets

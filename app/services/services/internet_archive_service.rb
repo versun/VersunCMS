@@ -2,7 +2,7 @@ require "net/http"
 require "uri"
 require "cgi"
 
-module Integrations
+module Services
   class InternetArchiveService
     include ContentBuilder
 

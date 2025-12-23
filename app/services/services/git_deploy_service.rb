@@ -3,7 +3,7 @@ require "fileutils"
 require "pathname"
 require "tmpdir"
 
-module Integrations
+module Services
   # Generic Git deploy service for deploying static files to any Git provider
   # Supports: GitHub, GitLab, Gitea, Codeberg, Bitbucket
   class GitDeployService

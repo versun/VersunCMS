@@ -24,7 +24,7 @@ class ArchiveSourceUrlJob < ApplicationJob
       return
     end
 
-    service = Integrations::InternetArchiveService.new
+    service = Services::InternetArchiveService.new
     result = service.save_url(article.source_url)
 
     if result[:success] && result[:archived_url].present?

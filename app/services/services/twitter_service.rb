@@ -3,7 +3,7 @@ require "tempfile"
 require "net/http"
 require "uri"
 require "json"
-module Integrations
+module Services
   class TwitterService
     include ContentBuilder
 

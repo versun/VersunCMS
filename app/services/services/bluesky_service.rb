@@ -1,4 +1,4 @@
-module Integrations
+module Services
   # COPY from: https://t27duck.com/posts/17-a-bluesky-at-proto-api-example-in-ruby
   class BlueskyService
     include ContentBuilder

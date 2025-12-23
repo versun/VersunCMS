@@ -1,7 +1,7 @@
 require "net/http"
 require "uri"
 
-module Integrations
+module Services
   class MastodonService
     include ContentBuilder
 

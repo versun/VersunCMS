@@ -1,4 +1,4 @@
-module Integrations
+module Services
   module ContentBuilder
     # 构建社交媒体发布内容
     # @param slug [String] 文章slug（如果提供了article则忽略此参数）

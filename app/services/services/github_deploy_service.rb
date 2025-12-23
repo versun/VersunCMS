@@ -3,7 +3,7 @@ require "fileutils"
 require "pathname"
 require "tmpdir"
 
-module Integrations
+module Services
   # Service for deploying static files to GitHub repository
   # Used when static_generation_destination is set to 'github'
   class GithubDeployService

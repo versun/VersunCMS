@@ -57,15 +57,15 @@ class Admin::CrosspostsController < Admin::BaseController
       results = case crosspost[:platform]
       when "mastodon"
         crosspost[:server_url] = "https://mastodon.social" if crosspost[:server_url].blank?
-        Integrations::MastodonService.new.verify(crosspost)
+        Services::MastodonService.new.verify(crosspost)
       when "twitter"
-        Integrations::TwitterService.new.verify(crosspost)
+        Services::TwitterService.new.verify(crosspost)
       when "bluesky"
         # Set default server_url if not provided
         crosspost[:server_url] = "https://bsky.social/xrpc" if crosspost[:server_url].blank?
-        Integrations::BlueskyService.new.verify(crosspost)
+        Services::BlueskyService.new.verify(crosspost)
       when "internet_archive"
-        Integrations::InternetArchiveService.new.verify(crosspost)
+        Services::InternetArchiveService.new.verify(crosspost)
       else
         raise "Unknown platform: #{crosspost[:platform]}"
       end
