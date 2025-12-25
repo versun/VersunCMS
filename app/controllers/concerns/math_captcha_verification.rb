@@ -37,4 +37,3 @@ module MathCaptchaVerification
     false
   end
 end
-

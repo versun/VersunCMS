@@ -38,4 +38,3 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, response.parsed_body["success"]
   end
 end
-
