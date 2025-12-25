@@ -6,8 +6,12 @@
   </div>
 
   <div class="field" data-math-captcha-target="container">
-    <label for="<%= captcha_answer_id %>" class="subscription-tags-label">验证：<span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
-    <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "答案", class: "newsletter-email-input", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
+    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+      <label for="<%= captcha_answer_id %>" class="subscription-tags-label" style="margin: 0;">
+        <span data-math-captcha-target="question"><%= captcha[:question] %></span>
+      </label>
+      <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "答案", class: "newsletter-email-input", style: "width: 6rem;", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
+    </div>
     <div data-math-captcha-target="message" class="subscription-tags-label" style="margin-top: 0.25rem; display: none;"></div>
     <%= hidden_field_tag "captcha[a]", captcha[:a], data: { math_captcha_target: "a" } %>
     <%= hidden_field_tag "captcha[b]", captcha[:b], data: { math_captcha_target: "b" } %>

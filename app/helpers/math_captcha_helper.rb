@@ -13,9 +13,8 @@ module MathCaptchaHelper
       op = "-"
     end
 
-    question = "#{a} #{op} #{b} = ?"
+    question = "#{a} #{op} #{b} ="
 
     { a:, b:, op:, question: }
   end
 end
-

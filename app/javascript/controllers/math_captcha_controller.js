@@ -40,7 +40,7 @@ export default class extends Controller {
     this.aTarget.value = String(a)
     this.bTarget.value = String(b)
     this.opTarget.value = op
-    this.questionTarget.textContent = `${a} ${op} ${b} = ?`
+    this.questionTarget.textContent = `${a} ${op} ${b} =`
     this.answerTarget.value = ""
     this.clearMessage()
     this.updateSubmitDisabled(true)

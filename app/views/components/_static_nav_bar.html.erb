@@ -38,7 +38,7 @@
         <input type="submit" value="订阅" class="newsletter-submit-btn">
       </div>
       <div data-math-captcha-target="container" style="margin-top: 0.5rem;">
-        <label style="font-size: 12px; color: #666;">验证：<span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
+        <label style="font-size: 12px; color: #666;"><span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
         <input type="text" name="captcha[answer]" required inputmode="numeric" autocomplete="off" placeholder="答案" style="margin-left: 0.5rem; width: 90px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;" data-math-captcha-target="answer" data-action="input->math-captcha#validate blur->math-captcha#validate">
         <div data-math-captcha-target="message" style="margin-top: 0.25rem; font-size: 12px; display: none;"></div>
         <input type="hidden" name="captcha[a]" value="<%= captcha[:a] %>" data-math-captcha-target="a">

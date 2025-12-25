@@ -37,7 +37,7 @@
                 class: "newsletter-submit-btn-small",
                 data: { newsletter_subscription_target: "submitBtn" } %>
             <div data-math-captcha-target="container" style="margin-top: 0.25rem;">
-              <label for="<%= captcha_answer_id %>" style="font-size: 12px; color: #666;">验证：<span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
+              <label for="<%= captcha_answer_id %>" style="font-size: 12px; color: #666;"><span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
               <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "答案", style: "margin-left: 0.5rem; width: 70px; padding: 0.3rem; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
               <div data-math-captcha-target="message" style="margin-top: 0.25rem; font-size: 12px; display: none;"></div>
               <%= hidden_field_tag "captcha[a]", captcha[:a], data: { math_captcha_target: "a" } %>

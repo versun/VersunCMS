@@ -40,7 +40,7 @@
 
     <div data-math-captcha-target="container" style="margin-bottom: 0.75rem;">
       <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <label for="<%= captcha_answer_id %>" style="font-size: 0.875rem; color: #333; white-space: nowrap;">验证：<span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
+        <label for="<%= captcha_answer_id %>" style="font-size: 0.875rem; color: #333; white-space: nowrap;"><span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
         <input type="text" name="captcha[answer]" id="<%= captcha_answer_id %>" required inputmode="numeric" autocomplete="off" placeholder="答案" style="width: 120px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" data-math-captcha-target="answer" data-action="input->math-captcha#validate blur->math-captcha#validate">
       </div>
       <div data-math-captcha-target="message" style="margin-top: 0.25rem; font-size: 12px; display: none;"></div>
