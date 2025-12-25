@@ -21,7 +21,9 @@
 
 /* Base */
 .admin-body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+        "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
     color: var(--text);
     margin: 0;
     padding: 0;

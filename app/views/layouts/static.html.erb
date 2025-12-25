@@ -2,6 +2,7 @@
 <html data-controller="theme-toggle">
   <head>
     <title><%= content_for?(:title) ? yield(:title) : site_settings[:title] %></title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -28,7 +29,7 @@
     <style>
       /* Critical CSS - Layout & First Paint */
       *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111;line-height:1.5;font-size:16px;overflow-wrap:break-word}
+      body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC","WenQuanYi Micro Hei",sans-serif;color:#111;line-height:1.5;font-size:16px;overflow-wrap:break-word}
       img{max-width:100%;height:auto;content-visibility:auto}
       a{text-decoration:none;color:inherit}
       ul{list-style:none}
@@ -46,10 +47,10 @@
       .timeline-content{flex:1;min-width:0}
       .timeline-header{display:flex;align-items:center;margin-bottom:4px;gap:8px;flex-wrap:wrap}
       .timeline-date{font-size:.8rem;color:#c04000;font-variant-numeric:tabular-nums;white-space:nowrap}
-      .post-title{font-family:Georgia,"Times New Roman",Times,serif;font-size:1.4rem;font-weight:700;color:#111;margin-bottom:4px}
+      .post-title{font-family:Georgia,"Times New Roman",Times,"Songti SC","SimSun","Noto Serif CJK SC","Source Han Serif SC",serif;font-size:1.4rem;font-weight:700;color:#111;margin-bottom:4px}
       .post-title a{color:#111}
       .post-title a:hover{color:#c04000;text-decoration:underline}
-      .post-description,.post-content{color:#333;font-family:Georgia,"Times New Roman",Times,serif;font-size:1.05rem;line-height:1.6}
+      .post-description,.post-content{color:#333;font-family:Georgia,"Times New Roman",Times,"Songti SC","SimSun","Noto Serif CJK SC","Source Han Serif SC",serif;font-size:1.05rem;line-height:1.6}
 	      .article-content a:not(.social-link-card__link){color:#c04000;text-decoration:underline}
       .tag{display:inline-block;background-color:#f0f0f0;color:#666;padding:2px 8px;border-radius:4px;font-size:.85rem}
       footer{display:flex;flex-direction:column;align-items:flex-start;gap:.75rem}

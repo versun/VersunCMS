@@ -33,7 +33,8 @@
 body {
     font-family:
         -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-        sans-serif;
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+        "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
     color: #111;
     line-height: 1.5;
     font-size: 16px;
@@ -375,7 +376,8 @@ footer {
 }
 
 .post-title {
-    font-family: Georgia, "Times New Roman", Times, serif;
+    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun",
+        "Noto Serif CJK SC", "Source Han Serif SC", serif;
     font-size: 1.4rem;
     font-weight: 700;
     color: #111;
@@ -393,7 +395,8 @@ footer {
 
 .post-description {
     color: #555;
-    font-family: Georgia, "Times New Roman", Times, serif;
+    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun",
+        "Noto Serif CJK SC", "Source Han Serif SC", serif;
     font-size: 1.05rem;
     line-height: 1.6;
 }
@@ -410,7 +413,8 @@ footer {
 
 .post-content {
     color: #333;
-    font-family: Georgia, "Times New Roman", Times, serif;
+    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun",
+        "Noto Serif CJK SC", "Source Han Serif SC", serif;
     font-size: 1.05rem;
     line-height: 1.6;
     margin-top: 6px;
