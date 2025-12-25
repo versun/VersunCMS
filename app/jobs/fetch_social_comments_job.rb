@@ -30,7 +30,7 @@ class FetchSocialCommentsJob < ApplicationJob
                       .where.not(social_media_posts: { url: nil })
                       .distinct
 
-    process_platform_comments(articles, "mastodon", Services::MastodonService.new, rate_limit_thresholds: { stop: 5, delay: 20 })
+    process_platform_comments(articles, "mastodon", MastodonService.new, rate_limit_thresholds: { stop: 5, delay: 20 })
   end
 
   def fetch_bluesky_comments
@@ -45,7 +45,7 @@ class FetchSocialCommentsJob < ApplicationJob
                       .where.not(social_media_posts: { url: nil })
                       .distinct
 
-    process_platform_comments(articles, "bluesky", Services::BlueskyService.new, rate_limit_thresholds: { stop: 50, delay: 200 })
+    process_platform_comments(articles, "bluesky", BlueskyService.new, rate_limit_thresholds: { stop: 50, delay: 200 })
   end
 
   def process_platform_comments(articles, platform, service, rate_limit_thresholds:)

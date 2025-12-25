@@ -22,22 +22,22 @@ class CrosspostArticleJob < ApplicationJob
 
     case platform
     when "mastodon"
-        mastodon_url = Services::MastodonService.new.post(article)
+        mastodon_url = MastodonService.new.post(article)
         if mastodon_url
           social_media_posts["mastodon"] = mastodon_url
         end
     when "twitter"
-        twitter_url = Services::TwitterService.new.post(article)
+        twitter_url = TwitterService.new.post(article)
         if twitter_url
           social_media_posts["twitter"] = twitter_url
         end
     when "bluesky"
-        bluesky_url = Services::BlueskyService.new.post(article)
+        bluesky_url = BlueskyService.new.post(article)
         if bluesky_url
           social_media_posts["bluesky"] = bluesky_url
         end
     when "internet_archive"
-        archive_url = Services::InternetArchiveService.new.post(article)
+        archive_url = InternetArchiveService.new.post(article)
         if archive_url
           social_media_posts["internet_archive"] = archive_url
         end

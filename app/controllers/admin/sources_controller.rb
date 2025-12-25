@@ -13,7 +13,7 @@ class Admin::SourcesController < Admin::BaseController
       return
     end
 
-    service = Services::InternetArchiveService.new
+    service = InternetArchiveService.new
     result = service.save_url(url)
 
     if result[:error]

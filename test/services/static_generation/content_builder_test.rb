@@ -1,9 +1,9 @@
 require "test_helper"
 
-class Services::ContentBuilderTest < ActiveSupport::TestCase
+class ContentBuilderTest < ActiveSupport::TestCase
   def setup
     @builder = Class.new do
-      include Services::ContentBuilder
+      include ContentBuilder
     end.new
   end
 

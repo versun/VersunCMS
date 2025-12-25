@@ -418,11 +418,11 @@ class Admin::ArticlesController < Admin::BaseController
       begin
         service = case post.platform
         when "mastodon"
-          Services::MastodonService.new
+          MastodonService.new
         when "bluesky"
-          Services::BlueskyService.new
+          BlueskyService.new
         when "twitter"
-          Services::TwitterService.new
+          TwitterService.new
         else
           next
         end

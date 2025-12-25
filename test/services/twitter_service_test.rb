@@ -1,8 +1,8 @@
 require "test_helper"
 
-class Services::TwitterServiceTest < ActiveSupport::TestCase
+class TwitterServiceTest < ActiveSupport::TestCase
   test "verify fails fast when required fields are blank" do
-    service = Services::TwitterService.new
+    service = TwitterService.new
     result = service.verify({})
 
     assert_equal false, result[:success]
@@ -11,7 +11,7 @@ class Services::TwitterServiceTest < ActiveSupport::TestCase
 
   test "post returns nil when crosspost is disabled" do
     Crosspost.twitter.update!(enabled: false)
-    service = Services::TwitterService.new
+    service = TwitterService.new
 
     assert_nil service.post(create_published_article)
   end

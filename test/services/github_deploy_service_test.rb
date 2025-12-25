@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Services::GithubDeployServiceTest < ActiveSupport::TestCase
+class GithubDeployServiceTest < ActiveSupport::TestCase
   def setup
     @setting = Setting.first_or_create
     @setting.update!(
@@ -8,7 +8,7 @@ class Services::GithubDeployServiceTest < ActiveSupport::TestCase
       github_token: "ghp_testtoken123456789",
       github_backup_branch: "main"
     )
-    @service = Services::GithubDeployService.new
+    @service = GithubDeployService.new
   end
 
   test "github_configured? returns true when both repo_url and token are present" do
@@ -17,19 +17,19 @@ class Services::GithubDeployServiceTest < ActiveSupport::TestCase
 
   test "github_configured? returns false when token is missing" do
     @setting.update!(github_token: nil)
-    service = Services::GithubDeployService.new
+    service = GithubDeployService.new
     assert_not service.github_configured?
   end
 
   test "github_configured? returns false when repo_url is missing" do
     @setting.update!(github_repo_url: nil)
-    service = Services::GithubDeployService.new
+    service = GithubDeployService.new
     assert_not service.github_configured?
   end
 
   test "deploy fails when github is not configured" do
     @setting.update!(github_token: nil)
-    service = Services::GithubDeployService.new
+    service = GithubDeployService.new
     result = service.deploy
     assert_not result[:success]
     assert_match "配置不完整", result[:message]
@@ -51,13 +51,13 @@ class Services::GithubDeployServiceTest < ActiveSupport::TestCase
 
   test "branch defaults to main when github_backup_branch is blank" do
     @setting.update!(github_backup_branch: nil)
-    service = Services::GithubDeployService.new
+    service = GithubDeployService.new
     assert_equal "main", service.send(:branch)
   end
 
   test "branch uses github_backup_branch when present" do
     @setting.update!(github_backup_branch: "gh-pages")
-    service = Services::GithubDeployService.new
+    service = GithubDeployService.new
     assert_equal "gh-pages", service.send(:branch)
   end
 
@@ -68,7 +68,7 @@ class Services::GithubDeployServiceTest < ActiveSupport::TestCase
 
   test "build_authenticated_url converts git@ url to https with token" do
     @setting.update!(github_repo_url: "git@github.com:test/repo.git")
-    service = Services::GithubDeployService.new
+    service = GithubDeployService.new
     url = service.send(:build_authenticated_url)
     assert_match "https://", url
     assert_match "ghp_testtoken123456789@", url
@@ -78,7 +78,7 @@ class Services::GithubDeployServiceTest < ActiveSupport::TestCase
   test "branch name with command injection is handled safely" do
     # This test documents the security concern and verifies the fix
     @setting.update!(github_backup_branch: "main; rm -rf /")
-    service = Services::GithubDeployService.new
+    service = GithubDeployService.new
     # The branch name should not allow command injection
     branch = service.send(:branch)
     assert_equal "main; rm -rf /", branch

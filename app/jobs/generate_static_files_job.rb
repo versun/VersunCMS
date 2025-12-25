@@ -176,14 +176,14 @@ class GenerateStaticFilesJob < ApplicationJob
     settings = Setting.first_or_create
 
     if settings.deploy_provider.present? && settings.deploy_provider != "local"
-      Services::GitDeployService.new.deploy
+      GitDeployService.new.deploy
       return
     end
 
     return unless settings.deploy_provider.blank?
     return unless settings.static_generation_destination == "github"
 
-    Services::GithubDeployService.new.deploy
+    GithubDeployService.new.deploy
   end
 
   def with_lock(&block)

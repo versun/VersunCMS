@@ -1,8 +1,8 @@
 require "test_helper"
 
-class Services::MastodonServiceTest < ActiveSupport::TestCase
+class MastodonServiceTest < ActiveSupport::TestCase
   test "verify fails fast when access token is blank" do
-    service = Services::MastodonService.new
+    service = MastodonService.new
     result = service.verify({})
 
     assert_equal false, result[:success]
@@ -11,7 +11,7 @@ class Services::MastodonServiceTest < ActiveSupport::TestCase
 
   test "post returns nil when crosspost is disabled" do
     Crosspost.mastodon.update!(enabled: false)
-    service = Services::MastodonService.new
+    service = MastodonService.new
 
     assert_nil service.post(create_published_article)
   end
