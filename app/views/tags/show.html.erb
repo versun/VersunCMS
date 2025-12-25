@@ -22,18 +22,28 @@
       <% newsletter_setting = NewsletterSetting.instance %>
       <% if newsletter_setting.enabled? && newsletter_setting.native? %>
         <span style="margin: 0 0.5rem;">·</span>
-        <span class="tag-subscription-inline" data-controller="newsletter-subscription" data-action="submit->newsletter-subscription#submit">
-          <%= form_with url: subscriptions_path, method: :post, data: { newsletter_subscription_target: "form", turbo: false }, class: "tag-subscription-form-inline-small" do |form| %>
+        <span class="tag-subscription-inline" data-controller="newsletter-subscription math-captcha" data-action="submit->newsletter-subscription#submit" data-math-captcha-max-value="10">
+          <%= form_with url: subscriptions_path, method: :post, data: { newsletter_subscription_target: "form", turbo: false, action: "submit->math-captcha#ensureValid" }, class: "tag-subscription-form-inline-small" do |form| %>
+            <% captcha = math_captcha_challenge(max: 10) %>
+            <% captcha_answer_id = "tag-subscription-captcha-answer-#{SecureRandom.hex(6)}" %>
             <%= hidden_field_tag "subscription[tag_ids][]", @tag.id %>
             <%= form.email_field :email, 
                 name: "subscription[email]",
                 placeholder: "通过邮件订阅该标签的更新", 
                 required: true,
                 class: "newsletter-email-input-small",
-                data: { newsletter_subscription_target: "emailInput" } %>
+                data: { newsletter_subscription_target: "emailInput", action: "focus->math-captcha#show" } %>
             <%= form.submit "订阅", 
                 class: "newsletter-submit-btn-small",
                 data: { newsletter_subscription_target: "submitBtn" } %>
+            <div data-math-captcha-target="container" style="margin-top: 0.25rem;">
+              <label for="<%= captcha_answer_id %>" style="font-size: 12px; color: #666;">验证：<span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
+              <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "答案", style: "margin-left: 0.5rem; width: 70px; padding: 0.3rem; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
+              <div data-math-captcha-target="message" style="margin-top: 0.25rem; font-size: 12px; display: none;"></div>
+              <%= hidden_field_tag "captcha[a]", captcha[:a], data: { math_captcha_target: "a" } %>
+              <%= hidden_field_tag "captcha[b]", captcha[:b], data: { math_captcha_target: "b" } %>
+              <%= hidden_field_tag "captcha[op]", captcha[:op], data: { math_captcha_target: "op" } %>
+            </div>
           <% end %>
           <div class="newsletter-message" data-newsletter-subscription-target="message" style="margin-top: 0.25rem; font-size: 12px;"></div>
         </span>

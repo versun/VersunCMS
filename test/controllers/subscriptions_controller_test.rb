@@ -5,6 +5,11 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
     @subscriber = subscribers(:confirmed_subscriber)
   end
 
+  def captcha_params(a: 3, b: 4, op: "+", answer: nil)
+    expected = op == "+" ? (a + b) : (a - b)
+    { captcha: { a:, b:, op:, answer: (answer || expected).to_s } }
+  end
+
   test "should respond to CORS preflight for subscriptions" do
     options subscriptions_path, headers: {
       "Origin" => "https://example.com",
@@ -23,7 +28,7 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
         subscription: {
           email: "new@example.com"
         }
-      }, as: :json
+      }.merge(captcha_params), as: :json
     end
 
     assert_response :success
@@ -35,7 +40,7 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
         subscription: {
           email: "invalid-email"
         }
-      }, as: :json
+      }.merge(captcha_params), as: :json
     end
     assert_response :unprocessable_entity
   end
@@ -46,7 +51,7 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
         subscription: {
           email: @subscriber.email
         }
-      }, as: :json
+      }.merge(captcha_params), as: :json
     end
     assert_response :success
   end

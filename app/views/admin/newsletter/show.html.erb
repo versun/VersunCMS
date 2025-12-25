@@ -70,7 +70,7 @@
         <div style="margin-top: 20px;">
           <%= link_to "Manage Subscribers", admin_subscribers_path, class: "btn btn-secondary" %>
         </div>
-        <div><%= form.submit "Save Native Email Settings", name: "newsletter_setting[submit]" %></div>
+        <div><%= form.submit "Save Native Email Settings" %></div>
 
       </div>
 
@@ -103,11 +103,11 @@
     <div id="list-template-container">
       <div>
         <%= form.label :list_id, "List" %>
-        <%= form.select :list_id, options_for_select(@lists.map { |l| [l["name"], l["id"]] }, @listmonk.list_id), { include_blank: "Select a List" }, { id: "list-select", data: { newsletter_target: "listSelect" } } %>
+        <%= form.select :list_id, options_for_select(Array(@lists).map { |l| [l["name"], l["id"]] }, @listmonk.list_id), { include_blank: "Select a List" }, { id: "list-select", data: { newsletter_target: "listSelect" } } %>
       </div>
       <div>
         <%= form.label :template_id, "Template" %>
-        <%= form.select :template_id, options_for_select(@templates.map { |l| [l["name"], l["id"]] }, @listmonk.template_id), { include_blank: "Select a Template" }, { id: "template-select", data: { newsletter_target: "templateSelect" } } %>
+        <%= form.select :template_id, options_for_select(Array(@templates).map { |l| [l["name"], l["id"]] }, @listmonk.template_id), { include_blank: "Select a Template" }, { id: "template-select", data: { newsletter_target: "templateSelect" } } %>
       </div>
     </div>
 

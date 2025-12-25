@@ -16,7 +16,9 @@
   
   form_id = is_reply ? "comment-form-#{parent_id}" : "comment-form-main"
 %>
-<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-container-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;">
+<% captcha = math_captcha_challenge(max: 10) %>
+<% captcha_answer_id = "#{form_id}-captcha-answer" %>
+<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-container-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;" data-controller="math-captcha" data-math-captcha-max-value="10">
   <div id="<%= form_id %>-message" style="display: none; margin-bottom: 0.75rem; padding: 0.75rem; border-radius: 4px; font-size: 0.875rem;"></div>
   <form id="<%= form_id %>" action="<%= form_url %>" method="post" accept-charset="UTF-8">
     <% if parent_id %>
@@ -25,7 +27,7 @@
     
     <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
       <div style="flex: 1;">
-        <input type="text" name="comment[author_name]" id="<%= form_id %>-author_name" required placeholder="Name *" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;">
+        <input type="text" name="comment[author_name]" id="<%= form_id %>-author_name" required placeholder="Name *" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" data-action="focus->math-captcha#show">
       </div>
       <div style="flex: 1;">
         <input type="url" name="comment[author_url]" id="<%= form_id %>-author_url" placeholder="Website (optional)" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;">
@@ -33,7 +35,18 @@
     </div>
 
     <div style="margin-bottom: 0.75rem;">
-      <textarea name="comment[content]" id="<%= form_id %>-content" required placeholder="<%= is_reply ? 'Reply *' : 'Comment *' %>" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;"></textarea>
+      <textarea name="comment[content]" id="<%= form_id %>-content" required placeholder="<%= is_reply ? 'Reply *' : 'Comment *' %>" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;" data-action="focus->math-captcha#show"></textarea>
+    </div>
+
+    <div data-math-captcha-target="container" style="margin-bottom: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="<%= captcha_answer_id %>" style="font-size: 0.875rem; color: #333; white-space: nowrap;">验证：<span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
+        <input type="text" name="captcha[answer]" id="<%= captcha_answer_id %>" required inputmode="numeric" autocomplete="off" placeholder="答案" style="width: 120px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" data-math-captcha-target="answer" data-action="input->math-captcha#validate blur->math-captcha#validate">
+      </div>
+      <div data-math-captcha-target="message" style="margin-top: 0.25rem; font-size: 12px; display: none;"></div>
+      <input type="hidden" name="captcha[a]" value="<%= captcha[:a] %>" data-math-captcha-target="a">
+      <input type="hidden" name="captcha[b]" value="<%= captcha[:b] %>" data-math-captcha-target="b">
+      <input type="hidden" name="captcha[op]" value="<%= captcha[:op] %>" data-math-captcha-target="op">
     </div>
 
     <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -76,6 +89,17 @@
   
   form.addEventListener('submit', function(e) {
     e.preventDefault();
+
+    var captchaContainer = form.closest('[data-controller~="math-captcha"]');
+    var captchaController = window.Stimulus && captchaContainer
+      ? window.Stimulus.getControllerForElementAndIdentifier(captchaContainer, 'math-captcha')
+      : null;
+
+    if (captchaController) {
+      captchaController.show();
+      captchaController.validate();
+      if (!captchaController.isValid()) return;
+    }
     
     // Disable submit button
     submitBtn.disabled = true;
@@ -140,4 +164,3 @@
   });
 })();
 </script>
-

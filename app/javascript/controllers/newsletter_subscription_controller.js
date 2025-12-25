@@ -6,6 +6,13 @@ export default class extends Controller {
   async submit(event) {
     event.preventDefault()
 
+    const captchaController = this.application.getControllerForElementAndIdentifier(this.element, "math-captcha")
+    if (captchaController) {
+      captchaController.show()
+      captchaController.validate()
+      if (!captchaController.isValid()) return
+    }
+
     const email = this.emailInputTarget.value.trim()
     
     if (!email) {
@@ -69,4 +76,3 @@ export default class extends Controller {
     }
   }
 }
-

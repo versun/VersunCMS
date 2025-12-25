@@ -3,14 +3,7 @@ class Admin::NewsletterController < Admin::BaseController
     @newsletter_setting = NewsletterSetting.instance
     @listmonk = Listmonk.first_or_initialize
 
-    # Fetch lists and templates only if provider is listmonk and configuration exists
-    if @newsletter_setting.listmonk? && @listmonk.persisted? && @listmonk.configured?
-      @lists = @listmonk.fetch_lists
-      @templates = @listmonk.fetch_templates
-    else
-      @lists = []
-      @templates = []
-    end
+    load_listmonk_options
   end
 
   def verify
@@ -189,7 +182,9 @@ class Admin::NewsletterController < Admin::BaseController
         redirect_to admin_newsletter_path, notice: "Newsletter settings updated successfully."
         return
       else
-        render :show, alert: @newsletter_setting.errors.full_messages.join(", ")
+        load_listmonk_options
+        flash.now[:alert] = @newsletter_setting.errors.full_messages.join(", ")
+        render :show, status: :unprocessable_entity
         return
       end
     end
@@ -198,14 +193,18 @@ class Admin::NewsletterController < Admin::BaseController
     if @listmonk.update(listmonk_params)
       redirect_to admin_newsletter_path, notice: "Newsletter settings updated successfully."
     else
-      render :show, alert: @listmonk.errors.full_messages.join(", ")
+      load_listmonk_options
+      flash.now[:alert] = @listmonk.errors.full_messages.join(", ")
+      render :show, status: :unprocessable_entity
     end
   end
 
   private
 
   def newsletter_setting_params
-    params.require(:newsletter_setting).permit(:provider, :enabled, :smtp_address, :smtp_port, :smtp_user_name, :smtp_password, :smtp_domain, :smtp_authentication, :smtp_enable_starttls, :from_email, :footer)
+    params.require(:newsletter_setting)
+      .except(:submit)
+      .permit(:provider, :enabled, :smtp_address, :smtp_port, :smtp_user_name, :smtp_password, :smtp_domain, :smtp_authentication, :smtp_enable_starttls, :from_email, :footer)
   end
 
   def listmonk_params
@@ -237,5 +236,14 @@ class Admin::NewsletterController < Admin::BaseController
       authentication: authentication.to_sym,
       enable_starttls_auto: @newsletter_setting.smtp_enable_starttls != false
     }
+  end
+
+  def load_listmonk_options
+    @lists = []
+    @templates = []
+    return unless @newsletter_setting.listmonk? && @listmonk.persisted? && @listmonk.configured?
+
+    @lists = @listmonk.fetch_lists || []
+    @templates = @listmonk.fetch_templates || []
   end
 end

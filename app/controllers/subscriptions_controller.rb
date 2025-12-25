@@ -1,5 +1,6 @@
 class SubscriptionsController < ApplicationController
   include CacheableSettings
+  include MathCaptchaVerification
   # Allow unauthenticated users to subscribe/confirm/unsubscribe from public pages
   allow_unauthenticated_access only: [ :index, :create, :options, :confirm, :unsubscribe ]
 
@@ -24,6 +25,14 @@ class SubscriptionsController < ApplicationController
       respond_to do |format|
         format.html { redirect_to root_path, alert: "请输入有效的邮箱地址。" }
         format.json { render json: { success: false, message: "请输入有效的邮箱地址。" }, status: :unprocessable_entity }
+      end
+      return
+    end
+
+    unless math_captcha_valid?(max: 10)
+      respond_to do |format|
+        format.html { redirect_to root_path, alert: "验证失败：请回答数学题。" }
+        format.json { render json: { success: false, message: "验证失败：请回答数学题。" }, status: :unprocessable_entity }
       end
       return
     end

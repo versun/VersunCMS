@@ -1,6 +1,11 @@
 require "test_helper"
 
 class SubscriptionWorkflowTest < ActionDispatch::IntegrationTest
+  def captcha_params(a: 3, b: 4, op: "+", answer: nil)
+    expected = op == "+" ? (a + b) : (a - b)
+    { captcha: { a:, b:, op:, answer: (answer || expected).to_s } }
+  end
+
   test "complete subscription workflow" do
     # Step 1: Subscribe
     assert_difference "Subscriber.count", 1 do
@@ -8,7 +13,7 @@ class SubscriptionWorkflowTest < ActionDispatch::IntegrationTest
         subscription: {
           email: "workflow@example.com"
         }
-      }
+      }.merge(captcha_params)
     end
 
     subscriber = Subscriber.find_by(email: "workflow@example.com")
@@ -40,7 +45,7 @@ class SubscriptionWorkflowTest < ActionDispatch::IntegrationTest
       subscription: {
         email: "tagged@example.com"
       }
-    }
+    }.merge(captcha_params)
 
     subscriber = Subscriber.find_by(email: "tagged@example.com")
 
@@ -70,7 +75,7 @@ class SubscriptionWorkflowTest < ActionDispatch::IntegrationTest
         subscription: {
           email: existing_subscriber.email
         }
-      }
+      }.merge(captcha_params)
     end
   end
 

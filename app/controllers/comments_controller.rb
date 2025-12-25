@@ -1,4 +1,5 @@
 class CommentsController < ApplicationController
+  include MathCaptchaVerification
   # Allow unauthenticated users to submit comments
   allow_unauthenticated_access only: [ :create, :options ]
 
@@ -13,6 +14,28 @@ class CommentsController < ApplicationController
   end
 
   def create
+    unless math_captcha_valid?(max: 10)
+      ActivityLog.create!(
+        action: "failed",
+        target: "comment",
+        level: :error,
+        description: "提交评论验证失败: #{@commentable.class.name}##{@commentable.slug}"
+      )
+
+      respond_to do |format|
+        format.html do
+          if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
+            render json: { success: false, message: "验证失败：请回答数学题。" }, status: :unprocessable_entity
+          else
+            redirect_path = determine_redirect_path
+            redirect_to redirect_path, alert: "验证失败：请回答数学题。"
+          end
+        end
+        format.json { render json: { success: false, message: "验证失败：请回答数学题。" }, status: :unprocessable_entity }
+      end
+      return
+    end
+
     @comment = @commentable.comments.build(comment_params)
     @comment.published_at = Time.current
     @comment.status = :pending # Require manual approval

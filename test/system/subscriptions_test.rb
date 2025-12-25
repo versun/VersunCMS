@@ -1,11 +1,28 @@
 require "application_system_test_case"
 
 class SubscriptionsTest < ApplicationSystemTestCase
+  def solve_math_captcha
+    find("input[name='subscription[email]']", visible: :all).click
+    assert_selector "input[name='captcha[answer]']", visible: true
+
+    question_text = find("[data-math-captcha-target='question']", visible: :all).text
+    match = question_text.match(/(\d+)\s*([+-])\s*(\d+)/)
+    raise "Could not parse captcha question: #{question_text.inspect}" unless match
+
+    a = match[1].to_i
+    op = match[2]
+    b = match[3].to_i
+    expected = op == "+" ? (a + b) : (a - b)
+
+    find("input[name='captcha[answer]']", visible: true).set(expected.to_s)
+  end
+
   test "subscribing from the subscriptions page" do
     email = "subscriber-#{SecureRandom.hex(6)}@example.com"
 
     visit subscriptions_path
     fill_in "输入您的邮箱地址", with: email
+    solve_math_captcha
     click_button "订阅"
 
     assert_current_path root_path
