@@ -1,6 +1,15 @@
 class Admin::SubscribersController < Admin::BaseController
   def index
-    @subscribers = Subscriber.order(created_at: :desc).paginate(page: params[:page], per_page: 30)
+    @status = params[:status].presence || "all"
+    @tag_ids = Array(params[:tag_ids]).reject(&:blank?).map(&:to_i)
+    @include_all = params[:include_all].to_s == "1"
+    @tags = Tag.alphabetical
+
+    scope = Subscriber.all
+    scope = apply_status_filter(scope)
+    scope = apply_subscription_filter(scope)
+
+    @subscribers = scope.includes(:tags).order(created_at: :desc).paginate(page: params[:page], per_page: 30)
   end
 
   def batch_create
@@ -90,5 +99,95 @@ class Admin::SubscribersController < Admin::BaseController
       description: "删除订阅者: #{email}"
     )
     redirect_to admin_subscribers_path, notice: "订阅者已删除。"
+  end
+
+  def batch_confirm
+    ids = Array(params[:ids]).reject(&:blank?)
+    count = 0
+
+    ids.each do |id|
+      subscriber = Subscriber.find_by(id: id)
+      next unless subscriber
+      next if subscriber.active?
+
+      attrs = {}
+      attrs[:confirmed_at] = Time.current unless subscriber.confirmed?
+      attrs[:unsubscribed_at] = nil if subscriber.unsubscribed?
+
+      next if attrs.blank?
+      count += 1 if subscriber.update(attrs)
+    end
+
+    ActivityLog.create!(
+      action: "updated",
+      target: "subscriber",
+      level: :info,
+      description: "批量确认订阅者: #{count}个"
+    )
+    redirect_to admin_subscribers_path, notice: "已确认 #{count} 个订阅者。"
+  rescue => e
+    ActivityLog.create!(
+      action: "failed",
+      target: "subscriber",
+      level: :error,
+      description: "批量确认订阅者失败: #{e.message}"
+    )
+    redirect_to admin_subscribers_path, alert: "批量确认失败: #{e.message}"
+  end
+
+  def batch_destroy
+    ids = Array(params[:ids]).reject(&:blank?)
+    count = 0
+
+    ids.each do |id|
+      subscriber = Subscriber.find_by(id: id)
+      next unless subscriber
+
+      subscriber.destroy
+      count += 1
+    end
+
+    ActivityLog.create!(
+      action: "deleted",
+      target: "subscriber",
+      level: :info,
+      description: "批量删除订阅者: #{count}个"
+    )
+    redirect_to admin_subscribers_path, notice: "已删除 #{count} 个订阅者。"
+  rescue => e
+    ActivityLog.create!(
+      action: "failed",
+      target: "subscriber",
+      level: :error,
+      description: "批量删除订阅者失败: #{e.message}"
+    )
+    redirect_to admin_subscribers_path, alert: "批量删除失败: #{e.message}"
+  end
+
+  private
+
+  def apply_status_filter(scope)
+    case @status
+    when "active"
+      scope.where.not(confirmed_at: nil).where(unsubscribed_at: nil)
+    when "unconfirmed"
+      scope.where(confirmed_at: nil)
+    when "unsubscribed"
+      scope.where.not(confirmed_at: nil).where.not(unsubscribed_at: nil)
+    else
+      scope
+    end
+  end
+
+  def apply_subscription_filter(scope)
+    return scope if @tag_ids.blank? && !@include_all
+
+    if @tag_ids.any? && @include_all
+      scope.left_joins(:tags).where("tags.id IN (?) OR tags.id IS NULL", @tag_ids).distinct
+    elsif @tag_ids.any?
+      scope.joins(:tags).where(tags: { id: @tag_ids }).distinct
+    else
+      scope.left_joins(:tags).where(tags: { id: nil })
+    end
   end
 end

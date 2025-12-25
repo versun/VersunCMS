@@ -84,6 +84,8 @@ Rails.application.routes.draw do
     resources :subscribers, only: [ :index, :destroy ] do
       collection do
         post :batch_create
+        post :batch_confirm
+        post :batch_destroy
       end
     end
     resources :migrates, only: [ :index, :create ]
