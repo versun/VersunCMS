@@ -1,13 +1,13 @@
 class Tag < ApplicationRecord
   has_many :article_tags, dependent: :destroy
   has_many :articles, through: :article_tags
+  has_many :subscriber_tags, dependent: :destroy
+  has_many :subscribers, through: :subscriber_tags
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :slug, presence: true, uniqueness: true
 
   before_validation :generate_slug
-  after_save :trigger_static_generation, if: :should_regenerate_static?
-  after_destroy :trigger_static_regeneration_on_destroy
 
   scope :alphabetical, -> { order(:name) }
 
@@ -47,19 +47,4 @@ class Tag < ApplicationRecord
     self.slug = slug_candidate
   end
 
-  def should_regenerate_static?
-    # Only regenerate if auto-regenerate is enabled for tag updates
-    return false unless Setting.first_or_create.auto_regenerate_enabled?("tag_update")
-
-    saved_change_to_name?
-  end
-
-  def trigger_static_generation
-    GenerateStaticFilesJob.schedule(type: "tag", id: id)
-  end
-
-  def trigger_static_regeneration_on_destroy
-    # Regenerate tags index when a tag is destroyed
-    GenerateStaticFilesJob.schedule(type: "all")
-  end
 end

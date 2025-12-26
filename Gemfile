@@ -13,7 +13,7 @@ gem "will_paginate"
 gem "mission_control-jobs"
 
 gem "csv"
-# GitHub deploy/backup uses the system `git` command (see Services::GithubDeployService)
+# Some features use the system `git` command.
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.1"

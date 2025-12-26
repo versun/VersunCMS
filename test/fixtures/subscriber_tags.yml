@@ -1,7 +1,1 @@
-confirmed_ruby:
-  subscriber: confirmed_subscriber
-  tag: ruby
-
-unsubscribed_rails:
-  subscriber: unsubscribed_subscriber
-  tag: rails
+{}

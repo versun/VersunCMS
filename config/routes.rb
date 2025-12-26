@@ -1,7 +1,6 @@
 Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "articles#index"
-  get "/analytics" => "analytics#index"
 
   # User authentication and management
   resources :users
@@ -72,7 +71,6 @@ Rails.application.routes.draw do
 
     # System management
     resource :setting, only: [ :edit, :update ]
-    resource :generate, only: [ :edit, :update ], controller: "generates"
     resources :static_files, only: [ :index, :create, :destroy ]
     resources :redirects
 
@@ -109,9 +107,6 @@ Rails.application.routes.draw do
     # Source reference API
     post "sources/archive", to: "sources#archive"
     post "sources/fetch_twitter", to: "sources#fetch_twitter"
-
-    # Static site generation
-    post "generate_static", to: "static_generation#create", as: :generate_static
 
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs

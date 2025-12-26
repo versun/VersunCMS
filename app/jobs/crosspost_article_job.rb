@@ -58,15 +58,6 @@ class CrosspostArticleJob < ApplicationJob
       )
     end
 
-    # Schedule static page regeneration after successful crosspost (2 min delay)
-    # Only if auto-regenerate is enabled for crosspost updates
-    if social_media_posts.any? && Setting.first_or_create.auto_regenerate_enabled?("crosspost_update")
-      GenerateStaticFilesJob.schedule_debounced(
-        type: "article",
-        id: article_id,
-        delay: 2.minutes
-      )
-    end
   rescue => e
     ActivityLog.create!(
       action: "failed",

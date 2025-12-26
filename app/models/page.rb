@@ -13,10 +13,6 @@ class Page < ApplicationRecord
   scope :published, -> { where(status: :publish) }
   scope :by_status, ->(status) { where(status: status) }
 
-  before_save :track_content_changes
-  after_save :trigger_static_generation, if: :should_regenerate_static?
-  after_destroy :trigger_static_regeneration_on_destroy
-
   def to_param
     slug
   end
@@ -45,29 +41,4 @@ class Page < ApplicationRecord
     end
   end
 
-  def should_regenerate_static?
-    # Only regenerate if auto-regenerate is enabled for page updates
-    return false unless Setting.first_or_create.auto_regenerate_enabled?("page_update")
-
-    saved_change_to_status? || (publish? && (saved_change_to_title? || @content_changed))
-  end
-
-  def track_content_changes
-    # Track content changes before save
-    if html?
-      # For HTML content type, check the html_content field directly
-      @content_changed = html_content_changed?
-    else
-      # For rich_text, check ActionText body changes
-      @content_changed = content.present? && content.body_changed?
-    end
-  end
-
-  def trigger_static_generation
-    GenerateStaticFilesJob.schedule(type: "page", id: id)
-  end
-
-  def trigger_static_regeneration_on_destroy
-    GenerateStaticFilesJob.schedule(type: "sitemap")
-  end
 end

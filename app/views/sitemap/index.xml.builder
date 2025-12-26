@@ -1,6 +1,5 @@
 xml.instruct! :xml, version: "1.0", encoding: "UTF-8"
 xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
-  static_generation = defined?(StaticRenderController) && controller.is_a?(StaticRenderController)
   raw_site_url = site_settings[:url].to_s.strip
   site_url = raw_site_url.presence&.chomp("/")
   site_url = "https://#{site_url}" if site_url.present? && !site_url.match?(%r{^https?://})
@@ -15,7 +14,6 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
   @pages.each do |post|
     xml.url do
       page_path = "/pages/#{post.slug}"
-      page_path = "#{page_path}.html" if static_generation
       page_url = site_url.present? ? "#{site_url}#{page_path}" : page_path
       xml.loc page_url
       xml.lastmod post.updated_at.strftime("%Y-%m-%d")
@@ -27,7 +25,6 @@ xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
   @articles.each do |post|
     xml.url do
       article_path = [ Rails.application.config.x.article_route_prefix, post.slug ].reject(&:blank?).join("/")
-      article_path = "#{article_path}.html" if static_generation
       article_path = "/#{article_path}" unless article_path.start_with?("/")
       article_url = site_url.present? ? "#{site_url}#{article_path}" : article_path
       xml.loc article_url

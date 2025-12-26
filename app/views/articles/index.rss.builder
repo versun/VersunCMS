@@ -1,7 +1,6 @@
 xml.instruct! :xml, version: "1.0"
 xml.rss version: "2.0",
         "xmlns:content" => "http://purl.org/rss/1.0/modules/content/" do
-  static_generation = defined?(StaticRenderController) && controller.is_a?(StaticRenderController)
   raw_site_url = site_settings[:url].to_s.strip
   site_url = raw_site_url.presence&.chomp("/")
   site_url = "https://#{site_url}" if site_url.present? && !site_url.match?(%r{^https?://})
@@ -34,7 +33,6 @@ xml.rss version: "2.0",
 
         xml.pubDate article.created_at.rfc822
         article_path = [ Rails.application.config.x.article_route_prefix, article.slug ].reject(&:blank?).join("/")
-        article_path = "#{article_path}.html" if static_generation
         article_path = "/#{article_path}" unless article_path.start_with?("/")
         article_url = site_url.present? ? "#{site_url}#{article_path}" : article_path
         xml.link article_url

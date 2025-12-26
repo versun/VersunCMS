@@ -11,6 +11,9 @@ class Admin::SubscribersControllerTest < ActionDispatch::IntegrationTest
 
     @ruby = tags(:ruby)
     @rails = tags(:rails)
+
+    @confirmed.tags << @ruby
+    @unsubscribed.tags << @rails
   end
 
   test "index filters by status" do
