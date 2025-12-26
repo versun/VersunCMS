@@ -129,10 +129,7 @@ Rails.application.routes.draw do
 
   # Health check and feeds
   get "up" => "rails/health#show", as: :rails_health_check
-  get "/rss" => redirect("/feed")
-  get "/rss.xml" => redirect("/feed")
-  get "/feed.xml" => redirect("/feed")
-  get "/feed" => "articles#index", format: "rss"
+  get "/feed.xml" => "articles#index", format: "rss"
   get "/sitemap.xml" => "sitemap#index", format: "xml", as: :sitemap
 
   # Public pages routes - for viewing published pages
