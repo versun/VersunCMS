@@ -40,5 +40,4 @@ class Page < ApplicationRecord
       end
     end
   end
-
 end

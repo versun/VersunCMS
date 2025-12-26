@@ -46,5 +46,4 @@ class Tag < ApplicationRecord
 
     self.slug = slug_candidate
   end
-
 end

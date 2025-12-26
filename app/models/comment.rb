@@ -56,5 +56,4 @@ class Comment < ApplicationRecord
       errors.add(:parent_id, "must belong to the same #{commentable_type}")
     end
   end
-
 end
