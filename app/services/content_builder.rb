@@ -18,45 +18,76 @@ module ContentBuilder
       description_text = article.description
     end
 
-    content_text = description_text.presence || content_text
+    title = title.to_s
+    content_text = (description_text.presence || content_text).to_s
 
-    # 检查是否有source reference，如果有则在内容末尾添加source URL
-    if article&.has_source? && article.source_url.present?
-      source_url_text = "\n#{article.source_url}"
-      content_text = content_text + source_url_text
+    # 如果有source reference，确保始终放在最后（在Read more链接之后）
+    source_url_text = if article&.has_source? && article.source_url.present?
+      "\n#{article.source_url}"
+    else
+      ""
     end
 
     title_length = count_chars(title, count_non_ascii_double)
     content_length = count_chars(content_text, count_non_ascii_double)
+    source_url_length = count_chars(source_url_text, count_non_ascii_double)
 
     # 检查是否需要添加链接
-    total_length = title_length + content_length + 1 # +1 for newline
+    body_length = if title.present?
+      title_length + content_length + 1 # +1 for newline
+    else
+      content_length
+    end
+    total_length = body_length + source_url_length
     needs_link = always_add_link || total_length >= max_length
 
     # 如果不需要链接，返回完整内容
-    return "#{title}\n#{content_text}" unless needs_link
+    unless needs_link
+      return "#{title}\n#{content_text}#{source_url_text}" if title.present?
+      return "#{content_text}#{source_url_text}"
+    end
 
     # 构建URL和链接文本
     post_url = build_post_url(slug)
     link_text = count_non_ascii_double ? "\nRead more:#{post_url}" : "\nRead more: #{post_url}"
     link_length = count_non_ascii_double ? 34 : (count_chars(link_text, false))
 
-    # 计算可用于标题和内容的长度
-    available_length = max_length - link_length
+    suffix_text = "#{link_text}#{source_url_text}"
+    suffix_length = link_length + source_url_length
 
-    # 如果标题过长，截断标题
-    if title_length >= available_length - 3
-      return "#{truncate_text(title, available_length - 3, count_non_ascii_double)}...#{link_text}"
+    # 计算可用于标题和内容的长度
+    available_length = max_length - suffix_length
+    return suffix_text.lstrip if available_length <= 0
+
+    if title.present?
+      # 如果标题过长，截断标题
+      if title_length >= available_length - 3
+        truncated_title = if available_length > 3
+          "#{truncate_text(title, available_length - 3, count_non_ascii_double)}..."
+        else
+          truncate_text(title, available_length, count_non_ascii_double)
+        end
+        return "#{truncated_title}#{suffix_text}"
+      end
+
+      # 计算内容可用长度
+      remaining_length = available_length - title_length - 1 # -1 for newline after title
+
+      # 如果没有足够空间放内容，只显示标题和链接
+      return "#{title}#{suffix_text}" if remaining_length <= 4
+
+      # 内容未超出则完整显示
+      return "#{title}\n#{content_text}#{suffix_text}" if content_length <= remaining_length
+
+      # 截断内容并添加省略号
+      return "#{title}\n#{truncate_text(content_text, remaining_length - 3, count_non_ascii_double)}...#{suffix_text}"
     end
 
-    # 计算内容可用长度
-    remaining_length = available_length - title_length - 1 # -1 for newline after title
+    # 没有标题时，仅处理内容
+    return "#{content_text}#{suffix_text}" if content_length <= available_length
+    return suffix_text.lstrip if available_length <= 4
 
-    # 如果没有足够空间放内容，只显示标题和链接
-    return "#{title}#{link_text}" if remaining_length <= 4
-
-    # 截断内容并添加省略号
-    "#{title}\n#{truncate_text(content_text, remaining_length - 3, count_non_ascii_double)}...#{link_text}"
+    "#{truncate_text(content_text, available_length - 3, count_non_ascii_double)}...#{suffix_text}"
   end
 
   # 计算字符数（可选择非ASCII字符计为2）
@@ -64,6 +95,7 @@ module ContentBuilder
   # @param count_non_ascii_double [Boolean] 是否将非ASCII字符计为2个字符
   # @return [Integer] 字符数
   def count_chars(str, count_non_ascii_double = false)
+    str = str.to_s
     return str.length unless count_non_ascii_double
 
     str.each_char.map { |c| c.ascii_only? ? 1 : 2 }.sum
@@ -75,6 +107,7 @@ module ContentBuilder
   # @param count_non_ascii_double [Boolean] 是否将非ASCII字符计为2个字符
   # @return [String] 截断后的字符串
   def truncate_text(str, max_length, count_non_ascii_double = false)
+    str = str.to_s
     return str[0...max_length] unless count_non_ascii_double
 
     current_length = 0
