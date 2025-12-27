@@ -34,4 +34,3 @@ class ExportMarkdownJob < ApplicationJob
     end
   end
 end
-

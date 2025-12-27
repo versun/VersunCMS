@@ -19,4 +19,3 @@ class ExportTest < ActiveSupport::TestCase
     File.delete(exporter.zip_path) if exporter&.zip_path.present? && File.exist?(exporter.zip_path)
   end
 end
-
