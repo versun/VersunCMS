@@ -16,12 +16,12 @@
       </div>
       
       <div>
-        <h4>WordPress Export</h4>
-        <p>Export data in WordPress WXR format, including all articles, pages, settings, etc.</p>
+        <h4>Markdown Export</h4>
+        <p>Export articles and pages in Markdown format (YAML front matter + body), including local attachments.</p>
         <%= form_with url: admin_migrates_path, method: :post, data: { turbo: false } do |f| %>
           <%= hidden_field_tag :operation_type, 'export' %>
-          <%= hidden_field_tag :export_type, 'wordpress' %>
-          <%= f.submit "Export WordPress Format", class: "btn btn-primary" %>
+          <%= hidden_field_tag :export_type, 'markdown' %>
+          <%= f.submit "Export Markdown Format", class: "btn btn-primary" %>
         <% end %>
       </div>
     </div>

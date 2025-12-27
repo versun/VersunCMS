@@ -6,12 +6,17 @@ class Export
   require "securerandom"
   require "zip"
 
+  include Exports::HtmlAttachmentProcessing
+  include Exports::ZipPackaging
+
   attr_reader :zip_path, :error_message, :export_dir, :attachments_dir
 
   def initialize
     @zip_path = nil
     @error_message = nil
-    @export_dir = Rails.root.join("tmp", "exports", "export_#{Time.current.strftime('%Y%m%d_%H%M%S')}")
+    timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
+    unique_suffix = "#{Process.pid}_#{SecureRandom.hex(4)}"
+    @export_dir = Rails.root.join("tmp", "exports", "export_#{timestamp}_#{unique_suffix}")
     @attachments_dir = File.join(@export_dir, "attachments")
 
     # 创建导出目录
@@ -42,6 +47,7 @@ class Export
       export_articles
       export_crossposts
       export_listmonks
+      export_git_integrations
       export_pages
       export_settings
       export_social_media_posts
@@ -123,171 +129,7 @@ class Export
       content_html = article.content.to_trix_html
     end
 
-    return content_html if content_html.blank?
-
-    doc = Nokogiri::HTML.fragment(content_html)
-
-    # 处理action-text-attachment标签
-    doc.css("action-text-attachment").each do |attachment|
-      process_attachment_element(attachment, article.id, "article")
-    end
-
-    # 处理figure标签（Trix编辑器格式）
-    doc.css("figure[data-trix-attachment]").each do |figure|
-      process_figure_element(figure, article.id, "article")
-    end
-
-    # 处理img标签
-    doc.css("img").each do |img|
-      process_image_element(img, article.id, "article")
-    end
-
-    doc.to_html
-  end
-
-  def process_attachment_element(attachment, record_id, record_type)
-    begin
-      content_type = attachment["content-type"]
-      original_url = attachment["url"]
-      filename = attachment["filename"]
-
-      return unless content_type&.start_with?("image/") && original_url.present? && filename.present?
-
-      Rails.event.notify("export.attachment_processing", component: "Export", filename: filename, url: original_url, level: "info")
-
-      # 下载并保存附件
-      new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
-
-      if new_url
-        # 更新attachment标签的URL
-        attachment["url"] = new_url
-
-        # 更新内部的img标签
-        img = attachment.at_css("img")
-        img["src"] = new_url if img
-      end
-    rescue => e
-      Rails.event.notify("export.attachment_processing_failed", component: "Export", error: e.message, level: "error")
-    end
-  end
-
-  def process_figure_element(figure, record_id, record_type)
-    begin
-      attachment_data = JSON.parse(figure["data-trix-attachment"]) rescue nil
-      return unless attachment_data
-
-      content_type = attachment_data["contentType"]
-      original_url = attachment_data["url"]
-      filename = attachment_data["filename"] || File.basename(original_url)
-
-      return unless content_type&.start_with?("image/") && original_url.present?
-
-      Rails.event.notify("export.figure_processing", component: "Export", filename: filename, url: original_url, level: "info")
-
-      # 下载并保存附件
-      new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
-
-      if new_url
-        # 更新attachment数据
-        attachment_data["url"] = new_url
-        figure["data-trix-attachment"] = attachment_data.to_json
-
-        # 更新内部的img标签
-        img = figure.at_css("img")
-        img["src"] = new_url if img
-      end
-    rescue => e
-      Rails.event.notify("export.figure_processing_failed", component: "Export", error: e.message, level: "error")
-    end
-  end
-
-  def process_image_element(img, record_id, record_type)
-    begin
-      original_url = img["src"]
-      return unless original_url.present?
-
-      # 检查是否是本地存储的附件URL
-      if original_url.include?("/rails/active_storage/blobs/") || original_url.include?("/rails/active_storage/representations/")
-        Rails.event.notify("export.image_processing", component: "Export", url: original_url, level: "info")
-
-        # 尝试从Active Storage获取blob信息
-        blob = extract_blob_from_url(original_url)
-        if blob
-          filename = blob.filename.to_s
-          new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
-          img["src"] = new_url if new_url
-        end
-      end
-    rescue => e
-      Rails.event.notify("export.image_processing_failed", component: "Export", error: e.message, level: "error")
-    end
-  end
-
-  def download_and_save_attachment(original_url, filename, record_id, record_type)
-    begin
-      # 创建记录特定的附件目录
-      record_attachments_dir = File.join(@attachments_dir, "#{record_type}_#{record_id}")
-      FileUtils.mkdir_p(record_attachments_dir)
-
-      # 生成新的文件名
-      new_filename = "#{SecureRandom.hex(8)}_#{filename}"
-      local_path = File.join(record_attachments_dir, new_filename)
-
-      # 构建完整的URL
-      full_url = build_full_url(original_url)
-      Rails.event.notify("export.attachment_download_started", component: "Export", url: full_url, level: "info")
-
-      # 下载文件
-      URI.open(full_url) do |remote_file|
-        File.open(local_path, "wb") do |local_file|
-          local_file.write(remote_file.read)
-        end
-      end
-
-      # 返回相对路径
-      new_url = "attachments/#{record_type}_#{record_id}/#{new_filename}"
-      Rails.event.notify("export.attachment_downloaded", component: "Export", filename: filename, new_filename: new_filename, level: "info")
-
-      new_url
-    rescue => e
-      Rails.event.notify("export.attachment_download_failed", component: "Export", url: original_url, full_url: build_full_url(original_url), error: e.message, level: "error")
-      nil
-    end
-  end
-
-  def build_full_url(original_url)
-    return original_url if original_url.start_with?("http")
-
-    # 如果是相对路径，使用应用的基础URL
-    base_url = Setting.first&.url.presence || ENV["BASE_URL"].presence || "http://localhost:3000"
-    base_url = base_url.chomp("/")
-
-    # 确保URL格式正确
-    if original_url.start_with?("/")
-      "#{base_url}#{original_url}"
-    else
-      "#{base_url}/#{original_url}"
-    end
-  end
-
-  def extract_blob_from_url(url)
-    # 从Active Storage URL中提取blob信息
-    # 格式通常是 /rails/active_storage/blobs/redirect/:signed_id/*filename
-    # 或 /rails/active_storage/representations/redirect/:signed_id/*filename
-
-    match = url.match(/\/rails\/active_storage\/(?:blobs|representations)\/redirect\/([^\/]+)/)
-    return nil unless match
-
-    signed_id = match[1]
-    begin
-      # 尝试找到对应的blob
-      blob = ActiveStorage::Blob.find_signed(signed_id)
-      Rails.event.notify("export.blob_found", component: "Export", signed_id: signed_id, filename: blob&.filename, level: "info")
-      blob
-    rescue => e
-      Rails.event.notify("export.blob_not_found", component: "Export", signed_id: signed_id, error: e.message, level: "error")
-      nil
-    end
+    process_html_content(content_html, record_id: article.id, record_type: "article")
   end
 
   def export_crossposts
@@ -339,6 +181,33 @@ class Export
     Rails.event.notify("export.listmonks_completed", component: "Export", count: Listmonk.count, level: "info")
   end
 
+  def export_git_integrations
+    Rails.event.notify("export.git_integrations_started", component: "Export", level: "info")
+
+    CSV.open(
+      File.join(@export_dir, "git_integrations.csv"),
+      "w",
+      write_headers: true,
+      headers: %w[id provider name server_url username access_token enabled created_at updated_at]
+    ) do |csv|
+      GitIntegration.order(:id).find_each do |integration|
+        csv << [
+          integration.id,
+          integration.provider,
+          integration.name,
+          integration.server_url,
+          integration.username,
+          integration.access_token,
+          integration.enabled,
+          integration.created_at,
+          integration.updated_at
+        ]
+      end
+    end
+
+    Rails.event.notify("export.git_integrations_completed", component: "Export", count: GitIntegration.count, level: "info")
+  end
+
   def export_pages
     Rails.event.notify("export.pages_started", component: "Export", level: "info")
 
@@ -368,24 +237,7 @@ class Export
     return "" unless page.content.present?
 
     content_html = page.content.to_trix_html
-    return content_html if content_html.blank?
-
-    doc = Nokogiri::HTML.fragment(content_html)
-
-    # 处理附件（与文章类似）
-    doc.css("action-text-attachment").each do |attachment|
-      process_attachment_element(attachment, page.id, "page")
-    end
-
-    doc.css("figure[data-trix-attachment]").each do |figure|
-      process_figure_element(figure, page.id, "page")
-    end
-
-    doc.css("img").each do |img|
-      process_image_element(img, page.id, "page")
-    end
-
-    doc.to_html
+    process_html_content(content_html, record_id: page.id, record_type: "page")
   end
 
   def export_settings
@@ -422,24 +274,7 @@ class Export
     return "" unless setting.footer.present?
 
     footer_html = setting.footer.to_trix_html
-    return footer_html if footer_html.blank?
-
-    doc = Nokogiri::HTML.fragment(footer_html)
-
-    # 处理附件
-    doc.css("action-text-attachment").each do |attachment|
-      process_attachment_element(attachment, setting.id, "setting")
-    end
-
-    doc.css("figure[data-trix-attachment]").each do |figure|
-      process_figure_element(figure, setting.id, "setting")
-    end
-
-    doc.css("img").each do |img|
-      process_image_element(img, setting.id, "setting")
-    end
-
-    doc.to_html
+    process_html_content(footer_html, record_id: setting.id, record_type: "setting")
   end
 
   def export_social_media_posts
@@ -602,24 +437,7 @@ class Export
     return "" unless setting.footer.present?
 
     footer_html = setting.footer.to_trix_html
-    return footer_html if footer_html.blank?
-
-    doc = Nokogiri::HTML.fragment(footer_html)
-
-    # 处理附件
-    doc.css("action-text-attachment").each do |attachment|
-      process_attachment_element(attachment, setting.id, "newsletter_setting")
-    end
-
-    doc.css("figure[data-trix-attachment]").each do |figure|
-      process_figure_element(figure, setting.id, "newsletter_setting")
-    end
-
-    doc.css("img").each do |img|
-      process_image_element(img, setting.id, "newsletter_setting")
-    end
-
-    doc.to_html
+    process_html_content(footer_html, record_id: setting.id, record_type: "newsletter_setting")
   end
 
   def export_subscribers
@@ -703,37 +521,8 @@ class Export
   end
 
   def create_zip_file
-    @zip_path = "#{@export_dir}.zip"
-
-    # 使用Ruby的zip库创建ZIP文件
-    # 修复：使用Zip::OutputStream替代不存在的Zip::File::CREATE常量以兼容rubyzip 3.2.2
-    Zip::OutputStream.open(@zip_path) do |zos|
-      # 添加CSV文件
-      Dir.glob(File.join(@export_dir.to_s, "*.csv")).each do |file|
-        zos.put_next_entry(File.basename(file))
-        zos.write(File.read(file))
-      end
-
-      # 添加附件目录
-      if Dir.exist?(@attachments_dir) && !Dir.empty?(@attachments_dir)
-        Dir.glob(File.join(@attachments_dir, "**", "*")).each do |file|
-          next unless File.file?(file)
-
-          # 计算在zip中的相对路径（相对于导出根目录）
-          relative_path = Pathname.new(file).relative_path_from(@export_dir).to_s
-          # 规范化为 zip 友好的分隔符（可选）
-          relative_path = relative_path.tr("\\", "/")
-
-          zos.put_next_entry(relative_path)
-          zos.write(File.binread(file))
-        end
-      end
-    end
-
+    super
     Rails.event.notify("export.zip_created", component: "Export", zip_path: @zip_path, level: "info")
-
-    # 清理临时目录（可选）
-    FileUtils.rm_rf(@export_dir)
   end
 
   # 清理旧的导出和导入文件
@@ -750,7 +539,7 @@ class Export
     begin
       # 清理导出zip文件
       if Dir.exist?(exports_dir)
-        zip_files = Dir.glob(File.join(exports_dir, "export_*.zip"))
+        zip_files = Dir.glob(File.join(exports_dir, "{export_,markdown_export_}*.zip"))
         zip_files.each do |zip_file|
           begin
             file_mtime = File.mtime(zip_file)

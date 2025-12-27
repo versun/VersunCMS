@@ -11,6 +11,7 @@ gem "open-uri"
 gem "feedjira"
 gem "will_paginate"
 gem "mission_control-jobs"
+gem "reverse_markdown", "~> 3.0"
 
 gem "csv"
 # Some features use the system `git` command.
@@ -67,7 +68,7 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-  gem "solargraph"
+  gem "ruby-lsp"
 end
 
 group :test do

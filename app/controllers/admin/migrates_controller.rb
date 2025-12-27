@@ -1,9 +1,3 @@
-require "zip"
-require "json"
-require "nokogiri"
-require "uri"
-require "net/http"
-
 class Admin::MigratesController < Admin::BaseController
   include ActiveStorage::SetCurrent
 
@@ -35,30 +29,25 @@ class Admin::MigratesController < Admin::BaseController
   private
 
   def handle_export
-    export_type = params[:export_type] || "default"
+    export_type = (params[:export_type].presence || "default").to_s
 
-    case export_type
-    when "wordpress"
-      ExportWordpressJob.perform_later
-      ActivityLog.create!(
-        action: "initiated",
-        target: "wordpress_export",
-        level: "info",
-        description: "WordPress Export Initiated"
-      )
-      flash[:notice] = "WordPress Export Initiated"
-    when "default"
-      ExportDataJob.perform_later
-      ActivityLog.create!(
-        action: "initiated",
-        target: "export",
-        level: "info",
-        description: "Export Initiated"
-      )
-      flash[:notice] = "Export Initiated"
-    else
-      flash[:alert] = "Unsupported export type"
+    export_config = {
+      "default" => { job: ExportDataJob, target: "export", description: "Export Initiated" },
+      "markdown" => { job: ExportMarkdownJob, target: "markdown_export", description: "Markdown Export Initiated" }
+    }.fetch(export_type, nil)
+
+    unless export_config
+      redirect_to admin_migrates_path, alert: "Unsupported export type" and return
     end
+
+    export_config[:job].perform_later
+    ActivityLog.create!(
+      action: "initiated",
+      target: export_config[:target],
+      level: "info",
+      description: export_config[:description]
+    )
+    flash[:notice] = export_config[:description]
 
     redirect_to admin_migrates_path
   end

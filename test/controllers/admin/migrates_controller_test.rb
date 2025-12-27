@@ -38,15 +38,15 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Export Initiated", flash[:notice]
   end
 
-  test "should handle wordpress export operation" do
+  test "should handle markdown export operation" do
     sign_in(@user)
 
-    assert_enqueued_with(job: ExportWordpressJob) do
-      post admin_migrates_path, params: { operation_type: "export", export_type: "wordpress" }
+    assert_enqueued_with(job: ExportMarkdownJob) do
+      post admin_migrates_path, params: { operation_type: "export", export_type: "markdown" }
     end
 
     assert_redirected_to admin_migrates_path
-    assert_match "WordPress Export Initiated", flash[:notice]
+    assert_match "Markdown Export Initiated", flash[:notice]
   end
 
   test "should reject non-zip files" do
