@@ -16,6 +16,67 @@ class ArticlesTest < ApplicationSystemTestCase
     assert_text "share"
   end
 
+  test "show page renders source reference links inside the quote block" do
+    article = create_published_article(
+      title: "Article With Source Reference",
+      description: "",
+      content: "<p>Body</p>",
+      source_content: "Quoted source text",
+      source_url: "https://example.com/original",
+      source_archive_url: "https://example.com/archive"
+    )
+
+    visit article_path(article)
+
+    assert_selector ".source-reference__quote .source-reference__links"
+    assert_selector ".source-reference__quote a", text: "Original"
+    assert_selector ".source-reference__quote a", text: "Archive"
+  end
+
+  test "home page shows description, falls back to full content when description blank" do
+    article_with_description = create_published_article(
+      title: "Article With Description",
+      description: "Only the description should be shown",
+      content: "<p>CONTENT SHOULD NOT APPEAR</p>"
+    )
+    article_without_description = create_published_article(
+      title: "Article Without Description",
+      description: "",
+      content: "<p>Fallback content should appear</p>"
+    )
+
+    visit root_path
+
+    assert_text article_with_description.title
+    assert_text "Only the description should be shown"
+    assert_no_text "CONTENT SHOULD NOT APPEAR"
+
+    assert_text article_without_description.title
+    assert_text "Fallback content should appear"
+  end
+
+  test "space key works on nested interactive controls inside a clickable card" do
+    skip "This test requires JavaScript support (Selenium)" unless self.class.use_selenium?
+
+    details_id = "nested-details-#{Time.current.to_i}-#{rand(10000)}"
+    summary_id = "nested-summary-#{Time.current.to_i}-#{rand(10000)}"
+
+    article = create_published_article(
+      title: "Article With Details Toggle",
+      description: "",
+      content: %(<details id="#{details_id}"><summary id="#{summary_id}">Toggle details</summary><div>Hidden content</div></details>)
+    )
+
+    visit root_path
+    assert_text article.title
+    assert_no_selector "##{details_id}[open]"
+
+    page.execute_script("document.getElementById(#{summary_id.to_json}).focus()")
+    page.send_keys(:space)
+
+    assert_selector "##{details_id}[open]"
+  end
+
   test "viewing a published article directly" do
     article = create_published_article(title: "Direct View Article", content: "Direct view content")
 

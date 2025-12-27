@@ -300,52 +300,38 @@ footer {
     color: #c04000;
 }
 
-/* Article List - Timeline Style */
+/* Article List - Twitter Card Style */
 .article-list.timeline {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 12px;
     position: relative;
-    padding-left: 24px;
+    padding-left: 0;
 }
 
-/* Timeline vertical line */
 .article-list.timeline::before {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 12px;
-    bottom: 0;
-    width: 4px;
-    background-color: #e1e1e1;
+    content: none;
 }
 
 .timeline-item {
-    display: flex;
     position: relative;
-    padding-bottom: 16px;
+    padding: 14px 16px;
+    border: 1px solid #e6ecf0;
+    border-radius: 16px;
+    background-color: #fff;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.timeline-item:last-child {
-    padding-bottom: 0;
+.timeline-item:hover {
+    background-color: #f7f9f9;
+    border-color: #d7dee3;
 }
 
-/* Timeline marker/dot */
 .timeline-marker {
-    position: absolute;
-    left: -25px;
-    top: 1px;
-    width: 18px;
-    height: 18px;
-    margin: 3px;
-    border-radius: 50%;
-    background-color: #e1e1e1;
-    /* border: 2px solid #fff; */
-    z-index: 1;
+    display: none;
 }
 
 .timeline-content {
-    flex: 1;
     min-width: 0;
 }
 
@@ -353,13 +339,13 @@ footer {
 .timeline-header {
     display: flex;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
     gap: 8px;
     flex-wrap: wrap;
 }
 
 .timeline-date {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #c04000;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -372,29 +358,32 @@ footer {
 }
 
 .post-title {
-    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun",
-        "Noto Serif CJK SC", "Source Han Serif SC", serif;
-    font-size: 1.4rem;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 1.05rem;
     font-weight: 700;
-    color: #111;
-    margin-bottom: 4px;
+    color: #0f1419;
+    margin: 0 0 8px 0;
+    line-height: 1.35;
 }
 
 .post-title a {
-    color: #111;
+    color: inherit;
+    text-decoration: none;
 }
 
 .post-title a:hover {
-    color: #c04000;
     text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
 }
 
 .post-description {
-    color: #555;
-    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun",
-        "Noto Serif CJK SC", "Source Han Serif SC", serif;
-    font-size: 1.05rem;
-    line-height: 1.6;
+    color: #0f1419;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 1rem;
+    line-height: 1.55;
 }
 
 
@@ -410,14 +399,12 @@ footer {
 }
 
 .post-content {
-    color: #333;
-    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun",
-        "Noto Serif CJK SC", "Source Han Serif SC", serif;
-    font-size: 1.05rem;
-    line-height: 1.6;
+    color: #0f1419;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 1rem;
+    line-height: 1.55;
     margin-top: 6px;
-    overflow: hidden;
-    transition: all 0.3s ease;
 }
 
 .post-content img {
@@ -434,6 +421,23 @@ footer {
     border-radius: 4px;
     font-size: 0.85rem;
     transition: background-color 0.2s;
+}
+
+.timeline-tags .tag {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #1d9bf0;
+    border-radius: 0;
+    font-size: 0.9rem;
+}
+
+.timeline-tags .tag:hover {
+    background: none;
+    color: #1a8cd8;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
 }
 
 .tag:hover {
@@ -502,283 +506,36 @@ h2 {
     --lexxy-color-link: #c04000;
 }
 
-.article-content a:not(.social-link-card__link) {
+.article-content a {
     color: #c04000 !important;
     text-decoration: underline !important;
     text-underline-offset: 2px;
 }
 
-.article-content a:not(.social-link-card__link):hover {
+.article-content a:hover {
     color: #a03000 !important;
     text-decoration-thickness: 2px;
 }
 
-/* Social Link Cards (in article content) */
-.social-link-card {
-    margin: 16px 0;
+/* Source Reference (Article) */
+.source-reference__quote {
+    border: 0 solid #ccc;
+    border-left-width: 0.3em;
+    margin: 0 0 0.75rem 0.3em;
+    padding-left: 0.6em;
 }
 
-.social-link-card__link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border: 1px solid #e6e6e6;
-    border-radius: 10px;
-    background: #fff;
-    transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+.source-reference__quote[dir=rtl],
+.source-reference [dir=rtl] .source-reference__quote {
+    border-width: 0;
+    border-right-width: 0.3em;
+    margin: 0 0.3em 0.75rem 0;
+    padding-left: 0;
+    padding-right: 0.6em;
 }
 
-.social-link-card__link:hover {
-    border-color: #c04000;
-    background-color: #fff8f3;
-    transform: translateY(-1px);
-}
-
-.social-link-card__icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f6f6f6;
-    flex: 0 0 auto;
-}
-
-.social-link-card__icon i {
-    font-size: 18px;
-    color: #333;
-}
-
-.social-link-card__body {
-    min-width: 0;
-    flex: 1;
-}
-
-.social-link-card__title {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #111;
-    margin-bottom: 2px;
-}
-
-.social-link-card__meta {
-    font-size: 0.78rem;
-    color: #777;
-    margin-bottom: 2px;
-}
-
-.social-link-card__url {
-    font-size: 0.85rem;
-    color: #555;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.social-link-card__arrow {
-    flex: 0 0 auto;
-    color: #999;
-}
-
-.social-link-card__arrow i {
-    font-size: 14px;
-}
-
-/* Embed variant (e.g. Twitter/X tweet embed) */
-.social-link-card--embed {
-    margin: 12px 0;
-    max-width: 550px;
-}
-
-.social-link-card--embed .social-link-card__fallback-link {
-    display: block;
-    padding: 6px 10px;
-    margin-bottom: 6px;
-    color: #c04000;
-    text-decoration: none;
-    font-size: 0.85rem;
-    border: 1px solid #e6e6e6;
-    border-radius: 4px;
-    background: #fff8f3;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-.social-link-card--embed .social-link-card__fallback-link:hover {
-    background: #fff0e6;
-    border-color: #c04000;
-    text-decoration: underline;
-}
-
-.social-link-card--embed .social-link-card__embed {
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    padding: 0;
-}
-
-.social-link-card--embed blockquote {
-    margin: 0 !important;
-}
-
-/* Custom Twitter tweet content (without interaction buttons) */
-.twitter-tweet-content {
-    border: 1px solid #e6e6e6;
-    border-radius: 8px;
-    padding: 12px 16px;
-    background: #fff;
-}
-
-.twitter-tweet-content__text-link {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-    margin: 0 0 10px 0;
-    transition: opacity 0.2s;
-}
-
-.twitter-tweet-content__text-link:hover {
-    opacity: 0.8;
-}
-
-.twitter-tweet-content__text {
-    font-size: 15px;
-    line-height: 1.5;
-    color: #333;
-    margin: 0;
-    word-wrap: break-word;
-}
-
-.twitter-tweet-content__author {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #e6e6e6;
-}
-
-.twitter-tweet-content__author-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #1da1f2;
-    text-decoration: none;
-}
-
-.twitter-tweet-content__author-link:hover {
-    text-decoration: underline;
-}
-
-.twitter-tweet-content__avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.twitter-tweet-content__author-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.twitter-tweet-content__author-display-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: #333;
-    line-height: 1.2;
-}
-
-.twitter-tweet-content__author-username {
-    font-size: 13px;
-    font-weight: 400;
-    color: #666;
-    line-height: 1.2;
-}
-
-/* Dark mode */
-[data-theme="dark"] .social-link-card__link {
-    background-color: #1f1f1f;
-    border-color: var(--border-color);
-}
-
-[data-theme="dark"] .social-link-card__link:hover {
-    background-color: #242424;
-    border-color: var(--accent-color);
-}
-
-[data-theme="dark"] .social-link-card__icon {
-    background-color: #2a2a2a;
-}
-
-[data-theme="dark"] .social-link-card__icon i {
-    color: var(--text-color);
-}
-
-[data-theme="dark"] .social-link-card__title {
-    color: var(--text-color);
-}
-
-[data-theme="dark"] .social-link-card__meta,
-[data-theme="dark"] .social-link-card__url {
-    color: var(--text-secondary);
-}
-
-[data-theme="dark"] .social-link-card__arrow {
-    color: var(--text-secondary);
-}
-
-[data-theme="dark"] .social-link-card--embed .social-link-card__fallback-link {
-    background-color: #2a2a2a;
-    border-color: var(--border-color);
-    color: var(--accent-color);
-}
-
-[data-theme="dark"] .social-link-card--embed .social-link-card__fallback-link:hover {
-    background-color: #333;
-    border-color: var(--accent-color);
-}
-
-[data-theme="dark"] .social-link-card--embed .social-link-card__embed {
-    background-color: transparent;
-    border: none;
-}
-
-[data-theme="dark"] .twitter-tweet-content {
-    background-color: #1f1f1f;
-    border-color: var(--border-color);
-}
-
-[data-theme="dark"] .twitter-tweet-content__text-link {
-    color: inherit;
-}
-
-[data-theme="dark"] .twitter-tweet-content__text-link:hover {
-    opacity: 0.8;
-}
-
-[data-theme="dark"] .twitter-tweet-content__text {
-    color: var(--text-color);
-}
-
-[data-theme="dark"] .twitter-tweet-content__author {
-    border-top-color: var(--border-color);
-}
-
-[data-theme="dark"] .twitter-tweet-content__author-link {
-    color: var(--accent-color);
-}
-
-[data-theme="dark"] .twitter-tweet-content__avatar {
-    border: 1px solid var(--border-color);
-}
-
-[data-theme="dark"] .twitter-tweet-content__author-display-name {
-    color: var(--text-color);
-}
-
-[data-theme="dark"] .twitter-tweet-content__author-username {
-    color: var(--text-secondary);
+.source-reference__links {
+    margin-top: 0.75rem;
 }
 
 /* Twitter tweet placeholder (loading state) */
@@ -1099,6 +856,20 @@ h2 {
     color: var(--text-color);
 }
 
+[data-theme="dark"] .timeline-tags .tag {
+    background: none;
+    border: none;
+    color: #4aa3ff;
+}
+
+[data-theme="dark"] .timeline-tags .tag:hover {
+    background: none;
+    color: #4aa3ff;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
 [data-theme="dark"] .article h1,
 [data-theme="dark"] h1,
 [data-theme="dark"] h2 {
@@ -1129,12 +900,16 @@ h2 {
     --lexxy-color-link: var(--accent-color);
 }
 
-[data-theme="dark"] .article-content a:not(.social-link-card__link) {
+[data-theme="dark"] .article-content a {
     color: var(--accent-color) !important;
 }
 
-[data-theme="dark"] .article-content a:not(.social-link-card__link):hover {
+[data-theme="dark"] .article-content a:hover {
     color: #ff8c5a !important;
+}
+
+[data-theme="dark"] .source-reference__quote {
+    border-color: var(--accent-color);
 }
 
 [data-theme="dark"] .article-content code {
@@ -1214,12 +989,21 @@ h2 {
 }
 
 [data-theme="dark"] .article-list.timeline::before {
-    background-color: var(--border-color);
+    content: none;
 }
 
 [data-theme="dark"] .timeline-marker {
-    background-color: var(--text-secondary);
-    border-color: var(--bg-color);
+    display: none;
+}
+
+[data-theme="dark"] .timeline-item {
+    background-color: var(--bg-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .timeline-item:hover {
+    background-color: var(--hover-bg);
+    border-color: #444;
 }
 
 [data-theme="dark"] .timeline-date {
@@ -1535,4 +1319,16 @@ h2 {
 [data-theme="dark"] .share-menu-item:hover {
     background-color: var(--hover-bg);
     color: var(--accent-color);
+}
+.timeline-item[data-controller~="clickable-card"] {
+    cursor: pointer;
+}
+
+.timeline-item[data-controller~="clickable-card"]:focus {
+    outline: none;
+}
+
+.timeline-item[data-controller~="clickable-card"]:focus-visible {
+    outline: 2px solid #1d9bf0;
+    outline-offset: 2px;
 }

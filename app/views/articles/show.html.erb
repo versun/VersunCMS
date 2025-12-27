@@ -133,9 +133,11 @@
       </div>
     </span>
   </small>
-  <%= render 'articles/source_reference' %>
+  <% if @article.has_source? %>
+    <%= render 'articles/source_reference' %>
+  <% end %>
   <div class="article-content">
-    <%= render_article_content_with_social_cards(@article) %>
+    <%= @article.html? ? @article.rendered_content.to_s.html_safe : @article.rendered_content %>
   </div>
 </article>
 
