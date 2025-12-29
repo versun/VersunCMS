@@ -1,7 +1,3 @@
-/*
- *= require actiontext
- */
-
 /* Font Display Optimization - Ensure text is always visible */
 /* All @font-face declarations should use font-display: swap or optional */
 /* This ensures text remains visible during font loading */
@@ -497,14 +493,6 @@ h2 {
 }
 
 /* Article Content - Link Styles */
-/* Override lexxy's link color variable and styles (only within articles) */
-.lexxy-content {
-    --lexxy-color-link: inherit;
-}
-
-.article-content {
-    --lexxy-color-link: #c04000;
-}
 
 .article-content a {
     color: #c04000 !important;
@@ -896,9 +884,6 @@ h2 {
     color: var(--text-color);
 }
 
-[data-theme="dark"] .article-content {
-    --lexxy-color-link: var(--accent-color);
-}
 
 [data-theme="dark"] .article-content a {
     color: var(--accent-color) !important;

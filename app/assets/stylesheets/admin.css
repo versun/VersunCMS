@@ -310,6 +310,20 @@ select:focus {
     outline-offset: -1px;
 }
 
+/* Action Text / Trix editor (avoid global reset conflicts) */
+trix-editor ul {
+    list-style: disc;
+}
+
+trix-editor ol {
+    list-style: decimal;
+}
+
+trix-editor {
+    resize: vertical;
+    overflow: auto;
+}
+
 textarea {
     min-height: 60px;
     resize: vertical;
