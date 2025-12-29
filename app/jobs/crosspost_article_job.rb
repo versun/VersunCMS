@@ -1,18 +1,7 @@
 class CrosspostArticleJob < ApplicationJob
   queue_as :default
 
-  # 重试机制：对于 Internet Archive 的速率限制错误，使用指数退避重试
-  retry_on StandardError, wait: :exponentially_longer, attempts: 5 do |job, error|
-    # 对于 Internet Archive 的速率限制，使用更长的等待时间
-    if job.arguments[1] == "internet_archive" && error.message.include?("rate limit")
-      Rails.event.notify "crosspost_article_job.rate_limit_hit",
-        level: "warn",
-        component: "CrosspostArticleJob",
-        platform: "internet_archive",
-        article_id: job.arguments[0],
-        error_message: error.message
-    end
-  end
+  retry_on StandardError, wait: :exponentially_longer, attempts: 5
 
   def perform(article_id, platform)
     article = Article.find_by(id: article_id)
@@ -35,11 +24,6 @@ class CrosspostArticleJob < ApplicationJob
         bluesky_url = BlueskyService.new.post(article)
         if bluesky_url
           social_media_posts["bluesky"] = bluesky_url
-        end
-    when "internet_archive"
-        archive_url = InternetArchiveService.new.post(article)
-        if archive_url
-          social_media_posts["internet_archive"] = archive_url
         end
     end
 

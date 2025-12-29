@@ -3,7 +3,6 @@ class Admin::CrosspostsController < Admin::BaseController
     @mastodon = Crosspost.mastodon
     @twitter = Crosspost.twitter
     @bluesky = Crosspost.bluesky
-    @internet_archive = Crosspost.internet_archive
   end
 
   def update
@@ -64,8 +63,6 @@ class Admin::CrosspostsController < Admin::BaseController
         # Set default server_url if not provided
         crosspost[:server_url] = "https://bsky.social/xrpc" if crosspost[:server_url].blank?
         BlueskyService.new.verify(crosspost)
-      when "internet_archive"
-        InternetArchiveService.new.verify(crosspost)
       else
         raise "Unknown platform: #{crosspost[:platform]}"
       end
