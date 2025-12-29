@@ -1,5 +1,12 @@
 module MathCaptchaVerification
+  include ApplicationHelper
+
   private
+
+  # 手机端跳过验证码验证
+  def skip_captcha_for_mobile?
+    mobile_device?
+  end
 
   def math_captcha_expected(max: 10)
     captcha = params.fetch(:captcha, {})
@@ -26,6 +33,9 @@ module MathCaptchaVerification
   end
 
   def math_captcha_valid?(max: 10)
+    # 手机端跳过验证
+    return true if skip_captcha_for_mobile?
+
     expected = math_captcha_expected(max:)
     return false if expected.nil?
 

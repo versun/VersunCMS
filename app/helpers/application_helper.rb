@@ -1,6 +1,14 @@
 require "uri"
 
 module ApplicationHelper
+  # 检测是否是手机设备（通过 User-Agent）
+  def mobile_device?
+    return @is_mobile_device if defined?(@is_mobile_device)
+
+    user_agent = request.user_agent.to_s.downcase
+    @is_mobile_device = user_agent.match?(/mobile|android|iphone|ipod|webos|blackberry|opera mini|iemobile/)
+  end
+
   def site_settings
     CacheableSettings.site_info
   end

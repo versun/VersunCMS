@@ -1,13 +1,14 @@
 <% parent_id = local_assigns[:parent_id] %>
 <% is_reply = parent_id.present? %>
-<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;" data-controller="math-captcha" data-math-captcha-max-value="10">
+<% is_mobile = mobile_device? %>
+<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;" <%= "data-controller=math-captcha data-math-captcha-max-value=10" unless is_mobile %>>
   <% if flash[:comment_submitted] && !is_reply %>
     <div id="comment-success-message" style="text-align: center; border: 1px solid #333; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; background: #fff;">
       <p style="margin: 0; font-size: 0.875rem; color: #333;">Your comment will be reviewed before being published.</p>
     </div>
   <% end %>
-  
-  <% 
+
+  <%
     # Determine the form URL based on whether we have @page or @article
     if defined?(@page) && @page.present?
       form_url = comments_path(page_id: @page.slug)
@@ -19,14 +20,16 @@
       form_url = comments_path(article_id: '')
     end
   %>
-  <%= form_with(model: comment, url: form_url, data: { action: "submit->math-captcha#ensureValid" }) do |f| %>
+  <%= form_with(model: comment, url: form_url, data: is_mobile ? {} : { action: "submit->math-captcha#ensureValid" }) do |f| %>
     <%= f.hidden_field :parent_id, value: parent_id if parent_id %>
-    <% captcha = math_captcha_challenge(max: 10) %>
-    <% captcha_answer_id = "comment-captcha-answer-#{SecureRandom.hex(6)}" %>
-    
+    <% unless is_mobile %>
+      <% captcha = math_captcha_challenge(max: 10) %>
+      <% captcha_answer_id = "comment-captcha-answer-#{SecureRandom.hex(6)}" %>
+    <% end %>
+
     <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
       <div style="flex: 1;">
-        <%= f.text_field :author_name, required: true, placeholder: "Name *", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;", data: { action: "focus->math-captcha#show" } %>
+        <%= f.text_field :author_name, required: true, placeholder: "Name *", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
       </div>
       <div style="flex: 1;">
         <%= f.url_field :author_url, placeholder: "Website (optional)", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" %>
@@ -34,9 +37,10 @@
     </div>
 
     <div style="margin-bottom: 0.75rem;">
-      <%= f.text_area :content, required: true, placeholder: is_reply ? "Reply *" : "Comment *", rows: 3, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;", data: { action: "focus->math-captcha#show" } %>
+      <%= f.text_area :content, required: true, placeholder: is_reply ? "Reply *" : "Comment *", rows: 3, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
     </div>
 
+    <% unless is_mobile %>
     <div data-math-captcha-target="container" style="margin-bottom: 0.75rem;">
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <label for="<%= captcha_answer_id %>" style="font-size: 0.875rem; color: #333; white-space: nowrap;"><span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
@@ -47,6 +51,7 @@
       <%= hidden_field_tag "captcha[b]", captcha[:b], data: { math_captcha_target: "b" } %>
       <%= hidden_field_tag "captcha[op]", captcha[:op], data: { math_captcha_target: "op" } %>
     </div>
+    <% end %>
 
     <div style="display: flex; gap: 0.5rem; align-items: center;">
       <%= f.submit is_reply ? "Reply" : "Submit", style: "padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;" %>
