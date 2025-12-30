@@ -634,7 +634,7 @@ class SingleFileArchiveService
         end
 
         FileUtils.mkdir_p(File.dirname(target_path))
-        entry.extract(target_path) { true }
+        entry.extract(entry_name, destination_directory: dest_root) { true }
       end
     end
   end

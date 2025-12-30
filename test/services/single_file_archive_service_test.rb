@@ -1,6 +1,7 @@
 require "test_helper"
 require "minitest/mock"
 require "tempfile"
+require "zip"
 
 class SingleFileArchiveServiceTest < ActiveSupport::TestCase
   test "validate_single_file_cli! does not invoke a shell" do
@@ -211,5 +212,22 @@ class SingleFileArchiveServiceTest < ActiveSupport::TestCase
     end
 
     assert_equal 120, captured_timeout
+  end
+
+  test "extract_zip! extracts entries into destination directory" do
+    service = SingleFileArchiveService.new
+
+    Tempfile.create([ "rables-zip", ".zip" ]) do |zip_file|
+      Zip::File.open(zip_file.path, create: true) do |zip|
+        zip.mkdir("chrome-linux64")
+        zip.get_output_stream("chrome-linux64/ABOUT") { |io| io.write("about") }
+      end
+
+      Dir.mktmpdir("rables_zip_extract") do |dest_dir|
+        service.send(:extract_zip!, zip_file.path, dest_dir)
+        extracted_path = File.join(dest_dir, "chrome-linux64", "ABOUT")
+        assert_equal "about", File.read(extracted_path)
+      end
+    end
   end
 end
