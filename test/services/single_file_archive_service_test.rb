@@ -214,6 +214,33 @@ class SingleFileArchiveServiceTest < ActiveSupport::TestCase
     assert_equal 120, captured_timeout
   end
 
+  test "run_single_file_cli passes SINGLE_FILE_BROWSER_ARGS as browser-arg flags" do
+    service = SingleFileArchiveService.new
+    status = Struct.new(:success?).new(true)
+    previous = ENV["SINGLE_FILE_BROWSER_ARGS"]
+    ENV["SINGLE_FILE_BROWSER_ARGS"] = "--no-sandbox --disable-dev-shm-usage"
+
+    captured_args = nil
+
+    service.stub(:browser_executable_path, nil) do
+      service.stub(:capture3_with_timeout, lambda { |*args, chdir:, timeout_seconds:|
+        captured_args = args
+        [ "", "", status ]
+      }) do
+        Dir.mktmpdir("rables_archive_test") do |tmpdir|
+          service.send(:run_single_file_cli, "https://example.com", "out.html", tmpdir)
+        end
+      end
+    end
+
+    browser_arg_positions = captured_args.each_index.select { |idx| captured_args[idx] == "--browser-arg" }
+    browser_args = browser_arg_positions.map { |idx| captured_args[idx + 1] }
+
+    assert_equal [ "--no-sandbox", "--disable-dev-shm-usage" ], browser_args
+  ensure
+    ENV["SINGLE_FILE_BROWSER_ARGS"] = previous
+  end
+
   test "extract_zip! extracts entries into destination directory" do
     service = SingleFileArchiveService.new
 

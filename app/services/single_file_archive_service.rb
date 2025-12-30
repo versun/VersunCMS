@@ -2,6 +2,7 @@ require "open3"
 require "fileutils"
 require "json"
 require "net/http"
+require "shellwords"
 require "tempfile"
 require "tmpdir"
 require "timeout"
@@ -317,12 +318,62 @@ class SingleFileArchiveService
       *extra_args
     ]
 
+    browser_launch_args.each do |arg|
+      cmd << "--browser-arg"
+      cmd << arg
+    end
+
     if (browser_path = browser_executable_path)
       cmd << "--browser-executable-path"
       cmd << browser_path
     end
 
     capture3_with_timeout(*cmd, chdir: tmpdir, timeout_seconds: SINGLE_FILE_TIMEOUT_SECONDS)
+  end
+
+  def browser_launch_args
+    args = default_browser_launch_args
+    args.concat(browser_launch_args_from_env)
+    args.uniq
+  end
+
+  def browser_launch_args_from_env
+    raw = ENV["SINGLE_FILE_BROWSER_ARGS"].to_s.strip
+    return [] if raw.blank?
+
+    if raw.lstrip.start_with?("[")
+      parsed = JSON.parse(raw)
+      return Array(parsed).map(&:to_s)
+    end
+
+    Shellwords.split(raw)
+  rescue JSON::ParserError, ArgumentError => e
+    raise BrowserNotFoundError, "Invalid SINGLE_FILE_BROWSER_ARGS: #{e.message}"
+  end
+
+  def default_browser_launch_args
+    return [] if ENV["SINGLE_FILE_BROWSER_DEFAULT_ARGS"].to_s.strip == "0"
+    return [] unless linux?
+    return [] unless containerized?
+
+    %w[--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage]
+  end
+
+  def linux?
+    RbConfig::CONFIG["host_os"].to_s.downcase.include?("linux")
+  end
+
+  def containerized?
+    return true if File.exist?("/.dockerenv")
+    return true if File.exist?("/run/.containerenv")
+
+    cgroup_path = "/proc/1/cgroup"
+    return false unless File.exist?(cgroup_path)
+
+    cgroup = File.read(cgroup_path)
+    cgroup.include?("docker") || cgroup.include?("containerd") || cgroup.include?("kubepods")
+  rescue Errno::ENOENT, Errno::EACCES
+    false
   end
 
   def capture3_with_timeout(*cmd, chdir:, timeout_seconds:)
