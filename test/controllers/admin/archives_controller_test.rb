@@ -33,4 +33,3 @@ class Admin::ArchivesControllerTest < ActionDispatch::IntegrationTest
     assert archive_item.reload.pending?
   end
 end
-

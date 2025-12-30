@@ -11,4 +11,3 @@ class ArchiveItemTest < ActiveSupport::TestCase
     assert_equal "http://example.com/path", item.url
   end
 end
-

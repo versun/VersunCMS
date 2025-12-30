@@ -28,4 +28,3 @@ class ArchiveSettingTest < ActiveSupport::TestCase
     assert setting.valid?
   end
 end
-
