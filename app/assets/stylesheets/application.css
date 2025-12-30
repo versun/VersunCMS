@@ -481,10 +481,25 @@ h2 {
     display: block;
     unicode-bidi: isolate;
     max-width: 800px;
-    /* margin-left: auto;
-    margin-right: auto; */
-    /* padding-left: 20px;
-    padding-right: 20px; */
+}
+
+.article-content pre {
+    background-color: #f6f8fa;
+    padding: 16px;
+    overflow-x: auto;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 16px 0;
+}
+
+.article-content pre code {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: inherit;
+    color: inherit;
 }
 
 .article-content img {
@@ -904,8 +919,7 @@ h2 {
 }
 
 [data-theme="dark"] .article-content pre {
-    background-color: #2a2a2a;
-    color: var(--text-color);
+    background-color: #0d1117;
     border: 1px solid var(--border-color);
 }
 
