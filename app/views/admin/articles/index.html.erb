@@ -65,6 +65,8 @@
       <div style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 500px; border-radius: 8px;">
         <h3>批量跨平台发布</h3>
         <p>请选择要发布的平台：</p>
+        <% archive_setting = (ArchiveSetting.table_exists? ? ArchiveSetting.instance : nil) rescue nil %>
+        <% archive_enabled = archive_setting&.configured? %>
         <%= form_with url: batch_crosspost_admin_articles_path, method: :post, id: "batchCrosspostForm" do |f| %>
           <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 8px;">
@@ -80,8 +82,11 @@
               Bluesky
             </label>
             <label style="display: block; margin-bottom: 8px;">
-              <%= check_box_tag "platforms[]", "internet_archive", false, id: "platform_internet_archive" %>
+              <%= check_box_tag "platforms[]", "internet_archive", false, id: "platform_internet_archive", disabled: !archive_enabled %>
               Internet Archive
+              <% unless archive_enabled %>
+                <span class="info-text">(off)</span>
+              <% end %>
             </label>
           </div>
           <div style="text-align: right;">
@@ -225,4 +230,3 @@
 <% content_for :javascript do %>
   <%= render 'admin/shared/batch_form_handler' %>
 <% end %>
-

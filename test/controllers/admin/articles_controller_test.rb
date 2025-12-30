@@ -158,4 +158,47 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
     # For now, we'll test the basic structure
     skip "Requires social media service mocking"
   end
+
+  test "should enqueue archive job for batch internet archive crosspost" do
+    ArchiveSetting.create!(
+      enabled: true,
+      repo_url: "https://github.com/example/archive.git",
+      branch: "main",
+      git_integration: git_integrations(:github)
+    )
+
+    assert_enqueued_with(job: ArchiveArticleJob, args: [ @article.id ]) do
+      post batch_crosspost_admin_articles_path, params: {
+        ids: [ @article.slug ],
+        platforms: [ "internet_archive" ]
+      }
+    end
+    assert_no_enqueued_jobs(only: CrosspostArticleJob)
+    assert_redirected_to admin_articles_path
+  end
+
+  test "should enqueue both archive and crosspost jobs in batch" do
+    ArchiveSetting.create!(
+      enabled: true,
+      repo_url: "https://github.com/example/archive.git",
+      branch: "main",
+      git_integration: git_integrations(:github)
+    )
+    Crosspost.find_or_create_by(platform: "mastodon").update!(
+      enabled: true,
+      client_key: "test_key",
+      client_secret: "test_secret",
+      access_token: "test_token"
+    )
+
+    post batch_crosspost_admin_articles_path, params: {
+      ids: [ @article.slug ],
+      platforms: [ "mastodon", "internet_archive" ]
+    }
+
+    assert enqueued_jobs.any? { |j| j["job_class"] == "ArchiveArticleJob" && j["arguments"] == [ @article.id ] },
+      "Expected ArchiveArticleJob to be enqueued for #{@article.slug}"
+    assert enqueued_jobs.any? { |j| j["job_class"] == "CrosspostArticleJob" && j["arguments"] == [ @article.id, "mastodon" ] },
+      "Expected CrosspostArticleJob to be enqueued for #{@article.slug} (mastodon)"
+  end
 end

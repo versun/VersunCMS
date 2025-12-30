@@ -1,0 +1,7 @@
+<%= turbo_stream.update @target do %>
+  <% if @status == "success" %>
+    <span class="text-success">&#10003; <%= @message %></span>
+  <% else %>
+    <span class="text-danger">&#10007; <%= @message %></span>
+  <% end %>
+<% end %>

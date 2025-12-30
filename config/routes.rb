@@ -100,13 +100,23 @@ Rails.application.routes.draw do
         post :verify
       end
     end
+    resources :archives, only: [ :index, :create, :destroy ] do
+      collection do
+        patch :update_settings
+        post :verify_ia
+      end
+      member do
+        post :retry
+      end
+    end
 
     # Activity logs
     resources :activities, only: [ :index ]
 
     # Source reference API
-    post "sources/archive", to: "sources#archive"
     post "sources/fetch_twitter", to: "sources#fetch_twitter"
+    post "sources/archive", to: "sources#archive"
+    get "sources/archive_status/:id", to: "sources#archive_status"
 
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs

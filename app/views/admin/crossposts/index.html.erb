@@ -38,8 +38,8 @@
       </div>
 
       <div class="field">
-        <%= f.label :max_characters, "Max Characters" %>
-        <%= f.number_field :max_characters, min: 1, placeholder: "500", value: @mastodon.max_characters || @mastodon.default_max_characters %>
+        <%= f.label :max_characters, "Max Characters", for: 'crosspost_max_characters_mastodon' %>
+        <%= f.number_field :max_characters, min: 1, placeholder: "500", value: @mastodon.max_characters || @mastodon.default_max_characters, id: 'crosspost_max_characters_mastodon' %>
         <small>
           Maximum characters for posts. If content exceeds this limit, a "Read more" link will be added. Default: 500
         </small>
@@ -120,8 +120,8 @@
       </div>
 
       <div class="field">
-        <%= f.label :max_characters, "Max Characters" %>
-        <%= f.number_field :max_characters, min: 1, placeholder: "250", value: @twitter.max_characters || @twitter.default_max_characters %>
+        <%= f.label :max_characters, "Max Characters", for: 'crosspost_max_characters_twitter' %>
+        <%= f.number_field :max_characters, min: 1, placeholder: "250", value: @twitter.max_characters || @twitter.default_max_characters, id: 'crosspost_max_characters_twitter' %>
         <small>
           Maximum characters for posts. If content exceeds this limit, a "Read more" link will be added. Default: 250 (non-ASCII characters count as 2)
         </small>
@@ -175,8 +175,8 @@
       </div>
 
       <div class="field">
-        <%= f.label :max_characters, "Max Characters" %>
-        <%= f.number_field :max_characters, min: 1, placeholder: "300", value: @bluesky.max_characters || @bluesky.default_max_characters %>
+        <%= f.label :max_characters, "Max Characters", for: 'crosspost_max_characters_bluesky' %>
+        <%= f.number_field :max_characters, min: 1, placeholder: "300", value: @bluesky.max_characters || @bluesky.default_max_characters, id: 'crosspost_max_characters_bluesky' %>
         <small>
           Maximum characters for posts. If content exceeds this limit, a "Read more" link will be added. Default: 300
         </small>
@@ -219,40 +219,6 @@
     <div id="verify-messages-bluesky"></div>
   </div>
 
-  <div class="form-section compact">
-    <h3>Internet Archive</h3>
-    <small>Automatically archive your articles to the Internet Archive's Wayback Machine. No credentials required.</small>
-    
-    <%= form_with(model: @internet_archive, url: admin_crosspost_path(@internet_archive.platform), method: :patch) do |f| %>
-      <%= f.hidden_field :platform, value: 'internet_archive' %>
-
-      <div class="field checkbox">
-        <%= f.check_box :enabled, id: 'crosspost_enabled_internet_archive' %>
-        <%= f.label :enabled, "Enable Internet Archive CrossPost", for: 'crosspost_enabled_internet_archive' %>
-      </div>
-
-      <div class="field">
-        <%= f.label :max_characters, "Max Characters (Optional)" %>
-        <%= f.number_field :max_characters, min: 1, placeholder: "No limit", value: @internet_archive.max_characters %>
-        <small>
-          Maximum characters for posts. If content exceeds this limit, a "Read more" link will be added. Leave empty for no limit (Internet Archive doesn't require character limits).
-        </small>
-      </div>
-
-      <div class="form-actions">
-        <%= f.submit "Save", class: 'btn btn-primary' %>
-        <div id="verify-button-internet_archive">
-          <%= button_tag "Verify", type: 'submit', class: 'btn btn-secondary', form: "verify-form-internet_archive", data: { turbo_frame: "_top" } %>
-        </div>
-      </div>
-    <% end %>
-
-    <%= form_with(url: verify_admin_crosspost_path('internet_archive'), method: :post, data: { turbo: true }, id: "verify-form-internet_archive") do |vf| %>
-      <%= hidden_field_tag 'crosspost[platform]', 'internet_archive' %>
-    <% end %>
-    <div id="verify-messages-internet_archive"></div>
-  </div>
-
 </div>
 
 <% content_for :javascript do %>
@@ -287,7 +253,7 @@
     }
 
     // 为每个平台设置表单同步
-    ['mastodon', 'twitter', 'bluesky', 'internet_archive'].forEach(platform => {
+    ['mastodon', 'twitter', 'bluesky'].forEach(platform => {
       const mainForm = document.querySelector(`form[action*="/admin/crossposts/${platform}"][method="patch"]`);
       if (mainForm) {
         // 使用事件委托，避免重复绑定

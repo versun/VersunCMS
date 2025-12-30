@@ -248,17 +248,20 @@ class Admin::ArticlesController < Admin::BaseController
       begin
         jobs_queued = false
         platforms.each do |platform|
-          # 检查平台是否启用
-          crosspost = Crosspost.find_by(platform: platform)
-          next unless crosspost&.enabled?
-
-          # 对于 Internet Archive，添加延迟以避免并发请求导致速率限制
           if platform == "internet_archive"
+            archive_setting = ArchiveSetting.instance
+            next unless archive_setting.configured?
+
+            # 对于 Internet Archive，添加延迟以避免并发请求导致速率限制
             # 每篇文章延迟 5 秒，避免触发速率限制
-            CrosspostArticleJob.set(wait: internet_archive_delay.seconds).perform_later(article.id, platform)
+            ArchiveArticleJob.set(wait: internet_archive_delay.seconds).perform_later(article.id)
             internet_archive_delay += 5
             jobs_queued = true
           else
+            # 检查平台是否启用
+            crosspost = Crosspost.find_by(platform: platform)
+            next unless crosspost&.enabled?
+
             # 其他平台立即执行
             CrosspostArticleJob.perform_later(article.id, platform)
             jobs_queued = true

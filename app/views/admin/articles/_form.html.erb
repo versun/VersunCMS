@@ -186,11 +186,12 @@
             <% end %>
           </div>
 
-          <% internet_archive_enabled = Crosspost.find_by(platform: 'internet_archive')&.enabled? %>
+          <% archive_setting = (ArchiveSetting.table_exists? ? ArchiveSetting.instance : nil) rescue nil %>
+          <% archive_enabled = archive_setting&.configured? %>
           <div class="field checkbox crosspost-field">
-            <%= form.check_box :crosspost_internet_archive, disabled: !internet_archive_enabled %>
-            Internet Archive
-            <% unless internet_archive_enabled %>
+            <%= form.check_box :crosspost_internet_archive, disabled: !archive_enabled %>
+            Archive
+            <% unless archive_enabled %>
               <span class="info-text">(off)</span>
             <% end %>
             <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'internet_archive') do |post_form| %>

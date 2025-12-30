@@ -325,6 +325,44 @@ class ArticleTest < ActiveSupport::TestCase
     end
   end
 
+  test "should enqueue archive job when publishing with archive checked" do
+    ArchiveSetting.create!(
+      enabled: true,
+      repo_url: "https://github.com/example/archive.git",
+      branch: "main",
+      git_integration: git_integrations(:github)
+    )
+
+    article = Article.new(
+      title: "Archive Test Article",
+      slug: "archive-test-publish",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Test content</p>",
+      crosspost_internet_archive: "1"
+    )
+
+    assert_enqueued_with(job: ArchiveArticleJob) do
+      article.save!
+    end
+  end
+
+  test "should enqueue archive job when updating published article with archive checked" do
+    ArchiveSetting.create!(
+      enabled: true,
+      repo_url: "https://github.com/example/archive.git",
+      branch: "main",
+      git_integration: git_integrations(:github)
+    )
+
+    article = create_published_article
+    article.crosspost_internet_archive = "1"
+
+    assert_enqueued_with(job: ArchiveArticleJob) do
+      article.update!(title: "Updated title")
+    end
+  end
+
   # Scheduled article crosspost tests
   test "should enqueue crosspost job when scheduled article is published" do
     # Setup: enable mastodon crosspost platform

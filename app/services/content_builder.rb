@@ -39,7 +39,7 @@ module ContentBuilder
       content_length
     end
     total_length = body_length + source_url_length
-    needs_link = always_add_link || total_length >= max_length
+    needs_link = always_add_link || total_length >= max_length || description_text.present?
 
     # 如果不需要链接，返回完整内容
     unless needs_link
