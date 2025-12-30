@@ -1,7 +1,7 @@
 class CrosspostArticleJob < ApplicationJob
   queue_as :default
 
-  retry_on StandardError, wait: :exponentially_longer, attempts: 5
+  retry_on StandardError, wait: ->(executions) { 2 ** executions }, attempts: 5
 
   def perform(article_id, platform)
     article = Article.find_by(id: article_id)

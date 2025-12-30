@@ -453,6 +453,8 @@ class SingleFileArchiveService
     candidate = chromium_executable_candidate_path
     return nil if candidate.blank?
 
+    return nil unless valid_chromium_installation?
+
     if Gem.win_platform?
       return candidate if File.exist?(candidate)
       return nil
@@ -460,6 +462,16 @@ class SingleFileArchiveService
 
     return candidate if File.executable?(candidate)
     nil
+  end
+
+  def valid_chromium_installation?
+    candidate = chromium_executable_candidate_path
+    return false if candidate.blank?
+    return false unless File.exist?(candidate)
+    return false if File.directory?(candidate)
+    version_file = File.join(DEFAULT_CHROMIUM_DIR, "VERSION")
+    return false unless File.exist?(version_file)
+    true
   end
 
   def chromium_executable_candidate_path
@@ -487,7 +499,9 @@ class SingleFileArchiveService
     File.open(lock_path, File::RDWR | File::CREAT, 0o644) do |lock_file|
       lock_file.flock(File::LOCK_EX)
 
-      return if installed_chromium_executable_path
+      return if valid_chromium_installation?
+
+      FileUtils.rm_rf(DEFAULT_CHROMIUM_DIR) if File.exist?(DEFAULT_CHROMIUM_DIR)
 
       platform = chrome_for_testing_platform
       version, download_url, sha256 = fetch_chrome_for_testing_download!(platform)

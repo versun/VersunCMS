@@ -3,7 +3,7 @@ class ArchiveUrlJob < ApplicationJob
 
   # Retry with exponential backoff for transient errors
   retry_on Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ECONNREFUSED, wait: :polynomially_longer, attempts: 3
-  retry_on StandardError, wait: :exponentially_longer, attempts: 3 do |job, error|
+  retry_on StandardError, wait: ->(executions) { 2 ** executions }, attempts: 3 do |job, error|
     # Don't retry if it's a configuration error
     error.message.include?("not configured") ||
       error.message.include?("not found") ||
