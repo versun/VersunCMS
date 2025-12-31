@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_28_014824) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_30_000001) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -58,37 +58,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_014824) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "archive_items", force: :cascade do |t|
-    t.datetime "archived_at"
-    t.integer "article_id"
-    t.datetime "created_at", null: false
-    t.text "error_message"
-    t.string "file_path"
-    t.integer "file_size"
-    t.integer "status", default: 0, null: false
-    t.string "title"
-    t.datetime "updated_at", null: false
-    t.string "url", null: false
-    t.index ["article_id"], name: "index_archive_items_on_article_id"
-    t.index ["status"], name: "index_archive_items_on_status"
-    t.index ["url"], name: "index_archive_items_on_url", unique: true
-  end
-
-  create_table "archive_settings", force: :cascade do |t|
-    t.boolean "auto_archive_article_links", default: false, null: false
-    t.boolean "auto_archive_published_articles", default: false, null: false
-    t.boolean "auto_submit_to_archive_org", default: false, null: false
-    t.string "branch", default: "main"
-    t.datetime "created_at", null: false
-    t.boolean "enabled", default: false, null: false
-    t.integer "git_integration_id"
-    t.string "ia_access_key"
-    t.string "ia_secret_key"
-    t.string "repo_url"
-    t.datetime "updated_at", null: false
-    t.index ["git_integration_id"], name: "index_archive_settings_on_git_integration_id"
-  end
-
   create_table "article_tags", force: :cascade do |t|
     t.integer "article_id", null: false
     t.datetime "created_at", null: false
@@ -110,7 +79,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_014824) do
     t.string "meta_title"
     t.datetime "scheduled_at"
     t.string "slug"
-    t.string "source_archive_url"
     t.string "source_author"
     t.text "source_content"
     t.string "source_url"
@@ -323,8 +291,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_28_014824) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "archive_items", "articles"
-  add_foreign_key "archive_settings", "git_integrations"
   add_foreign_key "article_tags", "articles"
   add_foreign_key "article_tags", "tags"
   add_foreign_key "comments", "articles"

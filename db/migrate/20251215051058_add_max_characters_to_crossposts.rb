@@ -17,7 +17,6 @@ class AddMaxCharactersToCrossposts < ActiveRecord::Migration[8.1]
         execute <<-SQL
           UPDATE crossposts SET max_characters = 300 WHERE platform = 'bluesky' AND max_characters IS NULL;
         SQL
-        # Internet Archive 不需要字符限制，设置为 NULL
       end
     end
   end

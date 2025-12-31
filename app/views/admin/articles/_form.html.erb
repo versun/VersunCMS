@@ -45,14 +45,10 @@
 
           <div class="field">
             <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
-              <%= form.text_field :source_url, placeholder: "Source URL & Archive", style: "flex: 1;", data: { source_reference_target: "url" } %>
+              <%= form.text_field :source_url, placeholder: "Source URL", style: "flex: 1;", data: { source_reference_target: "url" } %>
               <button type="button" class="btn btn-secondary" data-action="click->source-reference#fetchTwitter" data-source-reference-target="fetchBtn" style="white-space: nowrap;">
                 <i class="fab fa-twitter"></i> Fetch
               </button>
-              <button type="button" class="btn btn-secondary" data-action="click->source-reference#archiveUrl" data-source-reference-target="archiveBtn" style="white-space: nowrap;">
-                <i class="fas fa-archive"></i> Archive
-              </button>
-              <%= form.text_field :source_archive_url, placeholder: "https://web.archive.org/...", style: "flex: 1;", data: { source_reference_target: "archiveUrl" } %>
             </div>
           </div>
 
@@ -186,21 +182,6 @@
             <% end %>
           </div>
 
-          <% archive_setting = (ArchiveSetting.table_exists? ? ArchiveSetting.instance : nil) rescue nil %>
-          <% archive_enabled = archive_setting&.configured? %>
-          <div class="field checkbox crosspost-field">
-            <%= form.check_box :crosspost_internet_archive, disabled: !archive_enabled %>
-            Archive
-            <% unless archive_enabled %>
-              <span class="info-text">(off)</span>
-            <% end %>
-            <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'internet_archive') do |post_form| %>
-              <% if post_form.object.platform == 'internet_archive' %>
-                <%= post_form.text_field :url, placeholder: "Archive URL", class: "crosspost-url-input" %>
-                <%= post_form.hidden_field :platform, value: "internet_archive" %>
-              <% end %>
-            <% end %>
-          </div>
         </div>
       </div>
     </div>

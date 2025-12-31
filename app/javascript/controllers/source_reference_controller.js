@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["url", "archiveUrl", "archiveBtn", "fetchBtn", "author", "content", "status"]
+  static targets = ["url", "fetchBtn", "author", "content", "status"]
 
   connect() {
     // Controller initialized
@@ -67,106 +67,6 @@ export default class extends Controller {
     } catch (e) {
       return false
     }
-  }
-
-  async archiveUrl(event) {
-    event.preventDefault()
-    event.stopPropagation()
-
-    const url = this.urlTarget.value.trim()
-
-    if (!url) {
-      this.showStatus("Please enter a Source URL first", "error")
-      return
-    }
-
-    // 验证 URL 格式
-    try {
-      new URL(url)
-    } catch (e) {
-      this.showStatus("Invalid URL format", "error")
-      return
-    }
-
-    this.setLoading(this.archiveBtnTarget, true)
-    this.showStatus("Starting archive job...", "info")
-
-    try {
-      const response = await fetch("/admin/sources/archive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": this.csrfToken,
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({ url: url })
-      })
-
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        if (data.archived_url) {
-          // Already archived, use the existing URL
-          this.archiveUrlTarget.value = data.archived_url
-          this.showStatus("URL archived successfully!", "success")
-          this.setLoading(this.archiveBtnTarget, false)
-        } else if (data.archive_item_id) {
-          // Job started, poll for completion
-          this.showStatus("Archiving in progress... (this may take a few minutes)", "info")
-          this.pollArchiveStatus(data.archive_item_id)
-        }
-      } else {
-        this.showStatus(data.error || "Failed to archive URL", "error")
-        this.setLoading(this.archiveBtnTarget, false)
-      }
-    } catch (error) {
-      console.error("Archive error:", error)
-      this.showStatus(`Network error: ${error.message}`, "error")
-      this.setLoading(this.archiveBtnTarget, false)
-    }
-  }
-
-  async pollArchiveStatus(archiveItemId) {
-    const maxAttempts = 120 // 10 minutes at 5 second intervals
-    let attempts = 0
-
-    const poll = async () => {
-      attempts++
-
-      try {
-        const response = await fetch(`/admin/sources/archive_status/${archiveItemId}`, {
-          headers: {
-            "Accept": "application/json"
-          }
-        })
-
-        const data = await response.json()
-
-        if (data.status === "completed") {
-          this.archiveUrlTarget.value = data.archived_url
-          this.showStatus("URL archived successfully!", "success")
-          this.setLoading(this.archiveBtnTarget, false)
-          return
-        } else if (data.status === "failed") {
-          this.showStatus(data.error || "Archive failed", "error")
-          this.setLoading(this.archiveBtnTarget, false)
-          return
-        } else if (attempts >= maxAttempts) {
-          this.showStatus("Archive is taking too long. Check the Archives page for status.", "error")
-          this.setLoading(this.archiveBtnTarget, false)
-          return
-        }
-
-        // Still processing, poll again after 5 seconds
-        setTimeout(poll, 5000)
-      } catch (error) {
-        console.error("Poll error:", error)
-        this.showStatus(`Network error while checking status: ${error.message}`, "error")
-        this.setLoading(this.archiveBtnTarget, false)
-      }
-    }
-
-    poll()
   }
 
   setLoading(button, loading) {

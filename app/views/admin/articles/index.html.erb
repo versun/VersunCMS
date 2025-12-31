@@ -60,39 +60,30 @@
       </div>
     </div>
 
-    <!-- Batch Crosspost Modal -->
-    <div id="batchCrosspostModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-      <div style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 500px; border-radius: 8px;">
-        <h3>批量跨平台发布</h3>
-        <p>请选择要发布的平台：</p>
-        <% archive_setting = (ArchiveSetting.table_exists? ? ArchiveSetting.instance : nil) rescue nil %>
-        <% archive_enabled = archive_setting&.configured? %>
-        <%= form_with url: batch_crosspost_admin_articles_path, method: :post, id: "batchCrosspostForm" do |f| %>
-          <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 8px;">
-              <%= check_box_tag "platforms[]", "mastodon", false, id: "platform_mastodon" %>
-              Mastodon
+	    <!-- Batch Crosspost Modal -->
+	    <div id="batchCrosspostModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+	      <div style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 500px; border-radius: 8px;">
+	        <h3>批量跨平台发布</h3>
+	        <p>请选择要发布的平台：</p>
+	        <%= form_with url: batch_crosspost_admin_articles_path, method: :post, id: "batchCrosspostForm" do |f| %>
+	          <div style="margin-bottom: 15px;">
+	            <label style="display: block; margin-bottom: 8px;">
+	              <%= check_box_tag "platforms[]", "mastodon", false, id: "platform_mastodon" %>
+	              Mastodon
             </label>
             <label style="display: block; margin-bottom: 8px;">
               <%= check_box_tag "platforms[]", "twitter", false, id: "platform_twitter" %>
               Twitter
             </label>
-            <label style="display: block; margin-bottom: 8px;">
-              <%= check_box_tag "platforms[]", "bluesky", false, id: "platform_bluesky" %>
-              Bluesky
-            </label>
-            <label style="display: block; margin-bottom: 8px;">
-              <%= check_box_tag "platforms[]", "internet_archive", false, id: "platform_internet_archive", disabled: !archive_enabled %>
-              Internet Archive
-              <% unless archive_enabled %>
-                <span class="info-text">(off)</span>
-              <% end %>
-            </label>
-          </div>
-          <div style="text-align: right;">
-            <button type="button" class="btn btn-sm" onclick="closeBatchCrosspostModal()" style="margin-right: 10px;">取消</button>
-            <%= f.button "确认", type: "submit", class: "btn btn-sm", style: "background: #6f42c1; color: white;",
-                onclick: "return submitBatchFormWithModal(this, 'batchCrosspostForm')" %>
+	            <label style="display: block; margin-bottom: 8px;">
+	              <%= check_box_tag "platforms[]", "bluesky", false, id: "platform_bluesky" %>
+	              Bluesky
+	            </label>
+	          </div>
+	          <div style="text-align: right;">
+	            <button type="button" class="btn btn-sm" onclick="closeBatchCrosspostModal()" style="margin-right: 10px;">取消</button>
+	            <%= f.button "确认", type: "submit", class: "btn btn-sm", style: "background: #6f42c1; color: white;",
+	                onclick: "return submitBatchFormWithModal(this, 'batchCrosspostForm')" %>
           </div>
         <% end %>
       </div>

@@ -7,7 +7,6 @@
 - [x] Post list管理页面的action 添加评论获取功能
 - [ ] Site setting页面添加站点icon上传，自动重命名并上传到static file中
 - [ ] 添加照片集功能 
-- [x] 添加保存到Internet Archive功能，并在article meta中提供链接
 - [ ] 添加更多cross post平台
 - [ ] 添加“自定义URL格式” / Custom route: Post URL, Page URL, Tag URL
 - [ ] 添加打赏功能，Patreon，Github，AFdian
@@ -27,4 +26,3 @@
     - [ ] 智能搜索
 - [ ] 文章不同语言切换，但共享一个comment
 - [ ] 评论支持markdown格式
-- [ ] internet archive功能单独出来，使用archive.md，而不是internet archive

@@ -75,8 +75,6 @@ Located in `app/services/`:
 - **TwitterService**: X/Twitter posting with media upload
 - **MastodonService**: Mastodon posting
 - **BlueskyService**: Bluesky posting with rich text facets
-- **InternetArchiveService**: Upload HTML files to Internet Archive via S3 API
-- **SingleFileArchiveService**: Archive URLs using single-file CLI and push to Git
 
 ### Background Jobs (Solid Queue)
 Key jobs in `app/jobs/`:

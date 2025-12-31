@@ -1,6 +1,6 @@
 class Article < ApplicationRecord
   # Virtual attributes for crosspost functionality
-  attr_accessor :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, :crosspost_internet_archive
+  attr_accessor :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky
   # Virtual attributes for newsletter functionality
   attr_accessor :send_newsletter, :resend_newsletter
 
@@ -31,8 +31,6 @@ class Article < ApplicationRecord
   after_save :schedule_publication, if: :should_schedule?
   after_save :handle_crosspost, if: -> { Setting.table_exists? }
   after_save :handle_newsletter, if: -> { Setting.table_exists? }
-  after_save :handle_archive, if: :handle_archive?
-  after_save :handle_manual_archive, if: :handle_manual_archive?
 
   # SQLite原生搜索功能
   scope :search_content, ->(query) {
@@ -292,46 +290,5 @@ class Article < ApplicationRecord
     end
   end
 
-  def handle_archive
-    return unless publish?
-    return unless saved_change_to_status? || id_previously_changed?
-
-    settings = ArchiveSetting.instance
-    return unless settings.enabled?
-    return unless settings.auto_archive_published_articles? || settings.auto_archive_article_links?
-
-    ArchiveArticleLinksJob.perform_later(id)
-  end
-
-  def handle_manual_archive
-    return unless publish?
-
-    settings = ArchiveSetting.instance
-    return unless settings.enabled? && settings.configured?
-
-    archive_checked = crosspost_internet_archive.to_s == "1" ||
-      crosspost_internet_archive == true ||
-      crosspost_internet_archive.to_s == "true"
-    return unless archive_checked
-
-    ArchiveArticleJob.perform_later(id)
-  end
-
   private
-
-  def handle_archive?
-    return false unless ArchiveSetting.table_exists?
-    settings = ArchiveSetting.instance
-    settings.enabled? && (settings.auto_archive_published_articles? || settings.auto_archive_article_links?)
-  rescue NameError
-    false
-  end
-
-  def handle_manual_archive?
-    return false unless ArchiveSetting.table_exists?
-    settings = ArchiveSetting.instance
-    settings.enabled? && settings.configured?
-  rescue NameError
-    false
-  end
 end

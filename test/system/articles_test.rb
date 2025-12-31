@@ -16,21 +16,20 @@ class ArticlesTest < ApplicationSystemTestCase
     assert_text "share"
   end
 
-  test "show page renders source reference links inside the quote block" do
+  test "show page renders source reference link inside the quote block" do
     article = create_published_article(
       title: "Article With Source Reference",
       description: "",
       content: "<p>Body</p>",
       source_content: "Quoted source text",
-      source_url: "https://example.com/original",
-      source_archive_url: "https://example.com/archive"
+      source_url: "https://example.com/original"
     )
 
     visit article_path(article)
 
     assert_selector ".source-reference__quote .source-reference__links"
     assert_selector ".source-reference__quote a", text: "Original"
-    assert_selector ".source-reference__quote a", text: "Archive"
+    assert_no_selector ".source-reference__quote a", text: "Archive"
   end
 
   test "home page shows description, falls back to full content when description blank" do
