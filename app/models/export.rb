@@ -98,7 +98,17 @@ class Export
   def export_articles
     Rails.event.notify("export.articles_started", component: "Export", level: "info")
 
-    CSV.open(File.join(@export_dir, "articles.csv"), "w", write_headers: true, headers: %w[id title slug description content status scheduled_at created_at updated_at]) do |csv|
+    CSV.open(
+      File.join(@export_dir, "articles.csv"),
+      "w",
+      write_headers: true,
+      headers: %w[
+        id title slug description content status scheduled_at
+        source_url source_author source_content
+        meta_title meta_description meta_image
+        created_at updated_at
+      ]
+    ) do |csv|
       Article.order(:id).find_each do |article|
         # 处理文章内容和附件
         processed_content = process_article_content(article)
@@ -111,6 +121,12 @@ class Export
           processed_content,
           article.status,
           article.scheduled_at,
+          article.source_url,
+          article.source_author,
+          article.source_content,
+          article.meta_title,
+          article.meta_description,
+          article.meta_image,
           article.created_at,
           article.updated_at
         ]

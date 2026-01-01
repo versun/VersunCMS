@@ -29,6 +29,7 @@ class ImportZip
     import_article_tags
     import_crossposts
     import_listmonks
+    import_git_integrations
     import_pages
     import_settings
     import_social_media_posts
@@ -134,19 +135,43 @@ class ImportZip
         next
       end
       article_id = row["id"].presence || "article_#{imported_count + skipped_count}"
-      content = row["content"].presence || ""
-      processed_content = process_imported_content(content, article_id, "article")
+
+      raw_content = row["content"].to_s
+      if raw_content.blank?
+        Rails.event.notify("import_zip.article_skipped", component: "ImportZip", slug: row["slug"], reason: "content_blank", level: "warn")
+        skipped_count += 1
+        next
+      end
+
+      processed_content = process_imported_content(raw_content, article_id, "article")
       processed_content = fix_content_sgid_references(processed_content)
-      Article.create!(
+
+      base_attributes = {
         title: row["title"],
         slug: row["slug"],
         description: row["description"],
-        content: processed_content,
+        source_url: row["source_url"],
+        source_author: row["source_author"],
+        source_content: row["source_content"],
+        meta_title: row["meta_title"],
+        meta_description: row["meta_description"],
+        meta_image: row["meta_image"],
         status: row["status"],
         scheduled_at: row["scheduled_at"],
         created_at: row["created_at"],
         updated_at: row["updated_at"]
-      )
+      }
+
+      begin
+        Article.create!(**base_attributes, content: processed_content)
+      rescue ActiveRecord::RecordInvalid => e
+        if e.record.is_a?(Article) && e.record.errors.added?(:content, "can't be blank") && processed_content.present?
+          Rails.event.notify("import_zip.article_fallback_to_html", component: "ImportZip", slug: row["slug"], reason: "rich_text_content_blank", level: "warn")
+          Article.create!(**base_attributes, content_type: "html", html_content: processed_content)
+        else
+          raise
+        end
+      end
       imported_count += 1
     end
     Rails.event.notify("import_zip.articles_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
@@ -216,9 +241,26 @@ class ImportZip
 
     Rails.event.notify("import_zip.crossposts_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
     imported_count = 0
+    updated_count = 0
+    skipped_count = 0
     CSV.foreach(csv_path, headers: true) do |row|
-      Crosspost.update(
-        platform: row["platform"],
+      platform = row["platform"].to_s.strip.downcase
+      unless platform.present?
+        Rails.event.notify("import_zip.crosspost_skipped", component: "ImportZip", reason: "platform_missing", level: "warn")
+        skipped_count += 1
+        next
+      end
+
+      unless Crosspost::PLATFORMS.include?(platform)
+        Rails.event.notify("import_zip.crosspost_skipped", component: "ImportZip", platform: platform, reason: "unsupported_platform", level: "warn")
+        skipped_count += 1
+        next
+      end
+
+      crosspost = Crosspost.find_or_initialize_by(platform: platform)
+      is_new_record = crosspost.new_record?
+
+      crosspost.assign_attributes(
         server_url: row["server_url"],
         client_key: row["client_key"],
         client_secret: row["client_secret"],
@@ -228,13 +270,115 @@ class ImportZip
         api_key_secret: row["api_key_secret"],
         username: row["username"],
         app_password: row["app_password"],
-        enabled: row["enabled"],
+        enabled: cast_boolean(row["enabled"], default: false),
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       )
-      imported_count += 1
+
+      begin
+        crosspost.save!
+      rescue ActiveRecord::RecordInvalid
+        if crosspost.enabled?
+          Rails.event.notify(
+            "import_zip.crosspost_disabled_due_to_missing_credentials",
+            component: "ImportZip",
+            platform: platform,
+            errors: crosspost.errors.full_messages.join(", "),
+            level: "warn"
+          )
+          crosspost.enabled = false
+          crosspost.save!
+        else
+          raise
+        end
+      end
+
+      if is_new_record
+        imported_count += 1
+      else
+        updated_count += 1
+      end
     end
-    Rails.event.notify("import_zip.crossposts_import_completed", component: "ImportZip", imported_count: imported_count, level: "info")
+    Rails.event.notify(
+      "import_zip.crossposts_import_completed",
+      component: "ImportZip",
+      imported_count: imported_count,
+      updated_count: updated_count,
+      skipped_count: skipped_count,
+      level: "info"
+    )
+  end
+
+  def import_git_integrations
+    base_dir = find_csv_base_dir
+    csv_path = File.join(base_dir, "git_integrations.csv")
+    return unless File.exist?(csv_path)
+
+    Rails.event.notify("import_zip.git_integrations_import_started", component: "ImportZip", csv_path: csv_path, level: "info")
+    imported_count = 0
+    updated_count = 0
+    skipped_count = 0
+
+    CSV.foreach(csv_path, headers: true) do |row|
+      provider = row["provider"].to_s.strip.downcase
+      unless provider.present?
+        Rails.event.notify("import_zip.git_integration_skipped", component: "ImportZip", reason: "provider_missing", level: "warn")
+        skipped_count += 1
+        next
+      end
+
+      unless GitIntegration::PROVIDERS.include?(provider)
+        Rails.event.notify("import_zip.git_integration_skipped", component: "ImportZip", provider: provider, reason: "unsupported_provider", level: "warn")
+        skipped_count += 1
+        next
+      end
+
+      git_integration = GitIntegration.find_or_initialize_by(provider: provider)
+      is_new_record = git_integration.new_record?
+
+      git_integration.assign_attributes(
+        name: row["name"],
+        server_url: row["server_url"],
+        username: row["username"],
+        access_token: row["access_token"],
+        enabled: cast_boolean(row["enabled"], default: false),
+        created_at: row["created_at"],
+        updated_at: row["updated_at"]
+      )
+
+      begin
+        git_integration.save!
+      rescue ActiveRecord::RecordInvalid
+        if git_integration.enabled? && git_integration.errors.added?(:access_token, "can't be blank")
+          Rails.event.notify(
+            "import_zip.git_integration_disabled_due_to_missing_token",
+            component: "ImportZip",
+            provider: provider,
+            errors: git_integration.errors.full_messages.join(", "),
+            level: "warn"
+          )
+          git_integration.enabled = false
+          git_integration.save!
+        else
+          raise
+        end
+      end
+
+      if is_new_record
+        imported_count += 1
+      else
+        updated_count += 1
+      end
+    end
+
+    Rails.event.notify(
+      "import_zip.git_integrations_import_completed",
+      component: "ImportZip",
+      imported_count: imported_count,
+      updated_count: updated_count,
+      skipped_count: skipped_count,
+      level: "info"
+    )
   end
 
   def import_listmonks
@@ -273,19 +417,37 @@ class ImportZip
         next
       end
       page_id = row["id"].presence || "page_#{imported_count + skipped_count}"
-      content = row["content"].presence || ""
-      processed_content = process_imported_content(content, page_id, "page")
+
+      raw_content = row["content"].to_s
+      if raw_content.blank?
+        Rails.event.notify("import_zip.page_skipped", component: "ImportZip", slug: row["slug"], reason: "content_blank", level: "warn")
+        skipped_count += 1
+        next
+      end
+
+      processed_content = process_imported_content(raw_content, page_id, "page")
       processed_content = fix_content_sgid_references(processed_content)
-      Page.create!(
+
+      base_attributes = {
         title: row["title"],
         slug: row["slug"],
-        content: processed_content,
         status: row["status"],
         redirect_url: row["redirect_url"],
         page_order: row["page_order"],
         created_at: row["created_at"],
         updated_at: row["updated_at"]
-      )
+      }
+
+      begin
+        Page.create!(**base_attributes, content: processed_content)
+      rescue ActiveRecord::RecordInvalid => e
+        if e.record.is_a?(Page) && e.record.errors.added?(:content, "can't be blank") && processed_content.present?
+          Rails.event.notify("import_zip.page_fallback_to_html", component: "ImportZip", slug: row["slug"], reason: "rich_text_content_blank", level: "warn")
+          Page.create!(**base_attributes, content_type: "html", html_content: processed_content)
+        else
+          raise
+        end
+      end
       imported_count += 1
     end
     Rails.event.notify("import_zip.pages_import_completed", component: "ImportZip", imported_count: imported_count, skipped_count: skipped_count, level: "info")
@@ -435,6 +597,18 @@ class ImportZip
         next
       end
 
+      if row["author_name"].blank?
+        Rails.event.notify("import_zip.comment_skipped", component: "ImportZip", article_id: article.id, reason: "author_name_missing", level: "warn")
+        skipped_count += 1
+        next
+      end
+
+      if row["content"].blank?
+        Rails.event.notify("import_zip.comment_skipped", component: "ImportZip", article_id: article.id, reason: "content_blank", level: "warn")
+        skipped_count += 1
+        next
+      end
+
       # 检查是否已存在相同的记录
       existing_comment = nil
 
@@ -490,6 +664,8 @@ class ImportZip
 
       comment = Comment.create!(
         article_id: article.id,
+        commentable_type: "Article",
+        commentable_id: article.id,
         parent_id: nil, # 先不设置 parent_id
         author_name: row["author_name"],
         author_url: row["author_url"],
@@ -985,6 +1161,11 @@ class ImportZip
   rescue JSON::ParserError
     Rails.event.notify("import_zip.json_parse_failed", component: "ImportZip", reason: "invalid_format", level: "warn")
     {}
+  end
+
+  def cast_boolean(value, default: false)
+    casted = ActiveModel::Type::Boolean.new.cast(value)
+    casted.nil? ? default : casted
   end
 
   def detect_content_type(file_path)
