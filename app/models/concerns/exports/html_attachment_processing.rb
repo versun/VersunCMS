@@ -93,17 +93,61 @@ module Exports
       original_url = img["src"]
       return unless original_url.present?
 
-      return unless original_url.include?("/rails/active_storage/blobs/") ||
-                    original_url.include?("/rails/active_storage/representations/")
+      # 处理 ActiveStorage URL
+      if original_url.include?("/rails/active_storage/blobs/") ||
+         original_url.include?("/rails/active_storage/representations/")
+        blob = extract_blob_from_url(original_url)
+        return unless blob
 
-      blob = extract_blob_from_url(original_url)
-      return unless blob
-
-      filename = blob.filename.to_s
-      new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
-      img["src"] = new_url if new_url
+        filename = blob.filename.to_s
+        new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
+        img["src"] = new_url if new_url
+      # 处理外部图片 URL (RemoteImage)
+      elsif original_url.start_with?("http")
+        filename = extract_filename_from_url(original_url)
+        new_url = download_and_save_attachment(original_url, filename, record_id, record_type)
+        img["src"] = new_url if new_url
+      end
     rescue => e
       Rails.event.notify("exports.image_element_failed", component: self.class.name, error: e.message, level: "error")
+    end
+
+    def extract_filename_from_url(url)
+      # 从 URL 中提取文件名
+      uri = URI.parse(url)
+      path = uri.path
+      filename = File.basename(path)
+      # 如果没有文件名或扩展名，生成一个带扩展名的文件名
+      if filename.blank? || !filename.include?(".")
+        ext = detect_extension_from_content_type(url) || ".jpg"
+        "#{SecureRandom.hex(8)}#{ext}"
+      else
+        filename
+      end
+    rescue => e
+      "#{SecureRandom.hex(8)}.jpg"
+    end
+
+    def detect_extension_from_content_type(url)
+      # 尝试通过 HEAD 请求获取 Content-Type
+      require "net/http"
+      Net::HTTP.start(URI.parse(url).host, use_ssl: true) do |http|
+        response = http.head(url)
+        content_type = response["Content-Type"]
+        if content_type.present?
+          case content_type
+          when "image/jpeg" then ".jpg"
+          when "image/png" then ".png"
+          when "image/gif" then ".gif"
+          when "image/webp" then ".webp"
+          when "image/svg+xml" then ".svg"
+          when "image/bmp" then ".bmp"
+          else nil
+          end
+        end
+      end
+    rescue => e
+      nil
     end
 
     def download_and_save_attachment(original_url, filename, record_id, record_type)

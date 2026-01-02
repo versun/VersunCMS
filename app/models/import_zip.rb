@@ -1068,14 +1068,13 @@ class ImportZip
 
     if is_local_attachment?(original_url)
       attachment_path = safe_join_path(@import_dir, original_url)
-      if File.exist?(attachment_path) && safe_file_path?(attachment_path)
+      if File.exist?(attachment_path) && safe_file_path?(attachment_url)
         File.open(attachment_path) do |file|
           filename = File.basename(attachment_path)
           content_type = detect_content_type(attachment_path)
           blob = ActiveStorage::Blob.create_and_upload!(
             io: file, filename: filename, content_type: content_type
           )
-          # img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
           signed_id = blob.signed_id
           filename = blob.filename.to_s
           new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
@@ -1086,12 +1085,71 @@ class ImportZip
       end
     elsif is_active_storage_url?(original_url)
       blob = extract_blob_from_url(original_url)
-      # img['src'] = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true) if blob
-      signed_id = blob.signed_id
-      filename = blob.filename.to_s
-      new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
-      img["src"] = new_url
+      if blob
+        signed_id = blob.signed_id
+        filename = blob.filename.to_s
+        new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
+        img["src"] = new_url
+      end
+    elsif original_url.start_with?("http")
+      # 处理外部图片 URL (RemoteImage)
+      download_and_process_remote_image(img, original_url, record_id, record_type)
     end
+  end
+
+  def download_and_process_remote_image(img, original_url, record_id, record_type)
+    # 生成唯一文件名
+    ext = extract_extension_from_url(original_url) || ".jpg"
+    filename = "#{SecureRandom.hex(8)}#{ext}"
+
+    # 保存到 ActiveStorage
+    begin
+      URI.open(original_url) do |remote_file|
+        content_type = detect_content_type_from_url(original_url) || "image/jpeg"
+        blob = ActiveStorage::Blob.create_and_upload!(
+          io: remote_file, filename: filename, content_type: content_type
+        )
+        new_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
+        img["src"] = new_url
+        Rails.event.notify("import_zip.remote_image_processed", component: "ImportZip", original_url: original_url, new_url: new_url, level: "info")
+      end
+    rescue => e
+      Rails.event.notify("import_zip.remote_image_download_failed", component: "ImportZip", url: original_url, error: e.message, level: "error")
+    end
+  end
+
+  def extract_extension_from_url(url)
+    uri = URI.parse(url)
+    path = uri.path
+    filename = File.basename(path)
+    if filename.include?(".")
+      File.extname(filename)
+    else
+      nil
+    end
+  rescue => e
+    nil
+  end
+
+  def detect_content_type_from_url(url)
+    require "net/http"
+    Net::HTTP.start(URI.parse(url).host, use_ssl: true) do |http|
+      response = http.head(url)
+      content_type = response["Content-Type"]
+      if content_type.present?
+        case content_type
+        when "image/jpeg" then "image/jpeg"
+        when "image/png" then "image/png"
+        when "image/gif" then "image/gif"
+        when "image/webp" then "image/webp"
+        when "image/svg+xml" then "image/svg+xml"
+        when "image/bmp" then "image/bmp"
+        else "image/jpeg"
+        end
+      end
+    end
+  rescue => e
+    "image/jpeg"
   end
 
   def process_setting_footer_content(content, record_id = nil, record_type = nil)
