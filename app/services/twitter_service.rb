@@ -42,7 +42,13 @@ class TwitterService
 
     client = create_client
     max_length = @settings.effective_max_characters || 250
-    tweet = build_content(article: article, max_length: max_length, count_non_ascii_double: true)
+
+    quote_tweet_id = quote_tweet_id_for_article(article)
+    tweet = if quote_tweet_id
+      build_content(article.slug, article.title, article.plain_text_content, article.description, max_length: max_length, count_non_ascii_double: true)
+    else
+      build_content(article: article, max_length: max_length, count_non_ascii_double: true)
+    end
 
     begin
       user = client.get("users/me")
@@ -81,6 +87,7 @@ class TwitterService
 
       # 构建推文数据
       tweet_data = { text: tweet }
+      tweet_data[:quote_tweet_id] = quote_tweet_id if quote_tweet_id
       if media_ids.any?
         tweet_data[:media] = {
           media_ids: media_ids.map(&:to_s)
@@ -115,6 +122,7 @@ class TwitterService
             component: "TwitterService"
 
           text_only_data = { text: tweet }
+          text_only_data[:quote_tweet_id] = quote_tweet_id if quote_tweet_id
           Rails.event.notify "twitter_service.sending_text_only",
             level: "info",
             component: "TwitterService",
@@ -600,12 +608,37 @@ class TwitterService
     true
   end
 
+  def quote_tweet_id_for_article(article)
+    source_url = article&.source_url.to_s.strip
+    return nil if source_url.blank?
+
+    host = extract_host_from_url(source_url)
+    return nil unless x_dot_com_host?(host)
+
+    extract_tweet_id_from_url(source_url)
+  end
+
+  def extract_host_from_url(url)
+    normalized_url = url.match?(%r{^https?://}i) ? url : "https://#{url}"
+    URI.parse(normalized_url).host&.downcase
+  rescue URI::InvalidURIError
+    nil
+  end
+
+  def x_dot_com_host?(host)
+    return false if host.blank?
+
+    host == "x.com" || host.end_with?(".x.com")
+  end
+
   # Extract tweet ID from Twitter/X URL
   # Supports formats:
   # - https://twitter.com/username/status/1234567890
   # - https://x.com/username/status/1234567890
   def extract_tweet_id_from_url(url)
-    match = url.match(%r{(?:twitter\.com|x\.com)/\w+/status/(\d+)})
+    return nil if url.blank?
+
+    match = url.match(%r{(?:twitter\.com|x\.com)/(?:\w+/status|i/web/status)/(\d+)}i)
     match ? match[1] : nil
   end
 
