@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_30_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_03_000022) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -107,7 +107,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_30_000001) do
     t.string "url"
     t.index ["article_id", "platform", "external_id"], name: "index_comments_on_article_platform_external_id", unique: true, where: "platform IS NOT NULL AND external_id IS NOT NULL"
     t.index ["article_id"], name: "index_comments_on_article_id"
-    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
   end
 
