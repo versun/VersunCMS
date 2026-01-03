@@ -12,7 +12,11 @@ class ImportZip
   def initialize(zip_path)
     @zip_path = zip_path
     @error_message = nil
-    @import_dir = Rails.root.join("tmp", "imports", "import_#{Time.current.strftime('%Y%m%d_%H%M%S')}")
+    @import_dir = Rails.root.join(
+      "tmp",
+      "imports",
+      "import_#{Time.current.strftime('%Y%m%d_%H%M%S')}_#{SecureRandom.hex(6)}"
+    )
     FileUtils.mkdir_p(@import_dir)
   end
 
@@ -146,6 +150,9 @@ class ImportZip
       processed_content = process_imported_content(raw_content, article_id, "article")
       processed_content = fix_content_sgid_references(processed_content)
 
+      # 获取 content_type，默认为 rich_text
+      content_type = row["content_type"].presence || "rich_text"
+
       base_attributes = {
         title: row["title"],
         slug: row["slug"],
@@ -158,12 +165,20 @@ class ImportZip
         meta_image: row["meta_image"],
         status: row["status"],
         scheduled_at: row["scheduled_at"],
+        comment: cast_boolean(row["comment"], default: false),
+        content_type: content_type,
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       }
 
       begin
-        Article.create!(**base_attributes, content: processed_content)
+        # 如果是 html 类型，使用 html_content
+        if content_type == "html"
+          html_content = row["html_content"].presence || processed_content
+          Article.create!(**base_attributes, html_content: html_content)
+        else
+          Article.create!(**base_attributes, content: processed_content)
+        end
       rescue ActiveRecord::RecordInvalid => e
         if e.record.is_a?(Article) && e.record.errors.added?(:content, "can't be blank") && processed_content.present?
           Rails.event.notify("import_zip.article_fallback_to_html", component: "ImportZip", slug: row["slug"], reason: "rich_text_content_blank", level: "warn")
@@ -271,6 +286,10 @@ class ImportZip
         username: row["username"],
         app_password: row["app_password"],
         enabled: cast_boolean(row["enabled"], default: false),
+        auto_fetch_comments: cast_boolean(row["auto_fetch_comments"], default: false),
+        comment_fetch_schedule: row["comment_fetch_schedule"],
+        max_characters: row["max_characters"],
+        settings: parse_json_field(row["settings"]) || {},
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       )
@@ -428,18 +447,29 @@ class ImportZip
       processed_content = process_imported_content(raw_content, page_id, "page")
       processed_content = fix_content_sgid_references(processed_content)
 
+      # 获取 content_type，默认为 rich_text
+      content_type = row["content_type"].presence || "rich_text"
+
       base_attributes = {
         title: row["title"],
         slug: row["slug"],
         status: row["status"],
         redirect_url: row["redirect_url"],
         page_order: row["page_order"],
+        comment: cast_boolean(row["comment"], default: false),
+        content_type: content_type,
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       }
 
       begin
-        Page.create!(**base_attributes, content: processed_content)
+        # 如果是 html 类型，使用 html_content
+        if content_type == "html"
+          html_content = row["html_content"].presence || processed_content
+          Page.create!(**base_attributes, html_content: html_content)
+        else
+          Page.create!(**base_attributes, content: processed_content)
+        end
       rescue ActiveRecord::RecordInvalid => e
         if e.record.is_a?(Page) && e.record.errors.added?(:content, "can't be blank") && processed_content.present?
           Rails.event.notify("import_zip.page_fallback_to_html", component: "ImportZip", slug: row["slug"], reason: "rich_text_content_blank", level: "warn")
@@ -478,6 +508,18 @@ class ImportZip
         custom_css: csv_data["custom_css"],
         social_links: social_links,
         static_files: static_files || {},
+        auto_regenerate_triggers: parse_json_field(csv_data["auto_regenerate_triggers"]) || [],
+        deploy_branch: csv_data["deploy_branch"],
+        deploy_provider: csv_data["deploy_provider"],
+        deploy_repo_url: csv_data["deploy_repo_url"],
+        local_generation_path: csv_data["local_generation_path"],
+        static_generation_destination: csv_data["static_generation_destination"],
+        static_generation_delay: csv_data["static_generation_delay"],
+        setup_completed: cast_boolean(csv_data["setup_completed"], default: false),
+        github_backup_enabled: cast_boolean(csv_data["github_backup_enabled"], default: false),
+        github_repo_url: csv_data["github_repo_url"],
+        github_token: csv_data["github_token"],
+        github_backup_branch: csv_data["github_backup_branch"],
         created_at: csv_data["created_at"],
         updated_at: csv_data["updated_at"]
       )
@@ -498,6 +540,18 @@ class ImportZip
           custom_css: row["custom_css"],
           social_links: social_links,
           static_files: static_files || {},
+          auto_regenerate_triggers: parse_json_field(row["auto_regenerate_triggers"]) || [],
+          deploy_branch: row["deploy_branch"],
+          deploy_provider: row["deploy_provider"],
+          deploy_repo_url: row["deploy_repo_url"],
+          local_generation_path: row["local_generation_path"],
+          static_generation_destination: row["static_generation_destination"],
+          static_generation_delay: row["static_generation_delay"],
+          setup_completed: cast_boolean(row["setup_completed"], default: false),
+          github_backup_enabled: cast_boolean(row["github_backup_enabled"], default: false),
+          github_repo_url: row["github_repo_url"],
+          github_token: row["github_token"],
+          github_backup_branch: row["github_backup_branch"],
           created_at: row["created_at"],
           updated_at: row["updated_at"]
         )

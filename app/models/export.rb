@@ -106,6 +106,7 @@ class Export
         id title slug description content status scheduled_at
         source_url source_author source_content
         meta_title meta_description meta_image
+        content_type html_content comment
         created_at updated_at
       ]
     ) do |csv|
@@ -127,6 +128,9 @@ class Export
           article.meta_title,
           article.meta_description,
           article.meta_image,
+          article.content_type,
+          article.html_content,
+          article.comment,
           article.created_at,
           article.updated_at
         ]
@@ -151,7 +155,18 @@ class Export
   def export_crossposts
     Rails.event.notify("export.crossposts_started", component: "Export", level: "info")
 
-    CSV.open(File.join(@export_dir, "crossposts.csv"), "w", write_headers: true, headers: %w[id platform server_url client_key client_secret access_token access_token_secret api_key api_key_secret username app_password enabled created_at updated_at]) do |csv|
+    CSV.open(
+      File.join(@export_dir, "crossposts.csv"),
+      "w",
+      write_headers: true,
+      headers: %w[
+        id platform server_url client_key client_secret
+        access_token access_token_secret api_key api_key_secret
+        username app_password enabled auto_fetch_comments
+        comment_fetch_schedule max_characters settings
+        created_at updated_at
+      ]
+    ) do |csv|
       Crosspost.order(:id).find_each do |crosspost|
         csv << [
           crosspost.id,
@@ -166,6 +181,10 @@ class Export
           crosspost.username,
           crosspost.app_password,
           crosspost.enabled,
+          crosspost.auto_fetch_comments,
+          crosspost.comment_fetch_schedule,
+          crosspost.max_characters,
+          crosspost.settings&.to_json,
           crosspost.created_at,
           crosspost.updated_at
         ]
@@ -227,7 +246,7 @@ class Export
   def export_pages
     Rails.event.notify("export.pages_started", component: "Export", level: "info")
 
-    CSV.open(File.join(@export_dir, "pages.csv"), "w", write_headers: true, headers: %w[id title slug content status redirect_url page_order created_at updated_at]) do |csv|
+    CSV.open(File.join(@export_dir, "pages.csv"), "w", write_headers: true, headers: %w[id title slug content status redirect_url page_order content_type html_content comment created_at updated_at]) do |csv|
       Page.order(:id).find_each do |page|
         # 处理页面内容（如果有富文本内容的话）
         content = page.content.present? ? process_page_content(page) : ""
@@ -240,6 +259,9 @@ class Export
           page.status,
           page.redirect_url,
           page.page_order,
+          page.content_type,
+          page.html_content,
+          page.comment,
           page.created_at,
           page.updated_at
         ]
@@ -259,7 +281,19 @@ class Export
   def export_settings
     Rails.event.notify("export.settings_started", component: "Export", level: "info")
 
-    CSV.open(File.join(@export_dir, "settings.csv"), "w", write_headers: true, headers: %w[id title description author url time_zone head_code custom_css social_links footer tool_code giscus created_at updated_at]) do |csv|
+    CSV.open(
+      File.join(@export_dir, "settings.csv"),
+      "w",
+      write_headers: true,
+      headers: %w[
+        id title description author url time_zone head_code custom_css
+        social_links footer tool_code giscus static_files
+        auto_regenerate_triggers deploy_branch deploy_provider deploy_repo_url
+        local_generation_path static_generation_destination static_generation_delay
+        setup_completed github_backup_enabled github_repo_url github_token
+        github_backup_branch created_at updated_at
+      ]
+    ) do |csv|
       Setting.order(:id).find_each do |setting|
         # 处理footer内容（如果有富文本内容的话）
         footer_content = setting.footer.present? ? process_setting_footer(setting) : ""
@@ -277,6 +311,19 @@ class Export
           footer_content,
           setting.tool_code,
           setting.giscus,
+          setting.static_files&.to_json,
+          setting.auto_regenerate_triggers&.to_json,
+          setting.deploy_branch,
+          setting.deploy_provider,
+          setting.deploy_repo_url,
+          setting.local_generation_path,
+          setting.static_generation_destination,
+          setting.static_generation_delay,
+          setting.setup_completed,
+          setting.github_backup_enabled,
+          setting.github_repo_url,
+          setting.github_token,
+          setting.github_backup_branch,
           setting.created_at,
           setting.updated_at
         ]

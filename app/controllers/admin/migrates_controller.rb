@@ -82,7 +82,14 @@ class Admin::MigratesController < Admin::BaseController
     temp_file = uploads_dir.join(secure_filename)
 
     File.open(temp_file, "wb") do |f|
-      IO.copy_stream(uploaded_file, f)
+      source = if uploaded_file.respond_to?(:tempfile) && uploaded_file.tempfile
+        uploaded_file.tempfile
+      else
+        uploaded_file
+      end
+
+      source.rewind if source.respond_to?(:rewind)
+      IO.copy_stream(source, f)
     end
 
     # Execute import job
