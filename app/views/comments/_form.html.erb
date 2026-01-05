@@ -27,24 +27,24 @@
       <% captcha_answer_id = "comment-captcha-answer-#{SecureRandom.hex(6)}" %>
     <% end %>
 
-    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
-      <div style="flex: 1;">
-        <%= f.text_field :author_name, required: true, placeholder: "Name *", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
+    <div class="comment-form-row">
+      <div class="comment-form-field">
+        <%= f.text_field :author_name, required: true, placeholder: "Name *", class: "comment-form-input", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
       </div>
-      <div style="flex: 1;">
-        <%= f.url_field :author_url, placeholder: "Website (optional)", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;" %>
+      <div class="comment-form-field">
+        <%= f.url_field :author_url, placeholder: "Website (optional)", class: "comment-form-input" %>
       </div>
     </div>
 
     <div style="margin-bottom: 0.75rem;">
-      <%= f.text_area :content, required: true, placeholder: is_reply ? "Reply *" : "Comment *", rows: 3, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-size: 0.875rem; font-family: inherit;", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
+      <%= f.text_area :content, required: true, placeholder: is_reply ? "Reply *" : "Comment *", rows: 3, class: "comment-form-textarea", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
     </div>
 
     <% unless is_mobile %>
     <div data-math-captcha-target="container" style="margin-bottom: 0.75rem;">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <div class="comment-form-captcha">
         <label for="<%= captcha_answer_id %>" style="font-size: 0.875rem; color: #333; white-space: nowrap;"><span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
-        <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "答案", style: "width: 120px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.875rem;", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
+        <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "答案", class: "comment-captcha-input", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
       </div>
       <div data-math-captcha-target="message" style="margin-top: 0.25rem; font-size: 12px; display: none;"></div>
       <%= hidden_field_tag "captcha[a]", captcha[:a], data: { math_captcha_target: "a" } %>
@@ -53,7 +53,7 @@
     </div>
     <% end %>
 
-    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+ <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
       <%= f.submit is_reply ? "Reply" : "Submit", style: "padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;" %>
       <% if show_success %>
         <span class="comment-success-message" style="display: inline-flex; align-items: center; border: 1px solid #333; padding: 0.35rem 0.5rem; border-radius: 4px; background: #fff; font-size: 0.8rem; color: #333;">
@@ -61,7 +61,7 @@
         </span>
       <% end %>
       <% if is_reply %>
-        <button type="button" onclick="hideReplyForm(<%= parent_id %>)" style="padding: 0.5rem 1rem; background-color: #f0f0f0; color: #666; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Cancel</button>
+        <button type="button" onclick="hideReplyForm(<%= parent_id %>)" class="comment-form-cancel">Cancel</button>
       <% end %>
     </div>
   <% end %>

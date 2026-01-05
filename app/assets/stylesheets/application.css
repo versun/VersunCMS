@@ -442,6 +442,72 @@ footer {
     text-decoration: none;
 }
 
+/* Comment Form */
+.comment-form {
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+.comment-form-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.comment-form-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.comment-form-input,
+.comment-form-textarea,
+.comment-captcha-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: inherit;
+}
+
+.comment-form-textarea {
+    resize: vertical;
+}
+
+.comment-form-captcha {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.comment-form-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.comment-form-submit {
+    padding: 0.5rem 1.25rem;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.comment-form-cancel {
+    padding: 0.5rem 1rem;
+    background-color: #f0f0f0;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
 .article h1,
 h2 {
     color: #c04000;
@@ -688,6 +754,43 @@ h2 {
 
     .newsletter-form-group {
         gap: 6px;
+    }
+
+    .comment-form {
+        padding: 0.75rem;
+    }
+
+    .comment-form-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .comment-form-captcha {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .comment-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .comment-form-submit,
+    .comment-form-cancel {
+        width: 100%;
+    }
+
+    .tag-subscription-inline {
+        width: 100%;
+    }
+
+    .tag-subscription-form-inline-small {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .newsletter-email-input-small {
+        width: 100%;
     }
 }
 
@@ -1121,13 +1224,13 @@ h2 {
     outline: none;
 }
 
-[data-theme="dark"] .comment-form button[type="button"][style*="background-color: #f0f0f0"] {
+[data-theme="dark"] .comment-form-cancel {
     background-color: var(--hover-bg) !important;
     border-color: var(--border-color) !important;
     color: var(--text-secondary) !important;
 }
 
-[data-theme="dark"] .comment-form button[type="button"][style*="background-color: #f0f0f0"]:hover {
+[data-theme="dark"] .comment-form-cancel:hover {
     background-color: #3a3a3a !important;
     color: var(--text-color) !important;
 }

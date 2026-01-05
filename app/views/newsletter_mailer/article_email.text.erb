@@ -4,6 +4,17 @@
 <%= @article.description %>
 
 <% end %>
+<% if @article.has_source? %>
+参考:
+<% if @article.source_author.present? %>
+来源: <%= ActionView::Base.full_sanitizer.sanitize(@article.source_author.to_s) %>
+<% end %>
+<% if @article.source_content.present? %>
+<%= ActionView::Base.full_sanitizer.sanitize(@article.source_content.to_s) %>
+<% end %>
+原文: <%= @article.source_url %>
+
+<% end %>
 <% if @article.html? %>
 <%= ActionView::Base.full_sanitizer.sanitize(@article.html_content || "") %>
 <% else %>
@@ -17,4 +28,3 @@
 <% end %>
 
 不想再收到这些邮件？取消订阅: <%= @unsubscribe_url %>
-
