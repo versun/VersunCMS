@@ -2,7 +2,7 @@
 <% is_reply = parent_id.present? %>
 <% is_mobile = mobile_device? %>
 <div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;" <%= "data-controller=math-captcha data-math-captcha-max-value=10" unless is_mobile %>>
-  <% if flash[:comment_submitted] && !is_reply %>
+  <% if (flash[:comment_submitted].present? || params[:comment_submitted].present?) && !is_reply %>
     <div id="comment-success-message" style="text-align: center; border: 1px solid #333; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; background: #fff;">
       <p style="margin: 0; font-size: 0.875rem; color: #333;">Your comment will be reviewed before being published.</p>
     </div>

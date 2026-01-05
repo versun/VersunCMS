@@ -55,6 +55,7 @@ class CommentsController < ApplicationController
           else
             # For regular form submissions, redirect
             redirect_path = determine_redirect_path
+            flash[:comment_submitted] = true
             redirect_to redirect_path, notice: "评论已提交，等待审核后显示。"
           end
         end
