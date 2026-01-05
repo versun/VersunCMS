@@ -145,6 +145,27 @@ class NewsletterMailerTest < ActionMailer::TestCase
     end
   end
 
+  test "article_email includes source reference content" do
+    article = articles(:source_article)
+    subscriber = subscribers(:confirmed_subscriber)
+    site_info = { title: "My Blog", url: "https://frontend.example.com" }
+
+    with_env("RAILS_API_URL" => "https://api.example.com") do
+      email = NewsletterMailer.article_email(article, subscriber, site_info)
+
+      text_body = email.text_part.body.decoded
+      html_body = email.html_part.body.decoded
+
+      assert_includes html_body, article.source_author
+      assert_includes html_body, article.source_content
+      assert_includes html_body, article.source_url
+
+      assert_includes text_body, article.source_author
+      assert_includes text_body, article.source_content
+      assert_includes text_body, article.source_url
+    end
+  end
+
   private
 
   def with_env(env)
