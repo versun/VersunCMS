@@ -76,6 +76,8 @@ class ImportZipTest < ActiveSupport::TestCase
     assert article, "expected article to be imported"
     assert article.html?, "expected importer to fall back to html content type"
     assert_includes article.html_content, "<img"
+    assert_includes article.html_content, "/rails/active_storage/blobs/"
+    refute_includes article.html_content, "attachments/a.png"
   ensure
     File.delete(zip_path) if zip_path.present? && File.exist?(zip_path)
   end
