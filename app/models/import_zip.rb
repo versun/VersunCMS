@@ -1122,16 +1122,14 @@ class ImportZip
 
     if is_local_attachment?(original_url)
       attachment_path = safe_join_path(@import_dir, original_url)
-      if File.exist?(attachment_path) && safe_file_path?(attachment_url)
+      if File.exist?(attachment_path) && safe_file_path?(attachment_path)
         File.open(attachment_path) do |file|
           filename = File.basename(attachment_path)
           content_type = detect_content_type(attachment_path)
           blob = ActiveStorage::Blob.create_and_upload!(
             io: file, filename: filename, content_type: content_type
           )
-          signed_id = blob.signed_id
-          filename = blob.filename.to_s
-          new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
+          new_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
           img["src"] = new_url
         end
       else
@@ -1140,9 +1138,7 @@ class ImportZip
     elsif is_active_storage_url?(original_url)
       blob = extract_blob_from_url(original_url)
       if blob
-        signed_id = blob.signed_id
-        filename = blob.filename.to_s
-        new_url = Rails.application.routes.url_helpers.rails_blob_path(signed_id: signed_id, filename: filename, only_path: true)
+        new_url = Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
         img["src"] = new_url
       end
     elsif original_url.start_with?("http")
