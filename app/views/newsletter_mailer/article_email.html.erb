@@ -14,6 +14,15 @@
       .article-content {
         margin: 20px 0;
       }
+      .source-reference__quote {
+        border: 0 solid #ccc;
+        border-left-width: 0.3em;
+        margin: 0 0 0.75rem 0.3em;
+        padding-left: 0.6em;
+      }
+      .source-reference__links {
+        margin-top: 0.75rem;
+      }
       .footer {
         margin-top: 40px;
         padding-top: 20px;
@@ -40,6 +49,10 @@
     
     <% if @article.description.present? %>
       <p><%= @article.description %></p>
+    <% end %>
+
+    <% if @article.has_source? %>
+      <%= render "articles/source_reference", article: @article %>
     <% end %>
 
     <div class="article-content">
@@ -69,4 +82,3 @@
     </div>
   </body>
 </html>
-
