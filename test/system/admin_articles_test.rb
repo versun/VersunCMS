@@ -38,4 +38,18 @@ class AdminArticlesTest < ApplicationSystemTestCase
     article.reload
     assert article.trash?
   end
+
+  test "admin list hides unsupported social platforms" do
+    article = create_draft_article(title: "Admin List Platform Filter", content: "Draft body")
+    article.social_media_posts.create!(platform: "mastodon", url: "https://mastodon.social/@test/2")
+    article.social_media_posts.create!(platform: "internet_archive", url: "https://web.archive.org/web/123/http://example.com")
+
+    sign_in(@user)
+    visit admin_articles_path
+
+    within find("tr", text: article.title) do
+      assert_selector "[data-fetch-comments-platform-value='mastodon']"
+      assert_no_selector "[data-fetch-comments-platform-value='internet_archive']"
+    end
+  end
 end
