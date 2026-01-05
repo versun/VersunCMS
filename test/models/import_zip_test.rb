@@ -267,6 +267,36 @@ class ImportZipTest < ActiveSupport::TestCase
     File.delete(zip_path) if zip_path.present? && File.exist?(zip_path)
   end
 
+  test "imports redirects with numeric enabled and permanent flags" do
+    redirect_slug = "import-redirect-#{SecureRandom.hex(4)}"
+    redirects_csv = CSV.generate(
+      write_headers: true,
+      headers: %w[id regex replacement enabled permanent created_at updated_at]
+    ) do |csv|
+      csv << [
+        1,
+        "^/#{redirect_slug}$",
+        "/#{redirect_slug}-target",
+        "0",
+        "1",
+        Time.current,
+        Time.current
+      ]
+    end
+
+    zip_path = build_zip("redirects.csv" => redirects_csv)
+
+    importer = ImportZip.new(zip_path)
+
+    assert importer.import_data, importer.error_message
+
+    redirect = Redirect.find_by!(regex: "^/#{redirect_slug}$")
+    refute redirect.enabled?, "expected redirect to remain disabled when enabled is 0"
+    assert redirect.permanent?, "expected redirect to be marked permanent when permanent is 1"
+  ensure
+    File.delete(zip_path) if zip_path.present? && File.exist?(zip_path)
+  end
+
   private
 
   def build_zip(files)

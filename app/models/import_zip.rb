@@ -837,8 +837,8 @@ class ImportZip
       Redirect.create!(
         regex: row["regex"],
         replacement: row["replacement"],
-        enabled: row["enabled"] != "false",
-        permanent: row["permanent"] == "true",
+        enabled: cast_boolean(row["enabled"], default: false),
+        permanent: cast_boolean(row["permanent"], default: false),
         created_at: row["created_at"],
         updated_at: row["updated_at"]
       )
