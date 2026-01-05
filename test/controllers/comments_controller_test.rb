@@ -58,5 +58,4 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".flash-notice", false
     assert_select ".comment-form .comment-success-message", /Your comment will be reviewed/
   end
-
 end

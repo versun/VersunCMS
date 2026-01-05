@@ -132,5 +132,4 @@ class SubscriptionsController < ApplicationController
   end
 
   private
-
 end
