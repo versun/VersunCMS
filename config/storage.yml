@@ -16,8 +16,8 @@ s3:
   bucket: <%= ENV['S3_BUCKET'] %>
   force_path_style: <%= ENV['S3_FORCE_PATH_STYLE'] == 'true' %>
   public: <%= ENV['S3_PUBLIC'] == 'true' %>
-  request_checksum_calculation: <%= ENV.fetch("S3_REQUEST_CHECKSUM_CALCULATION", "when_supported") %>
-  response_checksum_validation: <%= ENV.fetch("S3_RESPONSE_CHECKSUM_VALIDATION", "when_supported") %>
+  request_checksum_calculation: <%= ENV.fetch("S3_REQUEST_CHECKSUM_CALCULATION", "when_required") %>
+  response_checksum_validation: <%= ENV.fetch("S3_RESPONSE_CHECKSUM_VALIDATION", "when_required") %>
   upload:
     cache_control: "public, max-age=31536000, immutable"  # 1年缓存
     checksum_algorithm: ~
