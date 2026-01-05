@@ -1,17 +1,8 @@
 class CommentsController < ApplicationController
   include MathCaptchaVerification
   # Allow unauthenticated users to submit comments
-  allow_unauthenticated_access only: [ :create, :options ]
-
-  # Skip CSRF protection for comments from static pages
-  skip_forgery_protection only: [ :create, :options ]
+  allow_unauthenticated_access only: [ :create ]
   before_action :set_commentable, only: [ :create ]
-  before_action :set_cors_headers
-
-  # Handle CORS preflight requests
-  def options
-    head :ok
-  end
 
   def create
     unless math_captcha_valid?(max: 10)
@@ -56,7 +47,7 @@ class CommentsController < ApplicationController
             # For regular form submissions, redirect
             redirect_path = determine_redirect_path
             flash[:comment_submitted] = true
-            redirect_to redirect_path, notice: "评论已提交，等待审核后显示。"
+            redirect_to redirect_path
           end
         end
         format.json { render json: { success: true, message: "评论已提交，等待审核后显示。" }, status: :created }
@@ -133,31 +124,7 @@ class CommentsController < ApplicationController
     params.require(:comment).permit(:author_name, :author_url, :content, :parent_id)
   end
 
-  def set_cors_headers
-    # Set CORS headers to allow cross-origin requests from static pages
-    headers["Access-Control-Allow-Origin"] = "*"
-    headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-    headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
-    headers["Access-Control-Max-Age"] = "86400" # 24 hours
-  end
-
   def determine_redirect_path
-    # If there's a referer and it's a static page, try to redirect back to it
-    if request.referer.present?
-      referer_uri = URI.parse(request.referer) rescue nil
-      if referer_uri && (referer_uri.path.end_with?(".html") || referer_uri.path == "/" || referer_uri.path.start_with?("/page/") || referer_uri.path.start_with?("/pages/") || referer_uri.path.start_with?("/tags/"))
-        # It's likely a static page, redirect back to it with success parameter
-        redirect_uri = URI.parse(request.referer)
-        if redirect_uri.query.present?
-          redirect_uri.query += "&comment_submitted=1"
-        else
-          redirect_uri.query = "comment_submitted=1"
-        end
-        return redirect_uri.to_s
-      end
-    end
-
-    # Fallback to dynamic Rails routes
     @commentable.is_a?(Page) ? page_path(@commentable) : article_path(@commentable)
   end
 end

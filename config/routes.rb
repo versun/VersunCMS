@@ -12,8 +12,6 @@ Rails.application.routes.draw do
   resources :subscriptions, only: [ :index, :create ]
   get "/confirm", to: "subscriptions#confirm", as: :confirm_subscription
   get "/unsubscribe", to: "subscriptions#unsubscribe", as: :unsubscribe
-  # Handle CORS preflight requests for subscriptions (static pages fetch)
-  match "/subscriptions", to: "subscriptions#options", via: :options
 
   # Admin namespace - 统一所有后台管理功能
   namespace :admin do
@@ -113,9 +111,6 @@ Rails.application.routes.draw do
 
   # Public comment submission
   resources :comments, only: [ :create ]
-
-  # Handle CORS preflight requests for comments
-  match "/comments", to: "comments#options", via: :options
 
   # Static files public access
   get "/static/*filename", to: "static_files#show", as: :static_file, format: false

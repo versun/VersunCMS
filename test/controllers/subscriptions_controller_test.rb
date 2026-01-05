@@ -10,18 +10,6 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
     { captcha: { a:, b:, op:, answer: (answer || expected).to_s } }
   end
 
-  test "should respond to CORS preflight for subscriptions" do
-    options subscriptions_path, headers: {
-      "Origin" => "https://example.com",
-      "Access-Control-Request-Method" => "POST",
-      "Access-Control-Request-Headers" => "X-Requested-With, Accept"
-    }
-
-    assert_response :success
-    assert_equal "*", response.headers["Access-Control-Allow-Origin"]
-    assert_includes response.headers["Access-Control-Allow-Methods"], "POST"
-  end
-
   test "should create subscription" do
     assert_difference "Subscriber.count", 1 do
       post subscriptions_path, params: {

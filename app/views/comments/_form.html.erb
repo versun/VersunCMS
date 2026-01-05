@@ -1,25 +1,25 @@
 <% parent_id = local_assigns[:parent_id] %>
 <% is_reply = parent_id.present? %>
 <% is_mobile = mobile_device? %>
-<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;" <%= "data-controller=math-captcha data-math-captcha-max-value=10" unless is_mobile %>>
-  <% if (flash[:comment_submitted].present? || params[:comment_submitted].present?) && !is_reply %>
-    <div id="comment-success-message" style="text-align: center; border: 1px solid #333; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; background: #fff;">
-      <p style="margin: 0; font-size: 0.875rem; color: #333;">Your comment will be reviewed before being published.</p>
-    </div>
-  <% end %>
-
-  <%
-    # Determine the form URL based on whether we have @page or @article
+<%
+  commentable =
     if defined?(@page) && @page.present?
-      form_url = comments_path(page_id: @page.slug)
+      @page
     elsif defined?(@article) && @article.present?
-      form_url = comments_path(article_id: @article.slug)
-    elsif defined?(@commentable)
-      form_url = @commentable.is_a?(Page) ? comments_path(page_id: @commentable.slug) : comments_path(article_id: @commentable.slug)
-    else
-      form_url = comments_path(article_id: '')
+      @article
+    elsif defined?(@commentable) && @commentable.present?
+      @commentable
     end
-  %>
+  show_success = !is_reply && flash[:comment_submitted].present?
+
+  form_url =
+    if commentable.present?
+      commentable.is_a?(Page) ? comments_path(page_id: commentable.slug) : comments_path(article_id: commentable.slug)
+    else
+      comments_path(article_id: "")
+    end
+%>
+<div class="comment-form <%= 'reply-form' if is_reply %>" id="<%= is_reply ? "comment-form-#{parent_id}" : 'comment-form-container' %>" style="margin-top: <%= is_reply ? '0.5rem' : '1.5rem' %>; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa;" <%= "data-controller=math-captcha data-math-captcha-max-value=10" unless is_mobile %>>
   <%= form_with(model: comment, url: form_url, data: is_mobile ? {} : { action: "submit->math-captcha#ensureValid" }) do |f| %>
     <%= f.hidden_field :parent_id, value: parent_id if parent_id %>
     <% unless is_mobile %>
@@ -53,8 +53,13 @@
     </div>
     <% end %>
 
-    <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
       <%= f.submit is_reply ? "Reply" : "Submit", style: "padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;" %>
+      <% if show_success %>
+        <span class="comment-success-message" style="display: inline-flex; align-items: center; border: 1px solid #333; padding: 0.35rem 0.5rem; border-radius: 4px; background: #fff; font-size: 0.8rem; color: #333;">
+          Your comment will be reviewed before being published.
+        </span>
+      <% end %>
       <% if is_reply %>
         <button type="button" onclick="hideReplyForm(<%= parent_id %>)" style="padding: 0.5rem 1rem; background-color: #f0f0f0; color: #666; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Cancel</button>
       <% end %>
