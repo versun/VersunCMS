@@ -2,16 +2,7 @@ class SubscriptionsController < ApplicationController
   include CacheableSettings
   include MathCaptchaVerification
   # Allow unauthenticated users to subscribe/confirm/unsubscribe from public pages
-  allow_unauthenticated_access only: [ :index, :create, :options, :confirm, :unsubscribe ]
-
-  # Skip CSRF protection for subscriptions from static pages
-  skip_forgery_protection only: [ :create, :options ]
-  before_action :set_cors_headers, only: [ :create, :options ]
-
-  # Handle CORS preflight requests
-  def options
-    head :ok
-  end
+  allow_unauthenticated_access only: [ :index, :create, :confirm, :unsubscribe ]
 
   def index
     @subscriber = Subscriber.new
@@ -141,12 +132,4 @@ class SubscriptionsController < ApplicationController
   end
 
   private
-
-  def set_cors_headers
-    # Allow cross-origin requests from static pages
-    headers["Access-Control-Allow-Origin"] = "*"
-    headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-    headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With, Accept"
-    headers["Access-Control-Max-Age"] = "86400" # 24 hours
-  end
 end

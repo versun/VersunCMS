@@ -54,6 +54,8 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to article_path(article)
     follow_redirect!
     assert_response :success
-    assert_select "#comment-success-message", /Your comment will be reviewed/
+    # Success message is now inline in the comment form, not in flash notice
+    assert_select ".flash-notice", false
+    assert_select ".comment-form .comment-success-message", /Your comment will be reviewed/
   end
 end
