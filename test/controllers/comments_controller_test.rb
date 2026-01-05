@@ -37,4 +37,23 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     assert_equal true, response.parsed_body["success"]
   end
+
+  test "shows success message after html submit" do
+    article = articles(:published_article)
+    article.update!(comment: true)
+
+    assert_difference "Comment.count", 1 do
+      post comments_path(article_id: article.slug), params: {
+        comment: {
+          author_name: "Alice",
+          content: "Nice post!"
+        }
+      }.merge(captcha_params)
+    end
+
+    assert_redirected_to article_path(article)
+    follow_redirect!
+    assert_response :success
+    assert_select "#comment-success-message", /Your comment will be reviewed/
+  end
 end
