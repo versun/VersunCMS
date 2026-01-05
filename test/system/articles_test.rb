@@ -85,6 +85,18 @@ class ArticlesTest < ApplicationSystemTestCase
     assert_text "share"
   end
 
+  test "show page hides unsupported social platforms" do
+    article = create_published_article(title: "Unsupported Platform Article", content: "Body")
+    article.social_media_posts.create!(platform: "mastodon", url: "https://mastodon.social/@test/1")
+    article.social_media_posts.create!(platform: "internet_archive", url: "https://web.archive.org/web/123/http://example.com")
+
+    visit article_path(article)
+
+    assert_selector "a[title='Mastodon']"
+    assert_no_selector "a[title='Internet Archive']"
+    assert_no_text "Internet Archive"
+  end
+
   test "browsing articles by tag" do
     tag = create_tag(name: "SystemTest")
     article = create_published_article(title: "Tagged Article", content: "Tagged content")

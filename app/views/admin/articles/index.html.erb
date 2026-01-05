@@ -169,7 +169,7 @@
                 <td class="col-comments">
                   <div class="comments-info" style="display: flex; align-items: center; gap: 8px;">
                     <span class="comment-count"><%= post.comments.count %></span>
-                    <% post.social_media_posts.where.not(url: nil).each do |social_post| %>
+                    <% post.social_media_posts.where(platform: Crosspost::PLATFORMS).where.not(url: nil).each do |social_post| %>
                       <% icon_class = Crosspost::PLATFORM_ICONS[social_post.platform] || "fas fa-share-alt" %>
                       <%= form_with url: fetch_comments_admin_article_path(post), method: :post, 
                           class: "fetch-comments-form", 

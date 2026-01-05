@@ -73,9 +73,10 @@
     <h2 style="flex: 1; margin: 0;"><%= @article.title %></h2>
   </div>
   <small style="color:grey; display: block; margin-bottom: 1rem;">
-  <% if @article.social_media_posts.any? %>
+  <% social_posts = @article.social_media_posts.where(platform: Crosspost::PLATFORMS) %>
+  <% if social_posts.any? %>
       <span class="social-label">also posted on:</span>
-      <% @article.social_media_posts.each do |post| %>
+      <% social_posts.each do |post| %>
         <% if post.url.present? %>
           <% 
             # 从 settings 中获取对应平台的图标信息
