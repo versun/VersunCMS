@@ -14,7 +14,9 @@ class MastodonService
     end
 
     begin
-      uri = URI.join(settings[:server_url], "/api/v1/accounts/verify_credentials")
+      uri = mastodon_api_uri("/api/v1/accounts/verify_credentials", settings[:server_url])
+      return { success: false, error: "Server URL must be a valid http(s) URL" } unless uri
+
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == "https"
 
@@ -45,7 +47,8 @@ class MastodonService
       media_id = upload_image(first_image)
     end
 
-    uri = URI.join(@settings[:server_url], "/api/v1/statuses")
+    uri = mastodon_api_uri("/api/v1/statuses")
+    return nil unless uri
 
     begin
       http = Net::HTTP.new(uri.host, uri.port)
@@ -108,7 +111,9 @@ class MastodonService
       return default_response unless status_id
 
       # Call Mastodon API to get context (ancestors and descendants/replies)
-      uri = URI.join(@settings[:server_url], "/api/v1/statuses/#{status_id}/context")
+      uri = mastodon_api_uri("/api/v1/statuses/#{status_id}/context")
+      return default_response unless uri
+
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == "https"
 
@@ -241,7 +246,9 @@ class MastodonService
       return nil unless image_data
 
       # Upload to Mastodon
-      uri = URI.join(@settings[:server_url], "/api/v2/media")
+      uri = mastodon_api_uri("/api/v2/media")
+      return nil unless uri
+
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == "https"
 
@@ -344,6 +351,58 @@ class MastodonService
       level: :error,
       description: "Mastodon API rate limit exceeded. Waiting until #{reset_time}"
     )
+  end
+
+  def mastodon_api_uri(path, server_url = @settings[:server_url])
+    base_uri = normalized_server_uri(server_url)
+    unless base_uri
+      notify_invalid_server_url(server_url, path)
+      return nil
+    end
+
+    relative_path = path.to_s.sub(%r{\A/}, "")
+    URI.join(base_uri.to_s, relative_path)
+  end
+
+  def notify_invalid_server_url(server_url, path)
+    info = server_url_info(server_url)
+    Rails.event.notify "mastodon_service.invalid_server_url",
+      level: "error",
+      component: "MastodonService",
+      path: path.to_s,
+      server_url_present: info[:present],
+      server_url_scheme: info[:scheme],
+      server_url_host: info[:host]
+  end
+
+  def server_url_info(server_url)
+    raw_url = server_url.to_s.strip
+    return { present: false, scheme: nil, host: nil } if raw_url.blank?
+
+    uri = URI.parse(raw_url)
+    { present: true, scheme: uri.scheme, host: uri.host }
+  rescue URI::InvalidURIError
+    { present: true, scheme: nil, host: nil }
+  end
+
+  def normalized_server_uri(server_url)
+    raw_url = server_url.to_s.strip
+    return nil if raw_url.blank?
+
+    uri = URI.parse(raw_url)
+    return nil unless uri.is_a?(URI::HTTP)
+    return nil if uri.host.blank? || uri.userinfo.present?
+
+    normalized_path = uri.path.presence || "/"
+    normalized_path = "/#{normalized_path}" unless normalized_path.start_with?("/")
+    normalized_path = "#{normalized_path}/" unless normalized_path.end_with?("/")
+
+    normalized = "#{uri.scheme}://#{uri.host}"
+    normalized += ":#{uri.port}" if uri.port && uri.port != uri.default_port
+    normalized += normalized_path
+    URI.parse(normalized)
+  rescue URI::InvalidURIError
+    nil
   end
 
   def extract_status_id_from_url(url)

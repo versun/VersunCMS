@@ -138,7 +138,7 @@
     <%= render 'articles/source_reference' %>
   <% end %>
   <div class="article-content">
-    <%= @article.html? ? @article.rendered_content.to_s.html_safe : @article.rendered_content %>
+    <%= @article.html? ? safe_html_content(@article.rendered_content) : @article.rendered_content %>
   </div>
 </article>
 

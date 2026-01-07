@@ -28,6 +28,17 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "should sanitize script tags in html content" do
+    article = create_published_article(html_content: "<p>Safe content</p><script>alert('xss')</script>")
+
+    get article_path(article.slug)
+    assert_response :success
+    assert_match "<p>Safe content</p>", response.body
+
+    article_content = response.body[/<div class="article-content">(.*?)<\/div>/m, 1]
+    assert_no_match(/<script>/, article_content) if article_content
+  end
+
   test "should not show draft article to unauthenticated users" do
     get article_path(@draft_article.slug)
     assert_response :not_found

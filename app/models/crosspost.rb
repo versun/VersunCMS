@@ -16,6 +16,7 @@ class Crosspost < ApplicationRecord
   validates :client_key, :client_secret, :access_token, presence: true, if: -> { mastodon? && enabled? }
   validates :access_token, :access_token_secret, :api_key, :api_key_secret, presence: true, if: -> { twitter? && enabled? }
   validates :username, :app_password, presence: true, if: -> { bluesky? && enabled? }
+  validate :server_url_http_format, if: -> { server_url.present? }
 
   scope :mastodon, -> { find_or_create_by(platform: "mastodon") }
   scope :twitter, -> { find_or_create_by(platform: "twitter") }
@@ -54,5 +55,19 @@ class Crosspost < ApplicationRecord
   # 获取有效的最大字符数（如果未设置则使用默认值）
   def effective_max_characters
     max_characters || default_max_characters
+  end
+
+  private
+
+  def server_url_http_format
+    uri = URI.parse(server_url.to_s.strip)
+    unless uri.is_a?(URI::HTTP) && uri.host.present?
+      errors.add(:server_url, "must be a valid http(s) URL")
+      return
+    end
+
+    errors.add(:server_url, "must not include credentials") if uri.userinfo.present?
+  rescue URI::InvalidURIError
+    errors.add(:server_url, "must be a valid http(s) URL")
   end
 end
