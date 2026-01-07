@@ -21,7 +21,7 @@
 <%= ActionView::Base.full_sanitizer.sanitize(@article.content.to_s) %>
 <% end %>
 
-阅读全文: <%= @site_info[:url] %>/<%= Rails.application.config.x.article_route_prefix %>/<%= @article.slug %>
+阅读全文: <%= @article_url %>
 
 <% if @footer.present? %>
 <%= ActionView::Base.full_sanitizer.sanitize(@footer.to_s) %>

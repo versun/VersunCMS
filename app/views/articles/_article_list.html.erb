@@ -1,6 +1,8 @@
+<% site_url = normalized_site_url %>
 <div class="article-list timeline">
   <% articles.each do |article| %>
-    <article class="timeline-item" data-article-id="<%= article.id %>" data-controller="clickable-card" data-action="click->clickable-card#visit keydown.enter->clickable-card#visit keydown.space->clickable-card#visit" data-clickable-card-url-value="<%= article_path(article) %>" tabindex="0" role="link" aria-label="<%= article.title.presence || 'Open article' %>">
+    <% article_url = "#{site_url}#{article_path(article)}" %>
+    <article class="timeline-item" data-article-id="<%= article.id %>" data-controller="clickable-card" data-action="click->clickable-card#visit keydown.enter->clickable-card#visit keydown.space->clickable-card#visit" data-clickable-card-url-value="<%= article_url %>" tabindex="0" role="link" aria-label="<%= article.title.presence || 'Open article' %>">
       <div class="timeline-marker"></div>
       <div class="timeline-content">
         <div class="timeline-header">
@@ -21,7 +23,7 @@
           <div data-turbo-frame-loading-target="content">
             <% if article.title.present? %>
               <h2 class="post-title">
-                <%= link_to article.title, article_path(article), data: { turbo_frame: "article_#{article.id}" } %>
+                <%= link_to article.title, article_url, data: { turbo_frame: "article_#{article.id}" } %>
               </h2>
               <div class="loading-spinner" data-turbo-frame-loading-target="spinner" style="display: none; justify-content: left; align-items: left; padding: 20px;">
                 <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #c04000;"></i>
@@ -37,7 +39,7 @@
               <% end %>
             <% else %>
               <%= render 'articles/source_reference', article: article %>
-              <%= link_to article_path(article), class: "post-content-link", data: { turbo_frame: "article_#{article.id}" } do %>
+              <%= link_to article_url, class: "post-content-link", data: { turbo_frame: "article_#{article.id}" } do %>
                 <% if article.description.present? %>
                   <div class="post-description">
                     <%= article.description %>

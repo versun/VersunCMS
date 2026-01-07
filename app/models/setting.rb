@@ -1,6 +1,7 @@
 class Setting < ApplicationRecord
   has_rich_text :footer
   before_save :parse_social_links_json
+  validates :url, presence: true, if: :setup_completed?
 
   # Virtual attribute for JSON textarea input
   attr_accessor :social_links_json

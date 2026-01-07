@@ -7,6 +7,8 @@ class NewsletterMailer < ApplicationMailer
     @site_info = site_info
     @newsletter_setting = NewsletterSetting.instance
     @footer = @newsletter_setting.footer
+    @site_url = normalized_site_url
+    @article_url = article_full_url(@article, @site_url)
 
     # Build unsubscribe URL using rails_api_url
     api_uri = URI.parse(ApplicationController.helpers.rails_api_url)
@@ -38,11 +40,14 @@ class NewsletterMailer < ApplicationMailer
       from_email: from_email,
       article_id: @article.id
 
-    mail_obj = mail(
-      to: @subscriber.email,
-      from: from_email,
-      subject: "#{@article.title} | #{@site_info[:title]}"
-    )
+    mail_obj = nil
+    with_active_storage_url_options(@site_url) do
+      mail_obj = mail(
+        to: @subscriber.email,
+        from: from_email,
+        subject: "#{@article.title} | #{@site_info[:title]}"
+      )
+    end
 
     # 验证邮件对象设置
     Rails.event.notify "newsletter.mailer.email_created",
@@ -78,5 +83,53 @@ class NewsletterMailer < ApplicationMailer
       from: from_email,
       subject: "请确认您的订阅 | #{@site_info[:title]}"
     )
+  end
+
+  private
+
+  def normalized_site_url
+    return "" unless Setting.respond_to?(:table_exists?) && Setting.table_exists?
+
+    raw_url = Setting.first&.url.to_s.strip
+    return "" if raw_url.blank?
+
+    site_url = raw_url.chomp("/")
+    site_url = "https://#{site_url}" unless site_url.match?(%r{^https?://})
+    site_url
+  end
+
+  def article_full_url(article, site_url)
+    return "" if site_url.blank?
+
+    path = Rails.application.routes.url_helpers.article_path(article)
+    "#{site_url}#{path}"
+  end
+
+  def active_storage_url_options(site_url)
+    return {} if site_url.blank?
+
+    uri = URI.parse(site_url)
+    options = { host: uri.host, protocol: uri.scheme }
+
+    if uri.port && !((uri.scheme == "http" && uri.port == 80) || (uri.scheme == "https" && uri.port == 443))
+      options[:port] = uri.port
+    end
+
+    if uri.path.present? && uri.path != "/"
+      options[:script_name] = uri.path
+    end
+
+    options
+  end
+
+  def with_active_storage_url_options(site_url)
+    previous = ActiveStorage::Current.url_options
+    if previous.blank?
+      options = active_storage_url_options(site_url)
+      ActiveStorage::Current.url_options = options if options.present?
+    end
+    yield
+  ensure
+    ActiveStorage::Current.url_options = previous
   end
 end

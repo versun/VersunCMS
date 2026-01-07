@@ -28,6 +28,17 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show uses setting url for article links" do
+    Setting.first.update!(url: "https://settings.example.com")
+    CacheableSettings.refresh_site_info
+
+    get article_path(@article.slug)
+    assert_response :success
+
+    expected_url = "https://settings.example.com#{article_path(@article)}"
+    assert_includes response.body, expected_url
+  end
+
   test "should sanitize script tags in html content" do
     article = create_published_article(html_content: "<p>Safe content</p><script>alert('xss')</script>")
 
@@ -135,5 +146,16 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   test "should paginate articles" do
     get articles_path, params: { page: 1 }
     assert_response :success
+  end
+
+  test "index uses setting url for article links" do
+    Setting.first.update!(url: "https://settings.example.com")
+    CacheableSettings.refresh_site_info
+
+    get articles_path
+    assert_response :success
+
+    expected_url = "https://settings.example.com#{article_path(@article)}"
+    assert_includes response.body, "data-clickable-card-url-value=\"#{expected_url}\""
   end
 end

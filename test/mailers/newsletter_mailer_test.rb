@@ -166,6 +166,61 @@ class NewsletterMailerTest < ActionMailer::TestCase
     end
   end
 
+  test "article_email uses setting url for article links" do
+    article = articles(:published_article)
+    subscriber = subscribers(:confirmed_subscriber)
+    Setting.first.update!(url: "https://settings.example.com")
+    site_info = { title: "My Blog", url: "https://frontend.example.com" }
+
+    with_env("RAILS_API_URL" => "https://api.example.com") do
+      email = NewsletterMailer.article_email(article, subscriber, site_info)
+
+      text_body = email.text_part.body.decoded
+      html_body = email.html_part.body.decoded
+
+      expected_url = "https://settings.example.com#{Rails.application.routes.url_helpers.article_path(article)}"
+
+      assert_includes text_body, expected_url
+      assert_includes html_body, expected_url
+      assert_not_includes text_body, "frontend.example.com"
+      assert_not_includes html_body, "frontend.example.com"
+    end
+  end
+
+  test "article_email renders attachment download links with absolute urls" do
+    file = file_fixture("sample.txt")
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: file.open,
+      filename: "sample.txt",
+      content_type: "text/plain"
+    )
+    attachment = ActionText::Attachment.from_attachable(blob)
+    token = SecureRandom.hex(4)
+    article = Article.create!(
+      title: "Attachment Article #{token}",
+      slug: "attachment-article-#{token}",
+      status: :publish,
+      content_type: :rich_text,
+      content: "Hello #{attachment.to_html}"
+    )
+    subscriber = subscribers(:confirmed_subscriber)
+    site_info = { title: "My Blog", url: "https://frontend.example.com" }
+    Setting.first.update!(url: "https://settings.example.com")
+
+    with_env("RAILS_API_URL" => "https://api.example.com") do
+      email = NewsletterMailer.article_email(article, subscriber, site_info)
+      html_body = email.html_part.body.decoded
+
+      expected_url = Rails.application.routes.url_helpers.rails_blob_url(
+        blob,
+        disposition: "attachment",
+        host: "settings.example.com",
+        protocol: "https"
+      )
+      assert_includes html_body, expected_url
+    end
+  end
+
   private
 
   def with_env(env)
