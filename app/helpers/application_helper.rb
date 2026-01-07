@@ -45,4 +45,49 @@ module ApplicationHelper
 
     site_url
   end
+
+  # Safely render HTML content by sanitizing dangerous tags while preserving common formatting
+  def safe_html_content(html_content)
+    return "".html_safe if html_content.blank?
+
+    sanitize(html_content.to_s, tags: allowed_html_tags, attributes: allowed_html_attributes)
+  end
+
+  private
+
+  # List of allowed HTML tags for content rendering.
+  def allowed_html_tags
+    %w[
+      p br div span
+      h1 h2 h3 h4 h5 h6
+      a img
+      ul ol li dl dt dd
+      table thead tbody tfoot tr th td caption colgroup col
+      strong b em i u s strike del ins mark small
+      blockquote q cite pre code kbd samp var
+      hr
+      figure figcaption
+      article section aside header footer nav main
+      details summary
+      abbr address time
+      sub sup
+      ruby rt rp
+      iframe video audio source
+    ]
+  end
+
+  # List of allowed HTML attributes.
+  def allowed_html_attributes
+    %w[
+      href src alt title class id style
+      target rel
+      width height
+      colspan rowspan
+      data-controller data-action data-target
+      loading
+      controls autoplay loop muted
+      frameborder allow allowfullscreen
+      name content
+    ]
+  end
 end

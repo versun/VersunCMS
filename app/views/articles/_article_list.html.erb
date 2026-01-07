@@ -32,7 +32,7 @@
                 </div>
               <% else %>
                 <div class="post-content">
-                  <%= article.html? ? article.rendered_content.to_s.html_safe : article.rendered_content %>
+                  <%= article.html? ? safe_html_content(article.rendered_content) : article.rendered_content %>
                 </div>
               <% end %>
             <% else %>
@@ -44,7 +44,7 @@
                   </div>
                 <% else %>
                   <div class="post-content">
-                    <%= article.html? ? article.rendered_content.to_s.html_safe : article.rendered_content %>
+                    <%= article.html? ? safe_html_content(article.rendered_content) : article.rendered_content %>
                   </div>
                 <% end %>
               <% end %>
