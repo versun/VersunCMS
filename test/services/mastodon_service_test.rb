@@ -9,7 +9,7 @@ class MastodonServiceTest < ActiveSupport::TestCase
     end
 
     def notify(name, **payload)
-      @events << [name, payload]
+      @events << [ name, payload ]
     end
   end
 
