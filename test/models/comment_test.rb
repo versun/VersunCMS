@@ -99,6 +99,22 @@ class CommentTest < ActiveSupport::TestCase
     assert @comment.valid?
   end
 
+  test "display_commentable falls back to parent commentable" do
+    parent_comment = Comment.create!(
+      commentable: @article,
+      author_name: "Parent",
+      content: "Parent comment"
+    )
+
+    reply = Comment.new(
+      parent: parent_comment,
+      author_name: "Reply",
+      content: "Reply comment"
+    )
+
+    assert_equal parent_comment.commentable, reply.display_commentable
+  end
+
   test "local scope should return comments without platform" do
     local_comment = comments(:approved_comment)
     external_comment = comments(:mastodon_comment)

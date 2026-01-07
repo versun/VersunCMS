@@ -2,7 +2,7 @@ class Admin::CommentsController < AdminController
   before_action :set_comment, only: [ :show, :edit, :update, :destroy, :approve, :reject ]
 
   def index
-    @comments = Comment.includes(:commentable)
+    @comments = Comment.includes(:commentable, :article, parent: :commentable)
 
     # Filter by status
     # Filter by status
