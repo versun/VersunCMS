@@ -355,10 +355,34 @@ class MastodonService
 
   def mastodon_api_uri(path, server_url = @settings[:server_url])
     base_uri = normalized_server_uri(server_url)
-    return nil unless base_uri
+    unless base_uri
+      notify_invalid_server_url(server_url, path)
+      return nil
+    end
 
     relative_path = path.to_s.sub(%r{\A/}, "")
     URI.join(base_uri.to_s, relative_path)
+  end
+
+  def notify_invalid_server_url(server_url, path)
+    info = server_url_info(server_url)
+    Rails.event.notify "mastodon_service.invalid_server_url",
+      level: "error",
+      component: "MastodonService",
+      path: path.to_s,
+      server_url_present: info[:present],
+      server_url_scheme: info[:scheme],
+      server_url_host: info[:host]
+  end
+
+  def server_url_info(server_url)
+    raw_url = server_url.to_s.strip
+    return { present: false, scheme: nil, host: nil } if raw_url.blank?
+
+    uri = URI.parse(raw_url)
+    { present: true, scheme: uri.scheme, host: uri.host }
+  rescue URI::InvalidURIError
+    { present: true, scheme: nil, host: nil }
   end
 
   def normalized_server_uri(server_url)
