@@ -11,10 +11,10 @@
         <strong>Please fix the following errors:</strong>
         <ul>
           <% @user.errors.full_messages.each do |message| %>
-            <li><%= message %></li>
+            <li><%= sanitize(message) %></li>
           <% end %>
           <% @setting.errors.full_messages.each do |message| %>
-            <li><%= message %></li>
+            <li><%= sanitize(message) %></li>
           <% end %>
         </ul>
       </div>
@@ -69,7 +69,7 @@
 
         <div class="field">
           <%= setting_form.label :url, "Site URL" %>
-          <%= setting_form.text_field :url, placeholder: "https://yourblog.com", type: "url" %>
+          <%= setting_form.text_field :url, placeholder: "https://yourblog.com", type: "url", required: true %>
           <small>The full URL where your blog will be accessible</small>
         </div>
 

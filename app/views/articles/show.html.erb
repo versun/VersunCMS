@@ -5,15 +5,8 @@
 <% content_for :head do %>
   <% 
     # 构建文章完整URL
-    site_url = site_settings[:url].presence || request.base_url
-    site_url = site_url.chomp("/")
-    site_url = "https://#{site_url}" unless site_url.match?(%r{^https?://})
-    article_route_prefix = Rails.application.config.x.article_route_prefix 
-    if article_route_prefix.present?
-      article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}"
-    else
-      article_full_url = "#{site_url}/#{@article.slug}"
-    end
+    site_url = normalized_site_url
+    article_full_url = "#{site_url}#{article_path(@article)}"
     
     meta_title = @article.seo_meta_title
     meta_description = @article.seo_meta_description
@@ -59,15 +52,8 @@
 <article>
   <% 
     # 构建文章完整URL
-    site_url = site_settings[:url].presence || request.base_url
-    site_url = site_url.chomp("/")
-    site_url = "https://#{site_url}" unless site_url.match?(%r{^https?://})
-    article_route_prefix = Rails.application.config.x.article_route_prefix 
-    if article_route_prefix.present?
-      article_full_url = "#{site_url}/#{article_route_prefix}/#{@article.slug}"
-    else
-      article_full_url = "#{site_url}/#{@article.slug}"
-    end
+    site_url = normalized_site_url
+    article_full_url = "#{site_url}#{article_path(@article)}"
   %>
   <div class="article-header" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.25rem;">
     <h2 style="flex: 1; margin: 0;"><%= @article.title %></h2>

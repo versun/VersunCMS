@@ -46,6 +46,15 @@ module ApplicationHelper
     site_url
   end
 
+  def normalized_site_url
+    raw_url = site_settings[:url].to_s.strip
+    return "" if raw_url.blank?
+
+    site_url = raw_url.chomp("/")
+    site_url = "https://#{site_url}" unless site_url.match?(%r{^https?://})
+    site_url
+  end
+
   # Safely render HTML content by sanitizing dangerous tags while preserving common formatting
   def safe_html_content(html_content)
     return "".html_safe if html_content.blank?
