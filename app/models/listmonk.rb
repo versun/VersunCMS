@@ -88,7 +88,7 @@ class Listmonk < ApplicationRecord
         type: "regular",
         content_type: "html",
         messenger: "email",
-        body: article.html? ? (article.html_content || "") : article.content.to_s,
+        body: campaign_body(article),
         template_id: template_id,
         send_later: false
       }.to_json
@@ -160,5 +160,19 @@ class Listmonk < ApplicationRecord
       )
       nil
     end
+  end
+
+  private
+
+  def campaign_body(article)
+    base_body = article.html? ? (article.html_content || "") : article.content.to_s
+    return base_body unless article.has_source?
+
+    reference_html = ApplicationController.renderer.render(
+      partial: "articles/source_reference",
+      locals: { article: article }
+    )
+
+    "#{reference_html}\n#{base_body}"
   end
 end
