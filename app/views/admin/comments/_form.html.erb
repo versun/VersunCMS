@@ -2,13 +2,14 @@
   <div style="margin-bottom: 1rem;">
     <%= f.label :commentable, "Article/Page", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
     <p style="margin: 0; padding: 0.5rem; background: #f5f5f5; border-radius: 4px;">
-      <% if @comment.commentable %>
-        <% if @comment.commentable.is_a?(Article) %>
-          Article: <%= @comment.commentable.title %>
-        <% elsif @comment.commentable.is_a?(Page) %>
-          Page: <%= @comment.commentable.title %>
+      <% display_commentable = @comment.display_commentable %>
+      <% if display_commentable %>
+        <% if display_commentable.is_a?(Article) %>
+          Article: <%= display_commentable.title %>
+        <% elsif display_commentable.is_a?(Page) %>
+          Page: <%= display_commentable.title %>
         <% else %>
-          <%= @comment.commentable.title %>
+          <%= display_commentable.title %>
         <% end %>
       <% else %>
         Unknown

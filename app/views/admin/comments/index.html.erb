@@ -91,13 +91,14 @@
                   <small><%= comment.content.truncate(100) %></small>
                 </td>
                 <td class="col-title">
-                  <% if comment.commentable %>
-                    <% if comment.commentable.is_a?(Article) %>
-                      <%= link_to comment.commentable.title.truncate(50), article_path(comment.commentable), class: "title-link", target: "_blank" %>
-                    <% elsif comment.commentable.is_a?(Page) %>
-                      <%= link_to comment.commentable.title.truncate(50), page_path(comment.commentable), class: "title-link", target: "_blank" %>
+                  <% display_commentable = comment.display_commentable %>
+                  <% if display_commentable %>
+                    <% if display_commentable.is_a?(Article) %>
+                      <%= link_to display_commentable.title.truncate(50), article_path(display_commentable), class: "title-link", target: "_blank" %>
+                    <% elsif display_commentable.is_a?(Page) %>
+                      <%= link_to display_commentable.title.truncate(50), page_path(display_commentable), class: "title-link", target: "_blank" %>
                     <% else %>
-                      <%= comment.commentable.title.truncate(50) %>
+                      <%= display_commentable.title.truncate(50) %>
                     <% end %>
                   <% else %>
                     <small class="text-muted">—</small>

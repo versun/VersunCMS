@@ -33,6 +33,10 @@ class Comment < ApplicationRecord
 
   default_scope { order(published_at: :asc) }
 
+  def display_commentable
+    commentable || parent&.commentable || article
+  end
+
   # Trigger static generation when comment is created, updated, or status changes
 
   private
