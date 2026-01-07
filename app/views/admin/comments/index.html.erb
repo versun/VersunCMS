@@ -92,13 +92,14 @@
                 </td>
                 <td class="col-title">
                   <% display_commentable = comment.display_commentable %>
+                  <% display_title = display_commentable&.title.presence || display_commentable&.try(:slug) %>
                   <% if display_commentable %>
                     <% if display_commentable.is_a?(Article) %>
-                      <%= link_to display_commentable.title.truncate(50), article_path(display_commentable), class: "title-link", target: "_blank" %>
+                      <%= link_to display_title.to_s.truncate(50), article_path(display_commentable), class: "title-link", target: "_blank" %>
                     <% elsif display_commentable.is_a?(Page) %>
-                      <%= link_to display_commentable.title.truncate(50), page_path(display_commentable), class: "title-link", target: "_blank" %>
+                      <%= link_to display_title.to_s.truncate(50), page_path(display_commentable), class: "title-link", target: "_blank" %>
                     <% else %>
-                      <%= display_commentable.title.truncate(50) %>
+                      <%= display_title.to_s.truncate(50) %>
                     <% end %>
                   <% else %>
                     <small class="text-muted">—</small>
