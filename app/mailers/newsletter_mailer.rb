@@ -1,6 +1,14 @@
 require "uri"
 
 class NewsletterMailer < ApplicationMailer
+  def default_url_options
+    base = super || {}
+    options = active_storage_url_options(@site_url)
+    return base if options.blank?
+
+    base.merge(options)
+  end
+
   def article_email(article, subscriber, site_info)
     @article = article
     @subscriber = subscriber
@@ -124,10 +132,8 @@ class NewsletterMailer < ApplicationMailer
 
   def with_active_storage_url_options(site_url)
     previous = ActiveStorage::Current.url_options
-    if previous.blank?
-      options = active_storage_url_options(site_url)
-      ActiveStorage::Current.url_options = options if options.present?
-    end
+    options = active_storage_url_options(site_url)
+    ActiveStorage::Current.url_options = options if options.present?
     yield
   ensure
     ActiveStorage::Current.url_options = previous
