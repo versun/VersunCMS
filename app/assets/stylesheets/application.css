@@ -575,13 +575,17 @@ h2 {
 
 /* Article Content - Link Styles */
 
-.article-content a {
+.article-content a,
+.post-content a,
+.post-description a {
     color: #c04000 !important;
     text-decoration: underline !important;
     text-underline-offset: 2px;
 }
 
-.article-content a:hover {
+.article-content a:hover,
+.post-content a:hover,
+.post-description a:hover {
     color: #a03000 !important;
     text-decoration-thickness: 2px;
 }
@@ -1003,11 +1007,15 @@ h2 {
 }
 
 
-[data-theme="dark"] .article-content a {
+[data-theme="dark"] .article-content a,
+[data-theme="dark"] .post-content a,
+[data-theme="dark"] .post-description a {
     color: var(--accent-color) !important;
 }
 
-[data-theme="dark"] .article-content a:hover {
+[data-theme="dark"] .article-content a:hover,
+[data-theme="dark"] .post-content a:hover,
+[data-theme="dark"] .post-description a:hover {
     color: #ff8c5a !important;
 }
 

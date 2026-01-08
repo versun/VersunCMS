@@ -54,6 +54,26 @@ class ArticlesTest < ApplicationSystemTestCase
     assert_text "Fallback content should appear"
   end
 
+  test "inline link inside untitled card follows its target" do
+    linked_article = create_published_article(title: "Linked Article", content: "<p>Linked content</p>")
+    link_href = article_path(linked_article)
+    untitled_article = create_published_article(
+      title: nil,
+      description: "",
+      slug: "untitled-article",
+      content: %(<p>Text <a href="#{link_href}">report</a></p>)
+    )
+
+    visit root_path
+
+    within "article[data-article-id='#{untitled_article.id}']" do
+      click_link "report"
+    end
+
+    assert_current_path link_href, ignore_query: true
+    assert_text linked_article.title
+  end
+
   test "space key works on nested interactive controls inside a clickable card" do
     skip "This test requires JavaScript support (Selenium)" unless self.class.use_selenium?
 

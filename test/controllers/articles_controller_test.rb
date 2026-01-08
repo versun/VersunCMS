@@ -158,4 +158,20 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     expected_url = "https://settings.example.com#{article_path(@article)}"
     assert_includes response.body, "data-clickable-card-url-value=\"#{expected_url}\""
   end
+
+  test "index renders untitled article without wrapping content link" do
+    article = create_published_article(
+      title: nil,
+      description: nil,
+      slug: "untitled-article",
+      html_content: "<p>Text <a href=\"https://example.com\">report</a></p>"
+    )
+
+    get articles_path
+    assert_response :success
+
+    assert_select "article[data-article-id='#{article.id}'][data-controller~='clickable-card']", 1
+    assert_select "article[data-article-id='#{article.id}'] a.post-content-link", 0
+    assert_select "article[data-article-id='#{article.id}'] a[href='https://example.com']", 1
+  end
 end
