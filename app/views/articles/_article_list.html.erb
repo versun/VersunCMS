@@ -39,16 +39,14 @@
               <% end %>
             <% else %>
               <%= render 'articles/source_reference', article: article %>
-              <%= link_to article_url, class: "post-content-link", data: { turbo_frame: "article_#{article.id}" } do %>
-                <% if article.description.present? %>
-                  <div class="post-description">
-                    <%= article.description %>
-                  </div>
-                <% else %>
-                  <div class="post-content">
-                    <%= article.html? ? safe_html_content(article.rendered_content) : article.rendered_content %>
-                  </div>
-                <% end %>
+              <% if article.description.present? %>
+                <div class="post-description">
+                  <%= article.description %>
+                </div>
+              <% else %>
+                <div class="post-content">
+                  <%= article.html? ? safe_html_content(article.rendered_content) : article.rendered_content %>
+                </div>
               <% end %>
             <% end %>
           </div>
