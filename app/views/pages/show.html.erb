@@ -31,7 +31,7 @@
     <%= render 'comments/form', comment: Comment.new %>
   </div>
 
-  <script>
+  <script nonce="<%= content_security_policy_nonce %>">
     function showReplyForm(commentId) {
       const formContainer = document.getElementById('reply-form-' + commentId);
       if (formContainer) {
@@ -57,9 +57,26 @@
         }
       }
     }
+
+    if (!window.replyFormHandlersInitialized) {
+      window.replyFormHandlersInitialized = true;
+      document.addEventListener('click', function(event) {
+        const trigger = event.target.closest('[data-reply-action]');
+        if (!trigger) return;
+
+        const commentId = trigger.dataset.commentId;
+        if (!commentId) return;
+
+        if (trigger.dataset.replyAction === 'show') {
+          showReplyForm(commentId);
+        } else if (trigger.dataset.replyAction === 'hide') {
+          hideReplyForm(commentId);
+        }
+      });
+    }
   </script>
 <% end %>
 
 <hr>
 <div class="giscus"></div>
-<%= raw site_settings[:giscus] %>
+<%= csp_nonce_html(site_settings[:giscus]) %>

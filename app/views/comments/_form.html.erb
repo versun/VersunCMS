@@ -61,7 +61,7 @@
         </span>
       <% end %>
       <% if is_reply %>
-        <button type="button" onclick="hideReplyForm(<%= parent_id %>)" class="comment-form-cancel">Cancel</button>
+        <button type="button" class="comment-form-cancel" data-reply-action="hide" data-comment-id="<%= parent_id %>">Cancel</button>
       <% end %>
     </div>
   <% end %>

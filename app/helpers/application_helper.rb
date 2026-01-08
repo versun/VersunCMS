@@ -1,4 +1,5 @@
 require "uri"
+require "nokogiri"
 
 module ApplicationHelper
   # 检测是否是手机设备（通过 User-Agent）
@@ -60,6 +61,19 @@ module ApplicationHelper
     return "".html_safe if html_content.blank?
 
     sanitize(html_content.to_s, tags: allowed_html_tags, attributes: allowed_html_attributes)
+  end
+
+  def csp_nonce_html(html_content)
+    return "".html_safe if html_content.blank?
+
+    nonce = content_security_policy_nonce
+    return html_content.to_s.html_safe if nonce.blank?
+
+    fragment = Nokogiri::HTML::DocumentFragment.parse(html_content.to_s)
+    fragment.css("script, style").each do |node|
+      node["nonce"] = nonce if node["nonce"].blank?
+    end
+    fragment.to_html.html_safe
   end
 
   private

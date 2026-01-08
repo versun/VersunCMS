@@ -20,28 +20,28 @@
       <span style="margin-right: 10px;"><strong><span data-batch-selection-target="count">0</span></strong> selected</span>
       
       <%= form_with url: batch_publish_admin_articles_path, method: :post, style: "display: inline;" do |f| %>
-        <%= f.button "Publish", type: "submit", class: "btn btn-sm", style: "background: #28a745; color: white;", 
-            onclick: "return submitBatchForm(this, 'publish')" %>
+        <%= f.button "Publish", type: "submit", class: "btn btn-sm", style: "background: #28a745; color: white;",
+            data: { batch_action: "publish" } %>
       <% end %>
 
       <%= form_with url: batch_unpublish_admin_articles_path, method: :post, style: "display: inline;" do |f| %>
         <%= f.button "Unpublish", type: "submit", class: "btn btn-sm", style: "background: #ffc107; color: black;",
-            onclick: "return submitBatchForm(this, 'unpublish')" %>
+            data: { batch_action: "unpublish" } %>
       <% end %>
 
       <%= form_with url: batch_destroy_admin_articles_path, method: :post, style: "display: inline;" do |f| %>
         <%= f.button "Delete", type: "submit", class: "btn btn-sm", style: "background: #dc3545; color: white;",
-            onclick: "return submitBatchForm(this, 'delete')" %>
+            data: { batch_action: "delete" } %>
       <% end %>
 
-      <button type="button" class="btn btn-sm" style="background: #17a2b8; color: white;" 
-              onclick="openBatchAddTagsModal()">Add Tags</button>
+      <button type="button" class="btn btn-sm" style="background: #17a2b8; color: white;"
+              data-batch-modal-open="add-tags">Add Tags</button>
 
-      <button type="button" class="btn btn-sm" style="background: #6f42c1; color: white;" 
-              onclick="openBatchCrosspostModal()">Crosspost</button>
+      <button type="button" class="btn btn-sm" style="background: #6f42c1; color: white;"
+              data-batch-modal-open="crosspost">Crosspost</button>
 
-      <button type="button" class="btn btn-sm" style="background: #fd7e14; color: white;" 
-              onclick="openBatchNewsletterModal()">Newsletter</button>
+      <button type="button" class="btn btn-sm" style="background: #fd7e14; color: white;"
+              data-batch-modal-open="newsletter">Newsletter</button>
     </div>
 
     <!-- Batch Add Tags Modal -->
@@ -52,9 +52,9 @@
         <%= form_with url: batch_add_tags_admin_articles_path, method: :post, id: "batchAddTagsForm" do |f| %>
           <%= f.text_field :tag_names, placeholder: "例如: tag1, tag2, tag3", style: "width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px;" %>
           <div style="text-align: right;">
-            <button type="button" class="btn btn-sm" onclick="closeBatchAddTagsModal()" style="margin-right: 10px;">取消</button>
+            <button type="button" class="btn btn-sm" data-batch-modal-close="add-tags" style="margin-right: 10px;">取消</button>
             <%= f.button "确认", type: "submit", class: "btn btn-sm", style: "background: #17a2b8; color: white;",
-                onclick: "return submitBatchFormWithModal(this, 'batchAddTagsForm')" %>
+                data: { batch_modal_submit: "batchAddTagsForm" } %>
           </div>
         <% end %>
       </div>
@@ -81,9 +81,9 @@
 	            </label>
 	          </div>
 	          <div style="text-align: right;">
-	            <button type="button" class="btn btn-sm" onclick="closeBatchCrosspostModal()" style="margin-right: 10px;">取消</button>
+	            <button type="button" class="btn btn-sm" data-batch-modal-close="crosspost" style="margin-right: 10px;">取消</button>
 	            <%= f.button "确认", type: "submit", class: "btn btn-sm", style: "background: #6f42c1; color: white;",
-	                onclick: "return submitBatchFormWithModal(this, 'batchCrosspostForm')" %>
+	                data: { batch_modal_submit: "batchCrosspostForm" } %>
           </div>
         <% end %>
       </div>
@@ -96,9 +96,9 @@
         <p>确认要向选中的文章发送邮件吗？</p>
         <%= form_with url: batch_newsletter_admin_articles_path, method: :post, id: "batchNewsletterForm" do |f| %>
           <div style="text-align: right; margin-top: 20px;">
-            <button type="button" class="btn btn-sm" onclick="closeBatchNewsletterModal()" style="margin-right: 10px;">取消</button>
+            <button type="button" class="btn btn-sm" data-batch-modal-close="newsletter" style="margin-right: 10px;">取消</button>
             <%= f.button "确认发送", type: "submit", class: "btn btn-sm", style: "background: #fd7e14; color: white;",
-                onclick: "return submitBatchFormWithModal(this, 'batchNewsletterForm')" %>
+                data: { batch_modal_submit: "batchNewsletterForm" } %>
           </div>
         <% end %>
       </div>

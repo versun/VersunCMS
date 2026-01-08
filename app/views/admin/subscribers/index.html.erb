@@ -67,12 +67,12 @@
 
     <%= form_with url: batch_confirm_admin_subscribers_path, method: :post, style: "display: inline;" do |f| %>
       <%= f.button "改为已确认", type: "submit", class: "btn btn-sm", style: "background: #28a745; color: white;",
-          onclick: "return submitBatchForm(this, 'confirm')" %>
+          data: { batch_action: "confirm" } %>
     <% end %>
 
     <%= form_with url: batch_destroy_admin_subscribers_path, method: :post, style: "display: inline;" do |f| %>
       <%= f.button "删除", type: "submit", class: "btn btn-sm", style: "background: #dc3545; color: white;",
-          onclick: "return submitBatchForm(this, 'delete')" %>
+          data: { batch_action: "delete" } %>
     <% end %>
   </div>
 

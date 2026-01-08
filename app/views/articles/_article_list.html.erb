@@ -25,7 +25,7 @@
               <h2 class="post-title">
                 <%= link_to article.title, article_url, data: { turbo_frame: "article_#{article.id}" } %>
               </h2>
-              <div class="loading-spinner" data-turbo-frame-loading-target="spinner" style="display: none; justify-content: left; align-items: left; padding: 20px;">
+              <div class="loading-spinner" data-turbo-frame-loading-target="spinner" style="display: none; padding: 20px;">
                 <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #c04000;"></i>
               </div>
               <% if article.description.present? %>
