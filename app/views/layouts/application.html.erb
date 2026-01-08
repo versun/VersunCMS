@@ -22,18 +22,22 @@
     <link rel="apple-touch-icon" href="/static/favicon.png">
     <link rel="alternate" type="application/rss+xml" title="<%= site_settings[:title] %>" href="/feed">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" as="style" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" media="print" data-async-media="true" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <noscript>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    </noscript>
 
     <%# Includes all stylesheet files in app/views/stylesheets %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
-    <%= raw site_settings[:head_code] %>
+    <%= csp_nonce_html(site_settings[:head_code]) %>
 
-    <style>
-      <%= site_settings[:custom_css] %>
-    </style>
+    <%= tag.style(site_settings[:custom_css].to_s.html_safe, nonce: content_security_policy_nonce) %>
   </head>
 
   <body>
@@ -84,7 +88,7 @@
         </div>
       </main>
       
-      <script>
+      <script nonce="<%= content_security_policy_nonce %>">
         // Auto-dismiss flash messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
           const flashMessages = document.querySelectorAll('.flash');
@@ -101,7 +105,7 @@
       </script>
     </div>
 
-    <%= raw site_settings[:tool_code] %>
+    <%= csp_nonce_html(site_settings[:tool_code]) %>
     <%= yield :javascript %>
   </body>
 </html>

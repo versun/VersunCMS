@@ -62,7 +62,7 @@
 </div>
 
 <% content_for :javascript do %>
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
 (function() {
   function syncVerifyFields(provider) {
     const accessToken = document.getElementById(`git_integration_access_token_${provider}`)?.value || "";

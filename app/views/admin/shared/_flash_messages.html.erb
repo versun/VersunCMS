@@ -10,7 +10,7 @@
   </div>
 <% end %>
 
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
 // Auto-dismiss flash messages after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {
   const flashMessages = document.querySelectorAll('.flash');

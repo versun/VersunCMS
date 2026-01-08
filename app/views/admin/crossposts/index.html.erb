@@ -222,7 +222,7 @@
 </div>
 
 <% content_for :javascript do %>
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
 (function() {
   // 使用立即执行函数避免重复绑定
   let initialized = false;

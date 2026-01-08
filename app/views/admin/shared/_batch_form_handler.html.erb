@@ -1,5 +1,5 @@
 <% # Shared batch form submission handler %>
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
 function submitBatchForm(button, action) {
   const form = button.closest('form');
   const controller = document.querySelector('[data-controller="batch-selection"]');
@@ -104,6 +104,47 @@ function openBatchNewsletterModal() {
 
 function closeBatchNewsletterModal() {
   document.getElementById('batchNewsletterModal').style.display = 'none';
+}
+
+if (!window.batchFormHandlersInitialized) {
+  window.batchFormHandlersInitialized = true;
+
+  document.addEventListener('click', function(event) {
+    const actionButton = event.target.closest('[data-batch-action]');
+    if (actionButton) {
+      const action = actionButton.dataset.batchAction;
+      if (!submitBatchForm(actionButton, action)) {
+        event.preventDefault();
+      }
+      return;
+    }
+
+    const modalSubmitButton = event.target.closest('[data-batch-modal-submit]');
+    if (modalSubmitButton) {
+      const formId = modalSubmitButton.dataset.batchModalSubmit;
+      if (!submitBatchFormWithModal(modalSubmitButton, formId)) {
+        event.preventDefault();
+      }
+      return;
+    }
+
+    const modalOpenButton = event.target.closest('[data-batch-modal-open]');
+    if (modalOpenButton) {
+      const target = modalOpenButton.dataset.batchModalOpen;
+      if (target === 'add-tags') openBatchAddTagsModal();
+      if (target === 'crosspost') openBatchCrosspostModal();
+      if (target === 'newsletter') openBatchNewsletterModal();
+      return;
+    }
+
+    const modalCloseButton = event.target.closest('[data-batch-modal-close]');
+    if (modalCloseButton) {
+      const target = modalCloseButton.dataset.batchModalClose;
+      if (target === 'add-tags') closeBatchAddTagsModal();
+      if (target === 'crosspost') closeBatchCrosspostModal();
+      if (target === 'newsletter') closeBatchNewsletterModal();
+    }
+  });
 }
 
 // Close modals when clicking outside
