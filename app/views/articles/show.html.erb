@@ -55,10 +55,10 @@
     site_url = normalized_site_url
     article_full_url = "#{site_url}#{article_path(@article)}"
   %>
-  <div class="article-header" style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.25rem;">
-    <h2 style="flex: 1; margin: 0;"><%= @article.title %></h2>
+  <div class="article-header">
+    <h2><%= @article.title %></h2>
   </div>
-  <small style="color:grey; display: block; margin-bottom: 1rem;">
+  <small class="article-meta">
   <% social_posts = @article.social_media_posts.where(platform: Crosspost::PLATFORMS) %>
   <% if social_posts.any? %>
       <span class="social-label">also posted on:</span>
@@ -79,10 +79,10 @@
           </a>
         <% end %>
       <% end %>
-      <span>|</span>
+      <span class="article-meta-divider">|</span>
   <% end %>
-    <span class="share-container" data-controller="share" data-share-url-value="<%= article_full_url %>" style="position: relative; display: inline-block;">
-      <button class="share-button" data-action="click->share#toggle" title="Share Article" style="background: none; border: none; cursor: pointer; padding: 4px; color: grey; border-radius: 4px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
+    <span class="share-container" data-controller="share" data-share-url-value="<%= article_full_url %>">
+      <button class="share-button" data-action="click->share#toggle" title="Share Article">
         <span>share</span>
         <i class="fas fa-share-alt" style="font-size: 14px;"></i>
       </button>
