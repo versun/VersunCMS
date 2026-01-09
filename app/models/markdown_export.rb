@@ -47,6 +47,8 @@ class MarkdownExport
     Article.order(:id).includes(:tags).find_each do |article|
       html = html_for_article(article)
       markdown = ReverseMarkdown.convert(html, unknown_tags: :bypass, github_flavored: true, force_encoding: true).to_s
+      reference = reference_markdown_for(article)
+      body = [ reference, markdown ].reject(&:blank?).join("\n\n")
 
       front_matter = {
         "type" => "article",
@@ -65,7 +67,7 @@ class MarkdownExport
         dir: articles_dir,
         basename: safe_basename(article.slug.presence || "article_#{article.id}"),
         front_matter: front_matter,
-        body: markdown
+        body: body
       )
     end
 
@@ -129,6 +131,51 @@ class MarkdownExport
       end
 
     process_html_content(html, record_id: page.id, record_type: "page")
+  end
+
+  def reference_markdown_for(article)
+    return "" unless article.has_source?
+
+    author = sanitize_source_text(article.source_author)
+    content = sanitize_source_text(article.source_content, preserve_line_breaks: true)
+    url = sanitize_source_url(article.source_url)
+
+    return "" if author.blank? && content.blank? && url.blank?
+
+    lines = [ "Reference:" ]
+    lines << "Source: #{author}" if author.present?
+
+    quote_lines = []
+    if content.present?
+      quote_lines.concat(content.split(/\r?\n/))
+    end
+    if url.present?
+      quote_lines << "" if content.present?
+      quote_lines << "Original: #{url}"
+    end
+
+    if quote_lines.any?
+      lines << ""
+      lines.concat(quote_lines.map { |line| line.present? ? "> #{line}" : ">" })
+    end
+
+    lines.join("\n").strip
+  end
+
+  def sanitize_source_text(text, preserve_line_breaks: false)
+    text = text.to_s
+    if preserve_line_breaks
+      text = text.gsub(/<\s*br\s*\/?>/i, "\n")
+      text = text.gsub(/<\/\s*p\s*>/i, "\n")
+      text = text.gsub(/<\s*p[^>]*>/i, "")
+    end
+
+    sanitized = ActionView::Base.full_sanitizer.sanitize(text)
+    sanitized.gsub(/\r\n?/, "\n").strip
+  end
+
+  def sanitize_source_url(url)
+    sanitize_source_text(url).split(/\r?\n/).first.to_s.strip
   end
 
   def write_markdown_file(dir:, basename:, front_matter:, body:)
