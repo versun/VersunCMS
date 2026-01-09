@@ -48,7 +48,7 @@ class MarkdownExport
       html = html_for_article(article)
       markdown = ReverseMarkdown.convert(html, unknown_tags: :bypass, github_flavored: true, force_encoding: true).to_s
       reference = reference_markdown_for(article)
-      body = [reference, markdown].reject(&:blank?).join("\n\n")
+      body = [ reference, markdown ].reject(&:blank?).join("\n\n")
 
       front_matter = {
         "type" => "article",
@@ -142,7 +142,7 @@ class MarkdownExport
 
     return "" if author.blank? && content.blank? && url.blank?
 
-    lines = ["Reference:"]
+    lines = [ "Reference:" ]
     lines << "Source: #{author}" if author.present?
 
     quote_lines = []
