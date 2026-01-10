@@ -158,4 +158,115 @@ class Admin::ArticlesControllerTest < ActionDispatch::IntegrationTest
     # For now, we'll test the basic structure
     skip "Requires social media service mocking"
   end
+
+  test "should batch crosspost with enabled platforms" do
+    crosspost = Crosspost.create!(
+      platform: "mastodon",
+      enabled: true,
+      server_url: "https://mastodon.example",
+      client_key: "key",
+      client_secret: "secret",
+      access_token: "token"
+    )
+
+    article = articles(:published_article)
+
+    assert_enqueued_with(job: CrosspostArticleJob, args: [ article.id, "mastodon" ]) do
+      post batch_crosspost_admin_articles_path, params: {
+        ids: [ article.slug ],
+        platforms: [ "mastodon" ]
+      }
+    end
+
+    assert_redirected_to admin_articles_path
+    assert crosspost.reload.enabled?
+  end
+
+  test "should batch newsletter enqueue for published articles" do
+    NewsletterSetting.first_or_create.update!(
+      enabled: true,
+      provider: "native",
+      smtp_address: "smtp.example.com",
+      smtp_port: 587,
+      smtp_user_name: "user",
+      smtp_password: "password",
+      from_email: "noreply@example.com"
+    )
+
+    article = articles(:published_article)
+
+    assert_enqueued_with(job: NativeNewsletterSenderJob, args: [ article.id ]) do
+      post batch_newsletter_admin_articles_path, params: { ids: [ article.slug ] }
+    end
+
+    assert_redirected_to admin_articles_path
+  end
+
+  test "fetch comments creates external comments and parents" do
+    article = articles(:published_article)
+    SocialMediaPost.create!(article: article, platform: "mastodon", url: "https://mastodon.example/post/1")
+
+    comments_payload = {
+      comments: [
+        {
+          external_id: "c1",
+          author_name: "Alice",
+          author_username: "alice",
+          content: "First",
+          published_at: Time.current,
+          url: "https://mastodon.example/post/1#c1"
+        },
+        {
+          external_id: "c2",
+          author_name: "Bob",
+          author_username: "bob",
+          content: "Reply",
+          published_at: Time.current,
+          url: "https://mastodon.example/post/1#c2",
+          parent_external_id: "c1"
+        }
+      ]
+    }
+
+    existing_count = article.comments.where(platform: "mastodon").count
+
+    with_stubbed_fetch_comments(MastodonService, comments_payload) do
+      post fetch_comments_admin_article_path(article.slug), as: :json
+      assert_response :success
+      assert_equal true, JSON.parse(response.body)["success"]
+    end
+
+    created = article.comments.where(platform: "mastodon")
+    assert_equal existing_count + 2, created.count
+    parent = created.find_by!(external_id: "c1")
+    child = created.find_by!(external_id: "c2")
+    assert_equal parent.id, child.parent_id
+  end
+
+  test "batch crosspost validates input" do
+    post batch_crosspost_admin_articles_path, params: { ids: [], platforms: [ "mastodon" ] }
+    assert_redirected_to admin_articles_path
+
+    post batch_crosspost_admin_articles_path, params: { ids: [ @article.slug ], platforms: [] }
+    assert_redirected_to admin_articles_path
+  end
+
+  test "batch newsletter validates input and skips drafts" do
+    post batch_newsletter_admin_articles_path, params: { ids: [] }
+    assert_redirected_to admin_articles_path
+
+    draft = articles(:draft_article)
+    post batch_newsletter_admin_articles_path, params: { ids: [ draft.slug ] }
+    assert_redirected_to admin_articles_path
+  end
+
+  private
+
+  def with_stubbed_fetch_comments(service_class, payload)
+    original = service_class.instance_method(:fetch_comments)
+    service_class.define_method(:fetch_comments) { |_url| payload }
+    yield
+  ensure
+    service_class.define_method(:fetch_comments, original)
+  end
 end

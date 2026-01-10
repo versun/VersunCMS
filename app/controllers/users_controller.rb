@@ -17,7 +17,7 @@ class UsersController < ApplicationController
   def update
     @user = Current.user
     if @user.update(user_params)
-      redirect_to admin_posts_path, alert: "Account was successfully updated."
+      redirect_to admin_articles_path, alert: "Account was successfully updated."
     else
       render :edit, status: :unprocessable_entity
     end
