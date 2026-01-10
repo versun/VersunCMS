@@ -57,7 +57,7 @@ class Admin::GitIntegrationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Server URL is not allowed (loopback/link-local/multicast/unspecified)",
                  controller.send(:outbound_ip_disallowed_reason, IPAddr.new("127.0.0.1"))
     resolved = controller.send(:resolved_ips_for_host, "8.8.8.8")
-    assert_equal [IPAddr.new("8.8.8.8")], resolved
+    assert_equal [ IPAddr.new("8.8.8.8") ], resolved
   end
 
   test "test_connection covers all providers" do
@@ -129,7 +129,7 @@ class Admin::GitIntegrationsControllerTest < ActionDispatch::IntegrationTest
   def with_stubbed_resolved_ips
     original = Admin::GitIntegrationsController.instance_method(:resolved_ips_for_host)
     original_reason = Admin::GitIntegrationsController.instance_method(:outbound_ip_disallowed_reason)
-    Admin::GitIntegrationsController.define_method(:resolved_ips_for_host) { |_host| [IPAddr.new("8.8.8.8")] }
+    Admin::GitIntegrationsController.define_method(:resolved_ips_for_host) { |_host| [ IPAddr.new("8.8.8.8") ] }
     Admin::GitIntegrationsController.define_method(:outbound_ip_disallowed_reason) { |_ip| nil }
     yield
   ensure

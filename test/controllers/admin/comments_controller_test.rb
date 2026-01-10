@@ -54,6 +54,5 @@ class Admin::CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_difference "Comment.count", -1 do
       post batch_destroy_admin_comments_path, params: { ids: [ batch_comment.id ] }
     end
-
   end
 end
