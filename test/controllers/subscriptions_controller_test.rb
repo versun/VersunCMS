@@ -73,4 +73,36 @@ class SubscriptionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "无效的取消订阅链接"
   end
+
+  test "blank email redirects with alert" do
+    post subscriptions_path, params: { subscription: { email: "" } }
+    assert_redirected_to root_path
+    assert_match "请输入有效的邮箱地址", flash[:alert]
+  end
+
+  test "captcha failure returns json error" do
+    post subscriptions_path, params: {
+      subscription: { email: "captcha@example.com" },
+      captcha: { a: "1", b: "2", op: "+", answer: "" }
+    }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal false, response.parsed_body["success"]
+  end
+
+  test "creates subscription with tags" do
+    tag = tags(:ruby)
+
+    assert_difference "Subscriber.count", 1 do
+      post subscriptions_path, params: {
+        subscription: {
+          email: "tagged@example.com",
+          tag_ids: [ tag.id ]
+        }
+      }.merge(captcha_params), as: :json
+    end
+
+    subscriber = Subscriber.find_by!(email: "tagged@example.com")
+    assert_includes subscriber.tags, tag
+  end
 end

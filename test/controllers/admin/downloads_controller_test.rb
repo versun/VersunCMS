@@ -70,6 +70,50 @@ class Admin::DownloadsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "rejects blank or dot filenames" do
+    sign_in(@user)
+
+    get admin_download_path(filename: ".hidden")
+    assert_redirected_to admin_migrates_path
+    assert_match "无效", flash[:alert]
+  end
+
+  test "rejects symlink escape" do
+    sign_in(@user)
+
+    filename = "symlink_#{@unique_suffix}.zip"
+    link_path = @exports_dir.join(filename)
+    FileUtils.ln_sf("/etc/hosts", link_path)
+
+    get admin_download_path(filename: filename)
+    assert_redirected_to admin_migrates_path
+    assert_match "不允许", flash[:alert]
+  end
+
+  test "rescues unexpected errors during download" do
+    sign_in(@user)
+
+    filename = "error_export_#{@unique_suffix}.zip"
+    test_file = @exports_dir.join(filename)
+    File.write(test_file, "test content")
+
+    ActionController::Base.class_eval do
+      alias_method :original_send_file, :send_file
+      def send_file(*)
+        raise "boom"
+      end
+    end
+
+    get admin_download_path(filename: filename)
+    assert_redirected_to admin_migrates_path
+    assert_match "下载失败", flash[:alert]
+  ensure
+    ActionController::Base.class_eval do
+      alias_method :send_file, :original_send_file
+      remove_method :original_send_file
+    end
+  end
+
   test "safe path validation prevents directory escape" do
     # This test verifies that even if File.basename is bypassed somehow,
     # the start_with? check would catch directory traversal

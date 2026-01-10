@@ -174,4 +174,66 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_select "article[data-article-id='#{article.id}'] a.post-content-link", 0
     assert_select "article[data-article-id='#{article.id}'] a[href='https://example.com']", 1
   end
+
+  test "admin create update and destroy via controller routes" do
+    with_routing do |set|
+      set.draw do
+        resources :articles, param: :slug, only: [ :new, :create, :edit, :update, :destroy ]
+        resource :session
+        namespace :admin do
+          get "/" => "articles#index", as: :root
+          resources :articles, path: "posts", only: [ :index ]
+        end
+      end
+
+      sign_in(@user)
+
+      get new_article_path
+      assert_response :not_acceptable
+
+      assert_difference "Article.count", 1 do
+        post articles_path, params: {
+          article: {
+            title: "Created",
+            slug: "created-article",
+            status: "draft",
+            content: "Content"
+          }
+        }
+      end
+      assert_redirected_to admin_articles_path
+
+      article = Article.find_by!(slug: "created-article")
+
+      patch article_path(article), params: { article: { title: "Updated" } }
+      assert_redirected_to admin_articles_path
+      assert_equal "Updated", article.reload.title
+
+      assert_no_difference "Article.count" do
+        delete article_path(article)
+      end
+      assert_equal "trash", article.reload.status
+    end
+  end
+
+  test "json create failure returns unprocessable" do
+    with_routing do |set|
+      set.draw do
+        resources :articles, param: :slug, only: [ :create ]
+        resource :session
+        namespace :admin do
+          get "/" => "articles#index", as: :root
+          resources :articles, path: "posts", only: [ :index ]
+        end
+      end
+
+      sign_in(@user)
+
+      post articles_path, params: {
+        article: { title: "", status: "draft" }
+      }, as: :json
+
+      assert_response :unprocessable_entity
+    end
+  end
 end
