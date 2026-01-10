@@ -216,32 +216,33 @@ class ExportTest < ActiveSupport::TestCase
   end
 
   test "cleans up old export and import files" do
-    exports_dir = Rails.root.join("tmp", "exports")
-    uploads_dir = Rails.root.join("tmp", "uploads")
-    FileUtils.mkdir_p(exports_dir)
-    FileUtils.mkdir_p(uploads_dir)
+    Dir.mktmpdir do |tmp_root|
+      Rails.stub(:root, Pathname.new(tmp_root)) do
+        exports_dir = Rails.root.join("tmp", "exports")
+        uploads_dir = Rails.root.join("tmp", "uploads")
+        FileUtils.mkdir_p(exports_dir)
+        FileUtils.mkdir_p(uploads_dir)
 
-    export_file = exports_dir.join("export_old.zip")
-    markdown_file = exports_dir.join("markdown_export_old.zip")
-    import_file = uploads_dir.join("import_old.zip")
+        export_file = exports_dir.join("export_old.zip")
+        markdown_file = exports_dir.join("markdown_export_old.zip")
+        import_file = uploads_dir.join("import_old.zip")
 
-    past_time = 2.days.ago.to_time
-    [ export_file, markdown_file, import_file ].each do |file|
-      File.write(file, "data")
-      File.utime(past_time, past_time, file)
+        past_time = 2.days.ago.to_time
+        [ export_file, markdown_file, import_file ].each do |file|
+          File.write(file, "data")
+          File.utime(past_time, past_time, file)
+        end
+
+        result = Export.cleanup_old_exports(days: 1)
+
+        assert_equal 3, result[:deleted]
+        assert_equal 0, result[:errors]
+        refute File.exist?(export_file)
+        refute File.exist?(markdown_file)
+        refute File.exist?(import_file)
+        assert_match(/Cleaned up 3 old export\/import file/, result[:message])
+      end
     end
-
-    result = Export.cleanup_old_exports(days: 1)
-
-    assert_equal 3, result[:deleted]
-    assert_equal 0, result[:errors]
-    refute File.exist?(export_file)
-    refute File.exist?(markdown_file)
-    refute File.exist?(import_file)
-    assert_match(/Cleaned up 3 old export\/import file/, result[:message])
-  ensure
-    FileUtils.rm_rf(exports_dir)
-    FileUtils.rm_rf(uploads_dir)
   end
 
   test "exports users to csv" do
