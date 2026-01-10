@@ -1,15 +1,15 @@
 module MathCaptchaHelper
-  def math_captcha_challenge(max: 10)
+  def math_captcha_challenge(max: 10, chooser: [ true, false ], rng: Kernel)
     max = max.to_i
     max = 10 if max <= 0
 
-    if [ true, false ].sample
-      a = rand(0..max)
-      b = rand(0..(max - a))
+    if chooser.sample
+      a = rng.rand(0..max)
+      b = rng.rand(0..(max - a))
       op = "+"
     else
-      a = rand(0..max)
-      b = rand(0..a)
+      a = rng.rand(0..max)
+      b = rng.rand(0..a)
       op = "-"
     end
 
