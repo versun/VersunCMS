@@ -85,4 +85,15 @@ class PageTest < ActiveSupport::TestCase
     @page.redirect_url = ""
     assert @page.valid?
   end
+
+  test "rendered_content returns rich text content when rich_text" do
+    page = Page.create!(
+      title: "Rich Page",
+      slug: "rich-page",
+      status: :publish,
+      content: "<p>Rich content</p>"
+    )
+
+    assert_includes page.rendered_content.to_s, "Rich content"
+  end
 end

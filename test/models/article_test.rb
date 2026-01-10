@@ -207,6 +207,130 @@ class ArticleTest < ActiveSupport::TestCase
     end
   end
 
+  test "renders content and derives SEO helpers" do
+    html_article = Article.create!(
+      title: "HTML Article",
+      slug: "html-article",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Hello <strong>World</strong></p>",
+      description: "html desc"
+    )
+
+    assert_equal html_article.html_content, html_article.rendered_content
+    assert_equal "Hello World", html_article.plain_text_content
+
+    html_article.meta_title = "Meta Title"
+    html_article.meta_description = "Meta Desc"
+    html_article.meta_image = "https://example.com/meta.png"
+    assert_equal "Meta Title", html_article.seo_meta_title
+    assert_equal "Meta Desc", html_article.seo_meta_description
+    assert_equal "https://example.com/meta.png", html_article.seo_meta_image
+    assert articles(:source_article).has_source?
+
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("fake-image"),
+      filename: "image.png",
+      content_type: "image/png"
+    )
+    attachment = ActionText::Attachment.from_attachable(blob)
+    rich_article = Article.create!(
+      title: "Rich Article",
+      slug: "rich-article",
+      status: :publish,
+      content: "<p>Hi</p>#{attachment.to_html}",
+      description: "rich desc"
+    )
+
+    assert_equal blob, rich_article.first_image_attachment
+    assert_includes rich_article.rendered_content.to_s, "Hi"
+    assert_includes rich_article.plain_text_content, "Hi"
+    assert_equal Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true), rich_article.seo_meta_image
+
+    long_text = "a" * 200
+    long_article = Article.create!(
+      title: "Long Article",
+      slug: "long-article",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>#{long_text}</p>",
+      description: "long desc"
+    )
+    assert_equal "Long Article", long_article.seo_meta_title
+    assert long_article.seo_meta_description.end_with?("...")
+    assert_equal 160, long_article.seo_meta_description.length
+
+    fallback_article = Article.new(description: "fallback desc")
+    assert_equal "fallback desc", fallback_article.seo_meta_description
+  end
+
+  test "handles scheduling helpers, crosspost checks, and post cleanup" do
+    setting = settings(:default)
+    original_zone = setting.time_zone
+    setting.update!(time_zone: "Pacific Time (US & Canada)")
+    CacheableSettings.refresh_site_info
+
+    article = Article.new(
+      title: "Scheduled",
+      slug: "scheduled-helper",
+      status: :schedule,
+      scheduled_at: Time.utc(2025, 1, 1, 12, 0, 0),
+      content_type: :html,
+      html_content: "<p>Content</p>"
+    )
+    article.send(:handle_time_zone)
+    assert article.scheduled_at.utc?
+
+    crosspost = Crosspost.mastodon
+    crosspost.update!(
+      enabled: true,
+      server_url: "https://mastodon.social",
+      client_key: "client",
+      client_secret: "secret",
+      access_token: "token"
+    )
+    article.crosspost_mastodon = "1"
+    assert article.send(:should_crosspost_to?, "mastodon")
+
+    article.social_media_posts.build(url: "")
+    article.social_media_posts.build(url: "https://example.com/post")
+    article.send(:cleanup_empty_social_media_posts)
+    assert article.social_media_posts.first.marked_for_destruction?
+  ensure
+    setting.update!(time_zone: original_zone) if setting&.persisted?
+    CacheableSettings.refresh_site_info
+  end
+
+  test "newsletter helpers respect publish status and enqueue jobs" do
+    draft = Article.new(status: :draft)
+    assert_not draft.send(:should_send_newsletter?)
+
+    newsletter_setting = NewsletterSetting.instance
+    newsletter_setting.update!(
+      provider: "native",
+      enabled: true,
+      smtp_address: "smtp.example.com",
+      smtp_port: 587,
+      smtp_user_name: "user",
+      smtp_password: "pass",
+      from_email: "from@example.com"
+    )
+
+    article = Article.create!(
+      title: "Newsletter Article",
+      slug: "newsletter-article",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Body</p>"
+    )
+    article.send_newsletter = "1"
+    assert article.send(:should_send_newsletter?)
+
+    assert_enqueued_with(job: NativeNewsletterSenderJob, args: [ article.id ]) do
+      article.send(:handle_newsletter)
+    end
+  end
+
   # Crosspost job tests
   test "should enqueue crosspost job when publishing with crosspost enabled" do
     # Setup: enable mastodon crosspost platform
