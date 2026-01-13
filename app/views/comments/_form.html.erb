@@ -10,7 +10,11 @@
     elsif defined?(@commentable) && @commentable.present?
       @commentable
     end
-  show_success = !is_reply && flash[:comment_submitted].present?
+  submitted_parent_id = flash[:comment_parent_id]
+  show_success =
+    flash[:comment_submitted].present? &&
+      (is_reply ? submitted_parent_id.to_s == parent_id.to_s : submitted_parent_id.blank?)
+  error_message = local_assigns[:error_message]
 
   form_url =
     if commentable.present?
@@ -53,8 +57,13 @@
     </div>
     <% end %>
 
- <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
       <%= f.submit is_reply ? "Reply" : "Submit", style: "padding: 0.5rem 1.25rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;" %>
+      <% if error_message.present? %>
+        <span class="comment-error-message" style="display: inline-flex; align-items: center; border: 1px solid #f5c6cb; padding: 0.35rem 0.5rem; border-radius: 4px; background: #f8d7da; font-size: 0.8rem; color: #721c24;">
+          <%= error_message %>
+        </span>
+      <% end %>
       <% if show_success %>
         <span class="comment-success-message" style="display: inline-flex; align-items: center; border: 1px solid #333; padding: 0.35rem 0.5rem; border-radius: 4px; background: #fff; font-size: 0.8rem; color: #333;">
           Your comment will be reviewed before being published.

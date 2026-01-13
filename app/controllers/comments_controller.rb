@@ -14,6 +14,13 @@ class CommentsController < ApplicationController
       )
 
       respond_to do |format|
+        format.turbo_stream do
+          @form_dom_id = comment_form_dom_id
+          @form_parent_id = comment_parent_id
+          @form_comment = build_comment_from_params
+          @form_error_message = "验证失败：请回答数学题。"
+          render :create, status: :unprocessable_entity
+        end
         format.html do
           if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
             render json: { success: false, message: "验证失败：请回答数学题。" }, status: :unprocessable_entity
@@ -39,6 +46,14 @@ class CommentsController < ApplicationController
           level: :info,
           description: "提交评论: #{@commentable_type}##{@commentable_id} (#{@comment.author_name})"
         )
+        format.turbo_stream do
+          flash.now[:comment_submitted] = true
+          @form_dom_id = comment_form_dom_id
+          @form_parent_id = comment_parent_id
+          flash.now[:comment_parent_id] = @form_parent_id
+          @form_comment = Comment.new
+          render :create
+        end
         format.html do
           # For AJAX requests, return success response
           if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
@@ -47,6 +62,7 @@ class CommentsController < ApplicationController
             # For regular form submissions, redirect
             redirect_path = determine_redirect_path
             flash[:comment_submitted] = true
+            flash[:comment_parent_id] = comment_parent_id
             redirect_to redirect_path
           end
         end
@@ -58,6 +74,13 @@ class CommentsController < ApplicationController
           level: :error,
           description: "提交评论失败: #{@comment.errors.full_messages.join(', ')}"
         )
+        format.turbo_stream do
+          @form_dom_id = comment_form_dom_id
+          @form_parent_id = comment_parent_id
+          @form_comment = @comment
+          @form_error_message = "提交评论时出错：#{@comment.errors.full_messages.join('，')}"
+          render :create, status: :unprocessable_entity
+        end
         format.html do
           if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
             render json: { success: false, message: "提交评论时出错：#{@comment.errors.full_messages.join('，')}" }, status: :unprocessable_entity
@@ -71,6 +94,13 @@ class CommentsController < ApplicationController
     end
   rescue ActiveRecord::RecordNotFound => e
     respond_to do |format|
+      format.turbo_stream do
+        @form_dom_id = comment_form_dom_id
+        @form_parent_id = comment_parent_id
+        @form_comment = Comment.new
+        @form_error_message = "文章或页面未找到。"
+        render :create, status: :not_found
+      end
       format.html do
         if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
           render json: { success: false, message: "文章或页面未找到。" }, status: :not_found
@@ -95,6 +125,13 @@ class CommentsController < ApplicationController
       description: "提交评论异常: #{e.message}"
     )
     respond_to do |format|
+      format.turbo_stream do
+        @form_dom_id = comment_form_dom_id
+        @form_parent_id = comment_parent_id
+        @form_comment = Comment.new
+        @form_error_message = "提交评论时发生错误，请稍后重试。"
+        render :create, status: :internal_server_error
+      end
       format.html do
         if request.xhr? || request.headers["X-Requested-With"] == "XMLHttpRequest"
           render json: { success: false, message: "提交评论时发生错误，请稍后重试。" }, status: :internal_server_error
@@ -126,5 +163,20 @@ class CommentsController < ApplicationController
 
   def determine_redirect_path
     @commentable.is_a?(Page) ? page_path(@commentable) : article_path(@commentable)
+  end
+
+  def comment_parent_id
+    params.dig(:comment, :parent_id).presence
+  end
+
+  def comment_form_dom_id
+    parent_id = comment_parent_id
+    parent_id.present? ? "comment-form-#{parent_id}" : "comment-form-container"
+  end
+
+  def build_comment_from_params
+    return Comment.new unless params[:comment].present?
+
+    Comment.new(comment_params)
   end
 end
