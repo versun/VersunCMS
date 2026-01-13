@@ -74,28 +74,6 @@ class ArticlesTest < ApplicationSystemTestCase
     assert_text linked_article.title
   end
 
-  test "space key works on nested interactive controls inside a clickable card" do
-    skip "This test requires JavaScript support (Selenium)" unless self.class.use_selenium?
-
-    details_id = "nested-details-#{Time.current.to_i}-#{rand(10000)}"
-    summary_id = "nested-summary-#{Time.current.to_i}-#{rand(10000)}"
-
-    article = create_published_article(
-      title: "Article With Details Toggle",
-      description: "",
-      content: %(<details id="#{details_id}"><summary id="#{summary_id}">Toggle details</summary><div>Hidden content</div></details>)
-    )
-
-    visit root_path
-    assert_text article.title
-    assert_no_selector "##{details_id}[open]"
-
-    page.execute_script("document.getElementById(#{summary_id.to_json}).focus()")
-    page.send_keys(:space)
-
-    assert_selector "##{details_id}[open]"
-  end
-
   test "viewing a published article directly" do
     article = create_published_article(title: "Direct View Article", content: "Direct view content")
 

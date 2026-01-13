@@ -38,7 +38,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, response.parsed_body["success"]
   end
 
-  test "shows success message after html submit" do
+  test "shows success message after turbo submit" do
     article = articles(:published_article)
     article.update!(comment: true)
 
@@ -48,15 +48,66 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
           author_name: "Alice",
           content: "Nice post!"
         }
-      }.merge(captcha_params)
+      }.merge(captcha_params), as: :turbo_stream
     end
 
-    assert_redirected_to article_path(article)
-    follow_redirect!
     assert_response :success
-    # Success message is now inline in the comment form, not in flash notice
-    assert_select ".flash-notice", false
-    assert_select ".comment-form .comment-success-message", /Your comment will be reviewed/
+    assert_includes response.body, "comment-form-container"
+    assert_includes response.body, "Your comment will be reviewed"
+  end
+
+  test "shows success message after turbo reply submit" do
+    article = articles(:published_article)
+    article.update!(comment: true)
+    parent = comments(:approved_comment)
+
+    assert_difference "Comment.count", 1 do
+      post comments_path(article_id: article.slug), params: {
+        comment: {
+          author_name: "Alice",
+          content: "Replying here",
+          parent_id: parent.id
+        }
+      }.merge(captcha_params), as: :turbo_stream
+    end
+
+    assert_response :success
+    assert_includes response.body, "comment-form-#{parent.id}"
+    assert_includes response.body, "Your comment will be reviewed"
+  end
+
+  test "turbo submit with invalid captcha preserves input and shows error" do
+    article = articles(:published_article)
+    article.update!(comment: true)
+
+    post comments_path(article_id: article.slug), params: {
+      comment: {
+        author_name: "Alice",
+        content: "Nice post!"
+      },
+      captcha: { a: "1", b: "1", op: "+", answer: "" }
+    }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "验证失败"
+    assert_includes response.body, "value=\"Alice\""
+    assert_includes response.body, "Nice post!"
+  end
+
+  test "turbo submit with validation error preserves input and shows error" do
+    article = articles(:published_article)
+    article.update!(comment: true)
+
+    post comments_path(article_id: article.slug), params: {
+      comment: {
+        author_name: "Alice",
+        content: ""
+      }
+    }.merge(captcha_params), as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "提交评论时出错"
+    assert_includes response.body, "value=\"Alice\""
   end
 
   test "html submit with invalid captcha redirects with alert" do
@@ -225,6 +276,28 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     }.merge(captcha_params), as: :json
 
     assert_response :not_found
+    assert_includes response.body, "文章或页面未找到"
+  ensure
+    Article.define_method(:comments, original_comments)
+  end
+
+  test "turbo stream record not found targets reply form" do
+    article = articles(:published_article)
+    parent = comments(:approved_comment)
+
+    original_comments = Article.instance_method(:comments)
+    Article.define_method(:comments) { raise ActiveRecord::RecordNotFound }
+
+    post comments_path(article_id: article.slug), params: {
+      comment: {
+        author_name: "Ghost",
+        content: "Missing",
+        parent_id: parent.id
+      }
+    }.merge(captcha_params), as: :turbo_stream
+
+    assert_response :not_found
+    assert_includes response.body, "comment-form-#{parent.id}"
     assert_includes response.body, "文章或页面未找到"
   ensure
     Article.define_method(:comments, original_comments)

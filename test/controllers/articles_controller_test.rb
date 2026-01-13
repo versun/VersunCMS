@@ -156,7 +156,9 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     expected_url = "https://settings.example.com#{article_path(@article)}"
-    assert_includes response.body, "data-clickable-card-url-value=\"#{expected_url}\""
+    expected_date = @article.created_at.strftime("%Y-%m-%d")
+    assert_select "article[data-article-id='#{@article.id}'] a[href='#{expected_url}']", minimum: 1
+    assert_select "article[data-article-id='#{@article.id}'] .timeline-date a[href='#{expected_url}'] time", text: expected_date
   end
 
   test "index renders untitled article without wrapping content link" do
@@ -167,12 +169,19 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
       html_content: "<p>Text <a href=\"https://example.com\">report</a></p>"
     )
 
+    CacheableSettings.refresh_site_info
     get articles_path
     assert_response :success
 
-    assert_select "article[data-article-id='#{article.id}'][data-controller~='clickable-card']", 1
+    assert_select "article[data-article-id='#{article.id}']", 1
+    assert_select "article[data-article-id='#{article.id}'][data-controller~='clickable-card']", 0
     assert_select "article[data-article-id='#{article.id}'] a.post-content-link", 0
     assert_select "article[data-article-id='#{article.id}'] a[href='https://example.com']", 1
+    expected_url = "#{Setting.first.url}#{article_path(article)}"
+    expected_date = article.created_at.strftime("%Y-%m-%d")
+    assert_select "article[data-article-id='#{article.id}'] .timeline-date a[href='#{expected_url}']", 1
+    assert_select "article[data-article-id='#{article.id}'] .timeline-date a[href='#{expected_url}'] time", text: expected_date
+    assert_select "article[data-article-id='#{article.id}'] h2.post-title", text: "Open article", count: 0
   end
 
   test "admin create update and destroy via controller routes" do
