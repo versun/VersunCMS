@@ -219,6 +219,44 @@
     <div id="verify-messages-bluesky"></div>
   </div>
 
+  <div class="form-section compact">
+    <h3>Xiaohongshu</h3>
+    <small>No public API available. These fields are for reference and manual posting.</small>
+
+    <%= form_with(model: @xiaohongshu, url: admin_crosspost_path(@xiaohongshu.platform), method: :patch) do |f| %>
+      <%= f.hidden_field :platform, value: 'xiaohongshu' %>
+
+      <div class="field checkbox">
+        <%= f.check_box :enabled, id: 'crosspost_enabled_xiaohongshu' %>
+        <%= f.label :enabled, "Enable Xiaohongshu CrossPost", for: 'crosspost_enabled_xiaohongshu' %>
+      </div>
+
+      <div class="form-grid form-grid-2">
+        <div class="field">
+          <%= f.label :username, "Username (optional)" %>
+          <%= f.text_field :username, placeholder: "your_id" %>
+        </div>
+
+        <div class="field">
+          <%= f.label :server_url, "Profile URL (optional)" %>
+          <%= f.text_field :server_url, placeholder: "https://www.xiaohongshu.com/user/profile/..." %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= f.label :max_characters, "Max Characters", for: 'crosspost_max_characters_xiaohongshu' %>
+        <%= f.number_field :max_characters, min: 1, placeholder: "300", value: @xiaohongshu.max_characters || @xiaohongshu.default_max_characters, id: 'crosspost_max_characters_xiaohongshu' %>
+        <small>
+          Maximum characters for manual posts. Default: <%= @xiaohongshu.default_max_characters %>
+        </small>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit "Save", class: 'btn btn-primary' %>
+      </div>
+    <% end %>
+  </div>
+
 </div>
 
 <% content_for :javascript do %>

@@ -447,6 +447,23 @@ textarea.description-compact {
     gap: 0.5rem;
 }
 
+.inline-svg-icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.12em;
+}
+
+.inline-svg-icon.is-loading {
+    animation: icon-spin 1s linear infinite;
+}
+
+@keyframes icon-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Crosspost field with inline URL input */
 .field.checkbox.crosspost-field {
     gap: 0.5rem;

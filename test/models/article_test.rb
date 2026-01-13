@@ -420,6 +420,23 @@ class ArticleTest < ActiveSupport::TestCase
     end
   end
 
+  test "should not enqueue crosspost job for xiaohongshu" do
+    Crosspost.find_or_create_by(platform: "xiaohongshu").update!(enabled: true)
+
+    article = Article.new(
+      title: "Xiaohongshu Crosspost Test",
+      slug: "xiaohongshu-crosspost-test",
+      status: :publish,
+      content_type: :html,
+      html_content: "<p>Test content</p>",
+      crosspost_xiaohongshu: "1"
+    )
+
+    assert_no_enqueued_jobs(only: CrosspostArticleJob) do
+      article.save!
+    end
+  end
+
   test "should enqueue multiple crosspost jobs for multiple platforms" do
     # Setup: enable multiple crosspost platforms
     Crosspost.find_or_create_by(platform: "mastodon").update!(

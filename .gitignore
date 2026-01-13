@@ -7,6 +7,8 @@
 *.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm
+*.sqlite3_*
+*.profraw
 # Ignore bundler config.
 /.bundle
 /vendor/bundle/
@@ -54,4 +56,3 @@ replit.nix
 /config/*.key
 
 /coverage
-

@@ -3,6 +3,7 @@ class Admin::CrosspostsController < Admin::BaseController
     @mastodon = Crosspost.mastodon
     @twitter = Crosspost.twitter
     @bluesky = Crosspost.bluesky
+    @xiaohongshu = Crosspost.xiaohongshu
   end
 
   def update

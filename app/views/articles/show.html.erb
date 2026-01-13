@@ -64,14 +64,18 @@
       <span class="social-label">also posted on:</span>
       <% social_posts.each do |post| %>
         <% if post.url.present? %>
-          <% 
+          <%
             # 从 settings 中获取对应平台的图标信息
             platform_config = site_settings[:social_links]&.dig(post.platform)
             icon_class = platform_config&.dig('icon') || Crosspost::PLATFORM_ICONS[post.platform]
             display_name = platform_config&.dig('name') || post.platform.titleize
+            icon_key = icon_class.to_s
+            icon_svg = icon_key.start_with?("svg:") ? icon_key.delete_prefix("svg:") : nil
           %>
           <a href="<%= post.url %>" target="_blank" rel="noopener noreferrer" class="social-icon-link" title="<%= display_name %>">
-            <% if icon_class.present? %>
+            <% if icon_svg.present? %>
+              <%= image_tag "icons/#{icon_svg}.svg", class: "inline-svg-icon", alt: "#{display_name} icon" %>
+            <% elsif icon_class.present? %>
               <i class="<%= icon_class %>" style="font-size: 16px;"></i>
             <% else %>
               <span style="font-size: 14px;"><%= display_name %></span>

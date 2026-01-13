@@ -9,6 +9,7 @@ export default class extends Controller {
         // Store original icon class for restoration
         if (this.hasIconTarget) {
             this.originalIconClass = this.iconTarget.className
+            this.iconIsImage = this.iconTarget.tagName === "IMG"
         }
     }
 
@@ -33,7 +34,11 @@ export default class extends Controller {
             if (!this.originalIconClass) {
                 this.originalIconClass = icon.className
             }
-            icon.className = 'fas fa-spinner fa-spin'
+            if (this.iconIsImage) {
+                icon.classList.add("is-loading")
+            } else {
+                icon.className = "fas fa-spinner fa-spin"
+            }
         }
 
         try {
@@ -66,10 +71,13 @@ export default class extends Controller {
             if (button) {
                 button.disabled = false
             }
-            if (icon && this.originalIconClass) {
-                icon.className = this.originalIconClass
+            if (icon) {
+                if (this.iconIsImage) {
+                    icon.classList.remove("is-loading")
+                } else if (this.originalIconClass) {
+                    icon.className = this.originalIconClass
+                }
             }
         }
     }
 }
-
