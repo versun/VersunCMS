@@ -182,6 +182,21 @@
             <% end %>
           </div>
 
+          <% xiaohongshu_enabled = Crosspost.find_by(platform: 'xiaohongshu')&.enabled? %>
+          <div class="field checkbox crosspost-field">
+            <%= form.check_box :crosspost_xiaohongshu, disabled: !xiaohongshu_enabled %>
+            Xiaohongshu
+            <% unless xiaohongshu_enabled %>
+              <span class="info-text">(off)</span>
+            <% end %>
+            <%= form.fields_for :social_media_posts, @article.social_media_posts.find_or_initialize_by(platform: 'xiaohongshu') do |post_form| %>
+              <% if post_form.object.platform == 'xiaohongshu' %>
+                <%= post_form.text_field :url, placeholder: "Xiaohongshu URL", class: "crosspost-url-input" %>
+                <%= post_form.hidden_field :platform, value: "xiaohongshu" %>
+              <% end %>
+            <% end %>
+          </div>
+
         </div>
       </div>
     </div>

@@ -30,16 +30,21 @@ class CrosspostTest < ActiveSupport::TestCase
     mastodon = Crosspost.new(platform: "mastodon", enabled: false)
     twitter = Crosspost.new(platform: "twitter", enabled: false, max_characters: 111)
     bluesky = Crosspost.new(platform: "bluesky", enabled: false)
+    xiaohongshu = Crosspost.new(platform: "xiaohongshu", enabled: false)
 
     assert_equal 500, mastodon.default_max_characters
     assert_equal 250, twitter.default_max_characters
     assert_equal 300, bluesky.default_max_characters
+    assert_equal 300, xiaohongshu.default_max_characters
     assert_equal 111, twitter.effective_max_characters
     assert_equal 500, mastodon.effective_max_characters
 
     mastodon.enabled = true
     assert_not mastodon.valid?
     assert_includes mastodon.errors[:client_key], "can't be blank"
+
+    xiaohongshu.enabled = true
+    assert xiaohongshu.valid?
   end
 
   private

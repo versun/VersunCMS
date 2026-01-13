@@ -35,6 +35,13 @@ img {
     height: auto;
 }
 
+.inline-svg-icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.12em;
+}
+
 a {
     text-decoration: none;
     color: inherit;

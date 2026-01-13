@@ -1,12 +1,13 @@
 class Crosspost < ApplicationRecord
   #  encrypts :access_token, :access_token_secret, :client_id, :client_secret,
   #          :client_key, :api_key, :api_key_secret, :app_password, :username
-  PLATFORMS = %w[mastodon twitter bluesky].freeze
+  PLATFORMS = %w[mastodon twitter bluesky xiaohongshu].freeze
 
   PLATFORM_ICONS = {
     "mastodon" => "fa-brands fa-mastodon",
     "twitter" => "fa-brands fa-square-x-twitter",
-    "bluesky" => "fa-brands fa-square-bluesky"
+    "bluesky" => "fa-brands fa-square-bluesky",
+    "xiaohongshu" => "svg:xiaohongshu"
   }.freeze
 
   validates :platform, presence: true,
@@ -21,6 +22,7 @@ class Crosspost < ApplicationRecord
   scope :mastodon, -> { find_or_create_by(platform: "mastodon") }
   scope :twitter, -> { find_or_create_by(platform: "twitter") }
   scope :bluesky, -> { find_or_create_by(platform: "bluesky") }
+  scope :xiaohongshu, -> { find_or_create_by(platform: "xiaohongshu") }
 
   def mastodon?
     platform == "mastodon"
@@ -32,6 +34,10 @@ class Crosspost < ApplicationRecord
 
   def bluesky?
     platform == "bluesky"
+  end
+
+  def xiaohongshu?
+    platform == "xiaohongshu"
   end
 
   def enabled?

@@ -169,8 +169,10 @@
                 <td class="col-comments">
                   <div class="comments-info" style="display: flex; align-items: center; gap: 8px;">
                     <span class="comment-count"><%= post.comments.count %></span>
-                    <% post.social_media_posts.where(platform: Crosspost::PLATFORMS).where.not(url: nil).each do |social_post| %>
+                    <% post.social_media_posts.where(platform: Crosspost::PLATFORMS - [ "xiaohongshu" ]).where.not(url: nil).each do |social_post| %>
                       <% icon_class = Crosspost::PLATFORM_ICONS[social_post.platform] || "fas fa-share-alt" %>
+                      <% icon_key = icon_class.to_s %>
+                      <% icon_svg = icon_key.start_with?("svg:") ? icon_key.delete_prefix("svg:") : nil %>
                       <%= form_with url: fetch_comments_admin_article_path(post), method: :post, 
                           class: "fetch-comments-form", 
                           style: "display: inline-block; margin: 0;",
@@ -185,7 +187,11 @@
                             title: "Fetch comments from #{social_post.platform.humanize}",
                             style: "padding: 2px 6px; font-size: 0.8em; border: 1px solid #ddd; background: #f5f5f5; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: #666;",
                             data: { fetch_comments_target: "button" } do %>
-                          <i class="<%= icon_class %>" data-fetch-comments-target="icon"></i>
+                          <% if icon_svg.present? %>
+                            <%= image_tag "icons/#{icon_svg}.svg", class: "inline-svg-icon", alt: "#{social_post.platform.titleize} icon", data: { fetch_comments_target: "icon" } %>
+                          <% else %>
+                            <i class="<%= icon_class %>" data-fetch-comments-target="icon"></i>
+                          <% end %>
                         <% end %>
                       <% end %>
                     <% end %>

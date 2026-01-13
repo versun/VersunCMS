@@ -1,6 +1,6 @@
 class Article < ApplicationRecord
   # Virtual attributes for crosspost functionality
-  attr_accessor :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky
+  attr_accessor :crosspost_mastodon, :crosspost_twitter, :crosspost_bluesky, :crosspost_xiaohongshu
   # Virtual attributes for newsletter functionality
   attr_accessor :send_newsletter, :resend_newsletter
 
@@ -189,10 +189,16 @@ class Article < ApplicationRecord
   def handle_crosspost
     return false unless publish?
 
-    %w[mastodon twitter bluesky].each do |platform|
+    %w[mastodon twitter bluesky xiaohongshu].each do |platform|
       should_post = should_crosspost_to?(platform)
       Rails.event.notify("article.crosspost_check", level: "info", component: "Article", article_id: id, platform: platform, should_post: should_post)
-      CrosspostArticleJob.perform_later(id, platform) if should_post
+      if should_post
+        if platform == "xiaohongshu"
+          Rails.event.notify("article.crosspost_skipped", level: "info", component: "Article", article_id: id, platform: platform, reason: "no_public_api")
+          next
+        end
+        CrosspostArticleJob.perform_later(id, platform)
+      end
     end
   end
 
