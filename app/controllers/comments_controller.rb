@@ -5,12 +5,14 @@ class CommentsController < ApplicationController
   before_action :set_commentable, only: [ :create ]
 
   def create
+    commentable_ref = commentable_reference
     unless math_captcha_valid?(max: 10)
-      ActivityLog.create!(
-        action: "failed",
-        target: "comment",
+      ActivityLog.log!(
+        action: :failed,
+        target: :comment,
         level: :error,
-        description: "提交评论验证失败: #{@commentable.class.name}##{@commentable.slug}"
+        commentable: commentable_ref,
+        reason: "captcha_invalid"
       )
 
       respond_to do |format|
@@ -40,11 +42,12 @@ class CommentsController < ApplicationController
 
     respond_to do |format|
       if @comment.save
-        ActivityLog.create!(
-          action: "created",
-          target: "comment",
+        ActivityLog.log!(
+          action: :created,
+          target: :comment,
           level: :info,
-          description: "提交评论: #{@commentable_type}##{@commentable_id} (#{@comment.author_name})"
+          commentable: commentable_ref,
+          author: @comment.author_name
         )
         format.turbo_stream do
           flash.now[:comment_submitted] = true
@@ -68,11 +71,12 @@ class CommentsController < ApplicationController
         end
         format.json { render json: { success: true, message: "评论已提交，等待审核后显示。" }, status: :created }
       else
-        ActivityLog.create!(
-          action: "failed",
-          target: "comment",
+        ActivityLog.log!(
+          action: :failed,
+          target: :comment,
           level: :error,
-          description: "提交评论失败: #{@comment.errors.full_messages.join(', ')}"
+          commentable: commentable_ref,
+          errors: @comment.errors.full_messages.join(", ")
         )
         format.turbo_stream do
           @form_dom_id = comment_form_dom_id
@@ -118,11 +122,12 @@ class CommentsController < ApplicationController
       message: e.message,
       backtrace: e.backtrace
     )
-    ActivityLog.create!(
-      action: "failed",
-      target: "comment",
+    ActivityLog.log!(
+      action: :failed,
+      target: :comment,
       level: :error,
-      description: "提交评论异常: #{e.message}"
+      commentable: commentable_reference,
+      error: e.message
     )
     respond_to do |format|
       format.turbo_stream do
@@ -178,5 +183,12 @@ class CommentsController < ApplicationController
     return Comment.new unless params[:comment].present?
 
     Comment.new(comment_params)
+  end
+
+  def commentable_reference
+    return nil unless @commentable
+
+    identifier = @commentable.try(:slug).presence || @commentable.id
+    "#{@commentable.class.name}##{identifier}"
   end
 end

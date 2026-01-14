@@ -33,8 +33,8 @@ class Admin::MigratesController < Admin::BaseController
     export_type = (params[:export_type].presence || "default").to_s
 
     export_config = {
-      "default" => { job: ExportDataJob, target: "export", description: "Export Initiated" },
-      "markdown" => { job: ExportMarkdownJob, target: "markdown_export", description: "Markdown Export Initiated" }
+      "default" => { job: ExportDataJob, format: "default", description: "Export Initiated" },
+      "markdown" => { job: ExportMarkdownJob, format: "markdown", description: "Markdown Export Initiated" }
     }.fetch(export_type, nil)
 
     unless export_config
@@ -42,11 +42,11 @@ class Admin::MigratesController < Admin::BaseController
     end
 
     export_config[:job].perform_later
-    ActivityLog.create!(
-      action: "initiated",
-      target: export_config[:target],
-      level: "info",
-      description: export_config[:description]
+    ActivityLog.log!(
+      action: :queued,
+      target: :export,
+      level: :info,
+      format: export_config[:format]
     )
     flash[:notice] = export_config[:description]
 

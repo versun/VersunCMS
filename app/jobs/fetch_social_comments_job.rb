@@ -73,11 +73,14 @@ class FetchSocialCommentsJob < ApplicationJob
               component: "FetchSocialCommentsJob",
               platform: platform,
               remaining: rate_limit[:remaining]
-            ActivityLog.create!(
-              action: "paused",
-              target: "fetch_comments",
-              level: :warning,
-              description: "Paused #{platform.capitalize} comment fetching due to low rate limit: #{rate_limit[:remaining]}/#{rate_limit[:limit]} remaining. Will resume after #{rate_limit[:reset_at]}"
+            ActivityLog.log!(
+              action: :paused,
+              target: :fetch_comments,
+              level: :warn,
+              platform: platform,
+              remaining: rate_limit[:remaining],
+              limit: rate_limit[:limit],
+              reset_at: rate_limit[:reset_at]
             )
             stopped_due_to_rate_limit = true
             break
@@ -146,24 +149,26 @@ class FetchSocialCommentsJob < ApplicationJob
           component: "FetchSocialCommentsJob",
           backtrace: e.backtrace.join("\n")
 
-        ActivityLog.create!(
-          action: "failed",
-          target: "fetch_comments",
+        ActivityLog.log!(
+          action: :failed,
+          target: :fetch_comments,
           level: :error,
-          description: "Failed to fetch #{platform.capitalize} comments for article #{article.slug}: #{e.message}"
+          platform: platform,
+          slug: article.slug,
+          error: e.message
         )
       end
     end
 
-    # Log summary
-    summary_message = "Fetched #{platform.capitalize} comments: #{success_count} articles processed, #{total_comments} new comments, #{error_count} errors"
-    summary_message += " (stopped early due to rate limit)" if stopped_due_to_rate_limit
-
-    ActivityLog.create!(
-      action: "completed",
-      target: "fetch_comments",
+    ActivityLog.log!(
+      action: :completed,
+      target: :fetch_comments,
       level: :info,
-      description: summary_message
+      platform: platform,
+      success_count: success_count,
+      total_comments: total_comments,
+      error_count: error_count,
+      stopped: stopped_due_to_rate_limit ? true : nil
     )
 
     Rails.event.notify "fetch_social_comments_job.platform_completed",

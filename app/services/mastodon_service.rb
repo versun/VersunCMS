@@ -70,29 +70,40 @@ class MastodonService
 
       if response.is_a?(Net::HTTPSuccess)
         json_response = JSON.parse(response.body)
-        ActivityLog.create!(
-          action: "completed",
-          target: "crosspost",
+        post_url = json_response["url"]
+        ActivityLog.log!(
+          action: :posted,
+          target: :crosspost,
           level: :info,
-          description: "Successfully posted article #{article.title} to Mastodon"
+          title: article.title,
+          slug: article.slug,
+          platform: "mastodon",
+          url: post_url
         )
 
-        json_response["url"]
+        post_url
       else
-        ActivityLog.create!(
-          action: "failed",
-          target: "crosspost",
+        error_message = "#{response.code} #{response.message}".strip
+        ActivityLog.log!(
+          action: :failed,
+          target: :crosspost,
           level: :error,
-          description: "Failed to post article #{article.title} to Mastodon: #{e.message}"
+          title: article.title,
+          slug: article.slug,
+          platform: "mastodon",
+          error: error_message
         )
         nil
       end
     rescue => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "crosspost",
+      ActivityLog.log!(
+        action: :failed,
+        target: :crosspost,
         level: :error,
-        description: "Failed to post article #{article.title} to Mastodon: #{e.message}"
+        title: article.title,
+        slug: article.slug,
+        platform: "mastodon",
+        error: e.message
       )
       nil
     end
@@ -319,11 +330,13 @@ class MastodonService
         limit: rate_limit_info[:limit],
         reset_at: rate_limit_info[:reset_at]
 
-      ActivityLog.create!(
-        action: "warning",
-        target: "mastodon_api",
-        level: :warning,
-        description: "Mastodon API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+      ActivityLog.log!(
+        action: :rate_limit_low,
+        target: :mastodon_api,
+        level: :warn,
+        remaining: rate_limit_info[:remaining],
+        limit: rate_limit_info[:limit],
+        reset_at: rate_limit_info[:reset_at]
       )
     elsif rate_limit_info[:remaining] < 50
       Rails.event.notify "mastodon_service.rate_limit_status",
@@ -345,11 +358,13 @@ class MastodonService
       reset_time: reset_time,
       wait_seconds: wait_seconds
 
-    ActivityLog.create!(
-      action: "rate_limited",
-      target: "mastodon_api",
+    ActivityLog.log!(
+      action: :rate_limited,
+      target: :mastodon_api,
       level: :error,
-      description: "Mastodon API rate limit exceeded. Waiting until #{reset_time}"
+      reset_at: reset_time,
+      remaining: rate_limit_info[:remaining],
+      limit: rate_limit_info[:limit]
     )
   end
 

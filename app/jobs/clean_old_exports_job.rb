@@ -18,11 +18,12 @@ class CleanOldExportsJob < ApplicationJob
     result = Export.cleanup_old_exports(days: days)
 
     # 创建ActivityLog记录
-    ActivityLog.create!(
-      action: result[:errors] > 0 ? "warning" : "completed",
-      target: "export_import_cleanup",
-      level: result[:errors] > 0 ? "warning" : "info",
-      description: result[:message]
+    ActivityLog.log!(
+      action: :completed,
+      target: :export_cleanup,
+      level: result[:errors] > 0 ? :warn : :info,
+      error_count: result[:errors],
+      message: result[:message]
     )
 
     Rails.event.notify "clean_old_exports_job.completed",

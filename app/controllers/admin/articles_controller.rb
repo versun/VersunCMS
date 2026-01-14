@@ -22,11 +22,12 @@ class Admin::ArticlesController < Admin::BaseController
 
     respond_to do |format|
       if @article.save
-        ActivityLog.create!(
-          action: "created",
-          target: "article",
+        ActivityLog.log!(
+          action: :created,
+          target: :article,
           level: :info,
-          description: "创建文章: #{@article.title}"
+          title: @article.title,
+          slug: @article.slug
         )
         if params[:create_and_add_another].present?
           format.html { redirect_to new_admin_article_path, notice: "Article was successfully created." }
@@ -35,11 +36,13 @@ class Admin::ArticlesController < Admin::BaseController
         end
         format.json { render :show, status: :created, location: @article }
       else
-        ActivityLog.create!(
-          action: "failed",
-          target: "article",
+        ActivityLog.log!(
+          action: :failed,
+          target: :article,
           level: :error,
-          description: "创建文章失败: #{@article.errors.full_messages.join(', ')}"
+          title: @article.title,
+          slug: @article.slug,
+          errors: @article.errors.full_messages.join(", ")
         )
         format.html { render :new }
         format.json { render json: @article.errors, status: :unprocessable_entity }
@@ -50,20 +53,23 @@ class Admin::ArticlesController < Admin::BaseController
   def update
     respond_to do |format|
       if @article.update(article_params)
-        ActivityLog.create!(
-          action: "updated",
-          target: "article",
+        ActivityLog.log!(
+          action: :updated,
+          target: :article,
           level: :info,
-          description: "更新文章: #{@article.title}"
+          title: @article.title,
+          slug: @article.slug
         )
         format.html { redirect_to admin_articles_path, notice: "Article was successfully updated." }
         format.json { render :show, status: :ok, location: @article }
       else
-        ActivityLog.create!(
-          action: "failed",
-          target: "article",
+        ActivityLog.log!(
+          action: :failed,
+          target: :article,
           level: :error,
-          description: "更新文章失败: #{@article.title} - #{@article.errors.full_messages.join(', ')}"
+          title: @article.title,
+          slug: @article.slug,
+          errors: @article.errors.full_messages.join(", ")
         )
         format.html { render :edit }
         format.json { render json: @article.errors, status: :unprocessable_entity }
@@ -75,20 +81,22 @@ class Admin::ArticlesController < Admin::BaseController
     article_title = @article.title
     if @article.status != "trash"
       @article.update(status: "trash")
-      ActivityLog.create!(
-        action: "trashed",
-        target: "article",
+      ActivityLog.log!(
+        action: :trashed,
+        target: :article,
         level: :info,
-        description: "文章移至垃圾箱: #{article_title}"
+        title: article_title,
+        slug: @article.slug
       )
       notice_message = "Article was successfully moved to trash."
     else
       @article.destroy!
-      ActivityLog.create!(
-        action: "deleted",
-        target: "article",
+      ActivityLog.log!(
+        action: :deleted,
+        target: :article,
         level: :info,
-        description: "删除文章: #{article_title}"
+        title: article_title,
+        slug: @article.slug
       )
       notice_message = "Article was successfully deleted."
     end
@@ -115,19 +123,22 @@ class Admin::ArticlesController < Admin::BaseController
 
   def publish
     if @article.update(status: :publish)
-      ActivityLog.create!(
-        action: "published",
-        target: "article",
+      ActivityLog.log!(
+        action: :published,
+        target: :article,
         level: :info,
-        description: "发布文章: #{@article.title}"
+        title: @article.title,
+        slug: @article.slug
       )
       redirect_to admin_articles_path, notice: "Article was successfully published."
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "article",
+      ActivityLog.log!(
+        action: :failed,
+        target: :article,
         level: :error,
-        description: "发布文章失败: #{@article.title} - #{@article.errors.full_messages.join(', ')}"
+        title: @article.title,
+        slug: @article.slug,
+        errors: @article.errors.full_messages.join(", ")
       )
       redirect_to admin_articles_path, alert: "Failed to publish article."
     end
@@ -135,19 +146,22 @@ class Admin::ArticlesController < Admin::BaseController
 
   def unpublish
     if @article.update(status: :draft)
-      ActivityLog.create!(
-        action: "unpublished",
-        target: "article",
+      ActivityLog.log!(
+        action: :unpublished,
+        target: :article,
         level: :info,
-        description: "取消发布文章: #{@article.title}"
+        title: @article.title,
+        slug: @article.slug
       )
       redirect_to admin_articles_path, notice: "Article was successfully unpublished."
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "article",
+      ActivityLog.log!(
+        action: :failed,
+        target: :article,
         level: :error,
-        description: "取消发布失败: #{@article.title} - #{@article.errors.full_messages.join(', ')}"
+        title: @article.title,
+        slug: @article.slug,
+        errors: @article.errors.full_messages.join(", ")
       )
       redirect_to admin_articles_path, alert: "Failed to unpublish article."
     end
@@ -201,19 +215,23 @@ class Admin::ArticlesController < Admin::BaseController
     end
 
     if errors.any?
-      ActivityLog.create!(
-        action: "warning",
-        target: "article",
+      ActivityLog.log!(
+        action: :updated,
+        target: :article,
         level: :warn,
-        description: "批量添加标签: 成功#{count}篇, 错误: #{errors.join('; ')}"
+        count: count,
+        error_count: errors.size,
+        tags: tag_names,
+        errors: errors.join("; ")
       )
       redirect_to admin_articles_path, alert: "成功添加标签到 #{count} 篇文章。错误: #{errors.join('; ')}"
     else
-      ActivityLog.create!(
-        action: "updated",
-        target: "article",
+      ActivityLog.log!(
+        action: :updated,
+        target: :article,
         level: :info,
-        description: "批量添加标签: #{count}篇文章"
+        count: count,
+        tags: tag_names
       )
       redirect_to admin_articles_path, notice: "成功添加标签到 #{count} 篇文章。"
     end
@@ -261,19 +279,23 @@ class Admin::ArticlesController < Admin::BaseController
     end
 
     if errors.any?
-      ActivityLog.create!(
-        action: "warning",
-        target: "crosspost",
+      ActivityLog.log!(
+        action: :queued,
+        target: :crosspost,
         level: :warn,
-        description: "批量跨平台发布: 提交#{count}篇, 错误: #{errors.join('; ')}"
+        count: count,
+        platforms: platforms,
+        error_count: errors.size,
+        errors: errors.join("; ")
       )
       redirect_to admin_articles_path, alert: "成功提交 #{count} 篇文章进行跨平台发布。错误: #{errors.join('; ')}"
     else
-      ActivityLog.create!(
-        action: "queued",
-        target: "crosspost",
+      ActivityLog.log!(
+        action: :queued,
+        target: :crosspost,
         level: :info,
-        description: "批量跨平台发布: 提交#{count}篇文章"
+        count: count,
+        platforms: platforms
       )
       redirect_to admin_articles_path, notice: "成功提交 #{count} 篇文章进行跨平台发布。"
     end
@@ -317,19 +339,21 @@ class Admin::ArticlesController < Admin::BaseController
     end
 
     if errors.any?
-      ActivityLog.create!(
-        action: "warning",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :queued,
+        target: :newsletter,
         level: :warn,
-        description: "批量发送邮件: 提交#{count}篇, 错误: #{errors.join('; ')}"
+        count: count,
+        error_count: errors.size,
+        errors: errors.join("; ")
       )
       redirect_to admin_articles_path, alert: "成功提交 #{count} 篇文章发送邮件。错误: #{errors.join('; ')}"
     else
-      ActivityLog.create!(
-        action: "queued",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :queued,
+        target: :newsletter,
         level: :info,
-        description: "批量发送邮件: 提交#{count}篇文章"
+        count: count
       )
       redirect_to admin_articles_path, notice: "成功提交 #{count} 篇文章发送邮件。"
     end
@@ -369,19 +393,23 @@ class Admin::ArticlesController < Admin::BaseController
     messages << "成功删除 #{deleted_count} 篇文章。" if deleted_count > 0
 
     if errors.any?
-      ActivityLog.create!(
-        action: "warning",
-        target: "article",
+      ActivityLog.log!(
+        action: :deleted,
+        target: :article,
         level: :warn,
-        description: "批量删除: 垃圾箱#{trashed_count}篇, 删除#{deleted_count}篇, 错误: #{errors.join('; ')}"
+        trashed_count: trashed_count,
+        deleted_count: deleted_count,
+        error_count: errors.size,
+        errors: errors.join("; ")
       )
       redirect_to admin_articles_path, alert: "#{messages.join(' ')}错误: #{errors.join('; ')}"
     else
-      ActivityLog.create!(
-        action: "deleted",
-        target: "article",
+      ActivityLog.log!(
+        action: :deleted,
+        target: :article,
         level: :info,
-        description: "批量删除: 垃圾箱#{trashed_count}篇, 删除#{deleted_count}篇"
+        trashed_count: trashed_count,
+        deleted_count: deleted_count
       )
       redirect_to admin_articles_path, notice: messages.join(" ")
     end
@@ -474,11 +502,14 @@ class Admin::ArticlesController < Admin::BaseController
         results << { platform: post.platform.titleize, fetched: platform_count }
 
         # Log activity
-        ActivityLog.create!(
-          action: "completed",
-          target: "fetch_comments",
+        ActivityLog.log!(
+          action: :fetched,
+          target: :fetch_comments,
           level: :info,
-          description: "Fetched #{platform_count} comments from #{post.platform.titleize} for article '#{@article.title}'"
+          title: @article.title,
+          slug: @article.slug,
+          platform: post.platform,
+          count: platform_count
         )
       rescue => e
         error_msg = "Failed to fetch #{post.platform} comments: #{e.message}"
@@ -494,11 +525,14 @@ class Admin::ArticlesController < Admin::BaseController
           article_title: @article.title
         )
 
-        ActivityLog.create!(
-          action: "failed",
-          target: "fetch_comments",
+        ActivityLog.log!(
+          action: :failed,
+          target: :fetch_comments,
           level: :error,
-          description: error_msg
+          title: @article.title,
+          slug: @article.slug,
+          platform: post.platform,
+          error: e.message
         )
       end
     end

@@ -102,11 +102,14 @@ class TwitterService
 
       if response && response["data"] && response["data"]["id"]
         id = response["data"]["id"]
-        ActivityLog.create!(
-          action: "completed",
-          target: "crosspost",
+        ActivityLog.log!(
+          action: :posted,
+          target: :crosspost,
           level: :info,
-          description: "Successfully posted article #{article.title} to Twitter"
+          title: article.title,
+          slug: article.slug,
+          platform: "twitter",
+          post_id: id
         )
       else
         error_message = response&.dig("errors")&.first&.dig("message") || "Unknown error"
@@ -137,11 +140,16 @@ class TwitterService
                 level: "warn",
                 component: "TwitterService"
 
-              ActivityLog.create!(
-                action: "completed",
-                target: "crosspost",
-                level: :warning,
-                description: "Posted article #{article.title} to Twitter (text only, media skipped due to API limitations)"
+              ActivityLog.log!(
+                action: :posted,
+                target: :crosspost,
+                level: :warn,
+                title: article.title,
+                slug: article.slug,
+                platform: "twitter",
+                post_id: id,
+                status: "text_only",
+                error: "media_upload_failed"
               )
             else
               raise "Fallback text tweet also failed"
@@ -152,20 +160,26 @@ class TwitterService
               component: "TwitterService",
               error_message: fallback_error.message
 
-            ActivityLog.create!(
-              action: "failed",
-              target: "crosspost",
+            ActivityLog.log!(
+              action: :failed,
+              target: :crosspost,
               level: :error,
-              description: "Failed to post article #{article.title} to Twitter: #{error_message} (and fallback also failed)"
+              title: article.title,
+              slug: article.slug,
+              platform: "twitter",
+              error: "#{error_message} (fallback_failed: #{fallback_error.message})"
             )
             return nil
           end
         else
-          ActivityLog.create!(
-            action: "failed",
-            target: "crosspost",
+          ActivityLog.log!(
+            action: :failed,
+            target: :crosspost,
             level: :error,
-            description: "Failed to post article #{article.title} to Twitter: #{error_message}"
+            title: article.title,
+            slug: article.slug,
+            platform: "twitter",
+            error: error_message
           )
           return nil
         end
@@ -177,11 +191,14 @@ class TwitterService
         level: "error",
         component: "TwitterService",
         error_message: e.message
-      ActivityLog.create!(
-        action: "failed",
-        target: "crosspost",
+      ActivityLog.log!(
+        action: :failed,
+        target: :crosspost,
         level: :error,
-        description: "Failed to post article #{article.title} to X: #{e.message}"
+        title: article.title,
+        slug: article.slug,
+        platform: "twitter",
+        error: e.message
       )
       nil
     end
@@ -796,11 +813,13 @@ class TwitterService
       reset_time: reset_time,
       wait_seconds: wait_seconds
 
-    ActivityLog.create!(
-      action: "rate_limited",
-      target: "twitter_api",
+    ActivityLog.log!(
+      action: :rate_limited,
+      target: :twitter_api,
       level: :error,
-      description: "Twitter API rate limit exceeded. Waiting until #{reset_time}"
+      reset_at: reset_time,
+      remaining: rate_limit_info[:remaining],
+      limit: rate_limit_info[:limit]
     )
   end
 
@@ -816,11 +835,13 @@ class TwitterService
         limit: rate_limit_info[:limit],
         reset_at: rate_limit_info[:reset_at]
 
-      ActivityLog.create!(
-        action: "warning",
-        target: "twitter_api",
-        level: :warning,
-        description: "Twitter API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+      ActivityLog.log!(
+        action: :rate_limit_low,
+        target: :twitter_api,
+        level: :warn,
+        remaining: rate_limit_info[:remaining],
+        limit: rate_limit_info[:limit],
+        reset_at: rate_limit_info[:reset_at]
       )
     elsif rate_limit_info[:remaining] < 50
       Rails.event.notify "twitter_service.rate_limit_status",

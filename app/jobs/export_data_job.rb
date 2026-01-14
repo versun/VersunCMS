@@ -10,11 +10,12 @@ class ExportDataJob < ApplicationJob
       download_url = exporter.zip_path
 
       # 创建ActivityLog记录
-      ActivityLog.create!(
-        action: "completed",
-        target: "export",
-        level: "info",
-        description: "Data Export Finished:#{download_url}"
+      ActivityLog.log!(
+        action: :completed,
+        target: :export,
+        level: :info,
+        format: "default",
+        file: download_url
       )
 
       Rails.event.notify "export_data_job.completed",
@@ -23,11 +24,12 @@ class ExportDataJob < ApplicationJob
         download_url: download_url
     else
       # 创建ActivityLog记录失败信息
-      ActivityLog.create!(
-        action: "failed",
-        target: "export",
-        level: "error",
-        description: "Data Export Failed:#{exporter.error_message}",
+      ActivityLog.log!(
+        action: :failed,
+        target: :export,
+        level: :error,
+        format: "default",
+        error: exporter.error_message
       )
 
       Rails.event.notify "export_data_job.failed",

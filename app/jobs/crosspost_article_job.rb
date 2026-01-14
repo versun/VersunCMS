@@ -34,20 +34,25 @@ class CrosspostArticleJob < ApplicationJob
 
     # Log successful crosspost
     if social_media_posts.any?
-      ActivityLog.create!(
-        action: "completed",
-        target: "crosspost",
+      ActivityLog.log!(
+        action: :posted,
+        target: :crosspost,
         level: :info,
-        description: "跨平台发布成功: #{article.title} (#{social_media_posts.keys.join(', ')})"
+        title: article.title,
+        slug: article.slug,
+        platforms: social_media_posts.keys
       )
     end
 
   rescue => e
-    ActivityLog.create!(
-      action: "failed",
-      target: "crosspost",
+    ActivityLog.log!(
+      action: :failed,
+      target: :crosspost,
       level: :error,
-      description: "跨平台发布失败: #{article.title} (#{platform}) - #{e.message}"
+      title: article&.title,
+      slug: article&.slug,
+      platform: platform,
+      error: e.message
     )
     raise
   end

@@ -83,20 +83,26 @@ class BlueskyService
 
     begin
       posted_url = skeet(content, embed)
-      ActivityLog.create!(
-        action: "initiated",
-        target: "crosspost",
+      ActivityLog.log!(
+        action: :posted,
+        target: :crosspost,
         level: :info,
-        description: "Successfully posted article #{article.title} to Bluesky"
+        title: article.title,
+        slug: article.slug,
+        platform: "bluesky",
+        url: posted_url
       )
 
       posted_url
     rescue => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "crosspost",
+      ActivityLog.log!(
+        action: :failed,
+        target: :crosspost,
         level: :error,
-        description: "Failed to post article #{article.title} to Bluesky: #{e.message}"
+        title: article.title,
+        slug: article.slug,
+        platform: "bluesky",
+        error: e.message
       )
       nil
     end
@@ -670,11 +676,13 @@ class BlueskyService
         limit: rate_limit_info[:limit],
         reset_at: rate_limit_info[:reset_at]
 
-      ActivityLog.create!(
-        action: "warning",
-        target: "bluesky_api",
-        level: :warning,
-        description: "Bluesky API rate limit low: #{rate_limit_info[:remaining]}/#{rate_limit_info[:limit]} remaining"
+      ActivityLog.log!(
+        action: :rate_limit_low,
+        target: :bluesky_api,
+        level: :warn,
+        remaining: rate_limit_info[:remaining],
+        limit: rate_limit_info[:limit],
+        reset_at: rate_limit_info[:reset_at]
       )
     elsif rate_limit_info[:remaining] < 500
       Rails.event.notify "bluesky_service.rate_limit_status",
@@ -696,11 +704,13 @@ class BlueskyService
       reset_time: reset_time,
       wait_seconds: wait_seconds
 
-    ActivityLog.create!(
-      action: "rate_limited",
-      target: "bluesky_api",
+    ActivityLog.log!(
+      action: :rate_limited,
+      target: :bluesky_api,
       level: :error,
-      description: "Bluesky API rate limit exceeded. Waiting until #{reset_time}"
+      reset_at: reset_time,
+      remaining: rate_limit_info[:remaining],
+      limit: rate_limit_info[:limit]
     )
   end
 end

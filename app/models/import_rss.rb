@@ -10,11 +10,13 @@ class ImportRss
   end
 
   def import_data
-    ActivityLog.create!(
-      action: "initiated",
-      target: "import",
+    ActivityLog.log!(
+      action: :started,
+      target: :import,
       level: :info,
-      description: "Start Import from: #{@url}, import images: #{@import_images}"
+      source: "rss",
+      url: @url,
+      import_images: @import_images
     )
     feed = Feedjira.parse(URI.open(@url).read)
 
@@ -52,20 +54,25 @@ class ImportRss
                     description: item.summary,
                     )
     end
-    ActivityLog.create!(
-      action: "completed",
-      target: "import",
+    ActivityLog.log!(
+      action: :completed,
+      target: :import,
       level: :info,
-      description: "Import successfully from: #{@url}, import images: #{@import_images}"
+      source: "rss",
+      url: @url,
+      import_images: @import_images
     )
     true
   rescue StandardError => e
     @error_message = e.message
-    ActivityLog.create!(
-      action: "failed",
-      target: "import",
+    ActivityLog.log!(
+      action: :failed,
+      target: :import,
       level: :error,
-      description: "Import failed from: #{@url}, import images: #{@import_images}, error: #{e.message}"
+      source: "rss",
+      url: @url,
+      import_images: @import_images,
+      error: e.message
     )
     false
   end

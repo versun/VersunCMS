@@ -8,11 +8,12 @@ class ExportMarkdownJob < ApplicationJob
     if success
       download_url = exporter.zip_path
 
-      ActivityLog.create!(
-        action: "completed",
-        target: "markdown_export",
-        level: "info",
-        description: "Markdown Export Finished:#{download_url}"
+      ActivityLog.log!(
+        action: :completed,
+        target: :export,
+        level: :info,
+        format: "markdown",
+        file: download_url
       )
 
       Rails.event.notify "export_markdown_job.completed",
@@ -20,11 +21,12 @@ class ExportMarkdownJob < ApplicationJob
         component: "ExportMarkdownJob",
         download_url: download_url
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "markdown_export",
-        level: "error",
-        description: "Markdown Export Failed:#{exporter.error_message}",
+      ActivityLog.log!(
+        action: :failed,
+        target: :export,
+        level: :error,
+        format: "markdown",
+        error: exporter.error_message
       )
 
       Rails.event.notify "export_markdown_job.failed",
