@@ -13,7 +13,7 @@ class CommentMailer < ApplicationMailer
     @commentable_url = site_url.present? ? "#{site_url}#{@commentable_path}" : @commentable_path
 
     mail to: @parent.author_email,
-      subject: "你收到一条新的回复 | New reply to your comment | #{@site_title}"
+      subject: "New reply to your comment | #{@site_title}"
   end
 
   private

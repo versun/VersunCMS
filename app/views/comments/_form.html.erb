@@ -36,7 +36,7 @@
         <%= f.text_field :author_name, required: true, placeholder: "Name *", class: "comment-form-input", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
       </div>
       <div class="comment-form-field">
-        <%= f.email_field :author_email, placeholder: "邮箱（可选，用于接收回复提醒）", class: "comment-form-input" %>
+        <%= f.email_field :author_email, placeholder: "Email (optional, for reply notifications)", class: "comment-form-input" %>
       </div>
     </div>
 
@@ -54,7 +54,7 @@
     <div data-math-captcha-target="container" style="margin-bottom: 0.75rem;">
       <div class="comment-form-captcha">
         <label for="<%= captcha_answer_id %>" style="font-size: 0.875rem; color: #333; white-space: nowrap;"><span data-math-captcha-target="question"><%= captcha[:question] %></span></label>
-        <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "答案", class: "comment-captcha-input", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
+        <%= text_field_tag "captcha[answer]", nil, id: captcha_answer_id, required: true, inputmode: "numeric", autocomplete: "off", placeholder: "Answer", class: "comment-captcha-input", data: { math_captcha_target: "answer", action: "input->math-captcha#validate blur->math-captcha#validate" } %>
       </div>
       <div data-math-captcha-target="message" style="margin-top: 0.25rem; font-size: 12px; display: none;"></div>
       <%= hidden_field_tag "captcha[a]", captcha[:a], data: { math_captcha_target: "a" } %>
