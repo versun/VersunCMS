@@ -13,19 +13,21 @@ class Admin::RedirectsController < Admin::BaseController
     @redirect = Redirect.new(redirect_params)
 
     if @redirect.save
-      ActivityLog.create!(
-        action: "created",
-        target: "redirect",
+      ActivityLog.log!(
+        action: :created,
+        target: :redirect,
         level: :info,
-        description: "创建重定向: #{@redirect.regex} -> #{@redirect.replacement}"
+        regex: @redirect.regex,
+        replacement: @redirect.replacement
       )
       redirect_to admin_redirects_path, notice: "Redirect was successfully created."
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "redirect",
+      ActivityLog.log!(
+        action: :failed,
+        target: :redirect,
         level: :error,
-        description: "创建重定向失败: #{@redirect.errors.full_messages.join(', ')}"
+        regex: @redirect.regex,
+        errors: @redirect.errors.full_messages.join(", ")
       )
       render :new, status: :unprocessable_entity
     end
@@ -36,32 +38,34 @@ class Admin::RedirectsController < Admin::BaseController
 
   def update
     if @redirect.update(redirect_params)
-      ActivityLog.create!(
-        action: "updated",
-        target: "redirect",
+      ActivityLog.log!(
+        action: :updated,
+        target: :redirect,
         level: :info,
-        description: "更新重定向: #{@redirect.regex} -> #{@redirect.replacement}"
+        regex: @redirect.regex,
+        replacement: @redirect.replacement
       )
       redirect_to admin_redirects_path, notice: "Redirect was successfully updated."
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "redirect",
+      ActivityLog.log!(
+        action: :failed,
+        target: :redirect,
         level: :error,
-        description: "更新重定向失败: #{@redirect.errors.full_messages.join(', ')}"
+        regex: @redirect.regex,
+        errors: @redirect.errors.full_messages.join(", ")
       )
       render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
-    redirect_info = "#{@redirect.regex} -> #{@redirect.replacement}"
     @redirect.destroy!
-    ActivityLog.create!(
-      action: "deleted",
-      target: "redirect",
+    ActivityLog.log!(
+      action: :deleted,
+      target: :redirect,
       level: :info,
-      description: "删除重定向: #{redirect_info}"
+      regex: @redirect.regex,
+      replacement: @redirect.replacement
     )
     redirect_to admin_redirects_path, status: :see_other, notice: "Redirect was successfully deleted."
   end

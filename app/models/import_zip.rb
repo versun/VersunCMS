@@ -21,11 +21,12 @@ class ImportZip
   end
 
   def import_data
-    ActivityLog.create!(
-      action: "initiated",
-      target: "zip_import",
+    ActivityLog.log!(
+      action: :started,
+      target: :import,
       level: :info,
-      description: "Start ZIP import from: #{@zip_path}"
+      source: "zip",
+      file: @zip_path
     )
     extract_zip_file
     import_tags
@@ -44,20 +45,23 @@ class ImportZip
     import_subscribers
     import_subscriber_tags
 
-    ActivityLog.create!(
-      action: "completed",
-      target: "zip_import",
+    ActivityLog.log!(
+      action: :completed,
+      target: :import,
       level: :info,
-      description: "ZIP import completed successfully from: #{@zip_path}"
+      source: "zip",
+      file: @zip_path
     )
     true
   rescue StandardError => e
     @error_message = e.message
-    ActivityLog.create!(
-      action: "failed",
-      target: "zip_import",
+    ActivityLog.log!(
+      action: :failed,
+      target: :import,
       level: :error,
-      description: "ZIP import failed from: #{@zip_path}, error: #{e.message}"
+      source: "zip",
+      file: @zip_path,
+      error: e.message
     )
     false
   ensure

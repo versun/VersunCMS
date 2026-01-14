@@ -15,11 +15,12 @@ class SetupController < ApplicationController
       # Create admin user
       @user = User.new(user_params)
       unless @user.save
-        ActivityLog.create!(
-          action: "failed",
-          target: "setup",
+        ActivityLog.log!(
+          action: :failed,
+          target: :setup,
           level: :error,
-          description: "初始化设置失败: 创建用户失败 - #{@user.errors.full_messages.join(', ')}"
+          step: "create_user",
+          errors: @user.errors.full_messages.join(", ")
         )
         @setting = Setting.first_or_create
         render :show, status: :unprocessable_entity
@@ -30,11 +31,12 @@ class SetupController < ApplicationController
       # Update site settings
       @setting = Setting.first_or_create
       unless @setting.update(setting_params.merge(setup_completed: true))
-        ActivityLog.create!(
-          action: "failed",
-          target: "setup",
+        ActivityLog.log!(
+          action: :failed,
+          target: :setup,
           level: :error,
-          description: "初始化设置失败: 更新设置失败 - #{@setting.errors.full_messages.join(', ')}"
+          step: "update_settings",
+          errors: @setting.errors.full_messages.join(", ")
         )
         render :show, status: :unprocessable_entity
         raise ActiveRecord::Rollback
@@ -44,11 +46,11 @@ class SetupController < ApplicationController
       # Refresh settings cache
       CacheableSettings.refresh_site_info
 
-      ActivityLog.create!(
-        action: "completed",
-        target: "setup",
+      ActivityLog.log!(
+        action: :completed,
+        target: :setup,
         level: :info,
-        description: "初始化设置完成"
+        message: "setup_completed"
       )
 
       redirect_to new_session_path, notice: "Setup completed successfully! Please log in with your admin credentials."

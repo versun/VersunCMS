@@ -7,11 +7,12 @@ class ImportFromZipJob < ApplicationJob
 
     if success
       # 创建ActivityLog记录
-      ActivityLog.create!(
-        action: "completed",
-        target: "import",
-        level: "info",
-        description: "ZIP导入任务完成: #{File.basename(zip_path)}"
+      ActivityLog.log!(
+        action: :completed,
+        target: :import,
+        level: :info,
+        source: "zip",
+        filename: File.basename(zip_path)
       )
 
       Rails.event.notify "import_from_zip_job.completed",
@@ -20,11 +21,13 @@ class ImportFromZipJob < ApplicationJob
         zip_path: zip_path
     else
       # 创建ActivityLog记录失败信息
-      ActivityLog.create!(
-        action: "failed",
-        target: "import",
-        level: "error",
-        description: "ZIP导入任务失败: #{importer.error_message}",
+      ActivityLog.log!(
+        action: :failed,
+        target: :import,
+        level: :error,
+        source: "zip",
+        filename: File.basename(zip_path),
+        error: importer.error_message
       )
 
       Rails.event.notify "import_from_zip_job.failed",

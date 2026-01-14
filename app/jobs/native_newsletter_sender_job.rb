@@ -36,11 +36,15 @@ class NativeNewsletterSenderJob < ApplicationJob
 
     return if relevant_subscribers.empty?
 
-    ActivityLog.create!(
-      action: "initiated",
-      target: "newsletter",
+    ActivityLog.log!(
+      action: :started,
+      target: :newsletter,
       level: :info,
-      description: "开始发送原生邮件: #{article.title}，订阅者数量: #{relevant_subscribers.count}（总订阅者: #{subscribers.count}）"
+      title: article.title,
+      slug: article.slug,
+      subscriber_count: relevant_subscribers.count,
+      total_subscribers: subscribers.count,
+      mode: "native"
     )
 
     success_count = 0
@@ -55,11 +59,14 @@ class NativeNewsletterSenderJob < ApplicationJob
         level: "error",
         component: "NativeNewsletterSenderJob",
         article_id: article.id
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: "SMTP 配置不完整，无法发送邮件"
+        title: article.title,
+        slug: article.slug,
+        mode: "native",
+        error: "smtp_config_missing"
       )
       return
     end
@@ -106,20 +113,28 @@ class NativeNewsletterSenderJob < ApplicationJob
           level: "error",
           component: "NativeNewsletterSenderJob",
           backtrace: e.backtrace.join("\n") if e.backtrace
-        ActivityLog.create!(
-          action: "failed",
-          target: "newsletter",
+        ActivityLog.log!(
+          action: :failed,
+          target: :newsletter,
           level: :error,
-          description: "发送邮件失败: #{subscriber.email} - #{error_message}"
+          title: article.title,
+          slug: article.slug,
+          email: subscriber.email,
+          mode: "native",
+          error: error_message
         )
       end
     end
 
-    ActivityLog.create!(
-      action: "completed",
-      target: "newsletter",
+    ActivityLog.log!(
+      action: :completed,
+      target: :newsletter,
       level: :info,
-      description: "原生邮件发送完成: #{article.title}，成功: #{success_count}，失败: #{fail_count}"
+      title: article.title,
+      slug: article.slug,
+      mode: "native",
+      success_count: success_count,
+      error_count: fail_count
     )
   end
 

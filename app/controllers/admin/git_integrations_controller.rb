@@ -16,19 +16,22 @@ class Admin::GitIntegrationsController < Admin::BaseController
     attrs.delete(:access_token) if attrs[:access_token].blank?
 
     if @integration.update(attrs)
-      ActivityLog.create!(
-        action: "updated",
-        target: "git_integration",
+      ActivityLog.log!(
+        action: :updated,
+        target: :git_integration,
         level: :info,
-        description: "更新 Git 集成设置: #{@integration.display_name}"
+        name: @integration.display_name,
+        provider: provider
       )
       redirect_to admin_git_integrations_path(provider: provider), notice: "#{@integration.display_name} 设置已更新。"
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "git_integration",
+      ActivityLog.log!(
+        action: :failed,
+        target: :git_integration,
         level: :error,
-        description: "更新 Git 集成设置失败: #{@integration.display_name} - #{@integration.errors.full_messages.join(', ')}"
+        name: @integration.display_name,
+        provider: provider,
+        errors: @integration.errors.full_messages.join(", ")
       )
       redirect_to admin_git_integrations_path(provider: provider), alert: @integration.errors.full_messages.join(", ")
     end

@@ -57,11 +57,12 @@ class SubscriptionsController < ApplicationController
 
       NewsletterConfirmationJob.perform_later(@subscriber.id)
 
-      ActivityLog.create!(
-        action: "created",
-        target: "subscription",
+      ActivityLog.log!(
+        action: :created,
+        target: :subscription,
         level: :info,
-        description: "创建订阅: #{email}"
+        email: email,
+        tags: tag_ids
       )
 
       respond_to do |format|
@@ -72,11 +73,12 @@ class SubscriptionsController < ApplicationController
         format.json { render json: { success: true, message: "订阅成功！请检查您的邮箱并点击确认链接。" } }
       end
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "subscription",
+      ActivityLog.log!(
+        action: :failed,
+        target: :subscription,
         level: :error,
-        description: "创建订阅失败: #{email} - #{@subscriber.errors.full_messages.join(', ')}"
+        email: email,
+        errors: @subscriber.errors.full_messages.join(", ")
       )
       respond_to do |format|
         format.html do
@@ -98,11 +100,11 @@ class SubscriptionsController < ApplicationController
         @message = "您的邮箱已经确认过了。"
       else
         @subscriber.confirm!
-        ActivityLog.create!(
-          action: "confirmed",
-          target: "subscription",
+        ActivityLog.log!(
+          action: :confirmed,
+          target: :subscription,
           level: :info,
-          description: "确认订阅: #{@subscriber.email}"
+          email: @subscriber.email
         )
         @success = true
         @message = "订阅确认成功！"
@@ -119,11 +121,11 @@ class SubscriptionsController < ApplicationController
     if @subscriber
       email = @subscriber.email
       @subscriber.unsubscribe!
-      ActivityLog.create!(
-        action: "unsubscribed",
-        target: "subscription",
+      ActivityLog.log!(
+        action: :unsubscribed,
+        target: :subscription,
         level: :info,
-        description: "取消订阅: #{email}"
+        email: email
       )
       @success = true
     end

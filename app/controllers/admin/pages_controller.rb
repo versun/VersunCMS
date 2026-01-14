@@ -22,21 +22,24 @@ class Admin::PagesController < Admin::BaseController
 
     respond_to do |format|
       if @page.save
-        ActivityLog.create!(
-          action: "created",
-          target: "page",
+        ActivityLog.log!(
+          action: :created,
+          target: :page,
           level: :info,
-          description: "创建页面: #{@page.title}"
+          title: @page.title,
+          slug: @page.slug
         )
         refresh_pages
         format.html { redirect_to admin_pages_path, notice: "Page was successfully created." }
         format.json { render :show, status: :created, location: @page }
       else
-        ActivityLog.create!(
-          action: "failed",
-          target: "page",
+        ActivityLog.log!(
+          action: :failed,
+          target: :page,
           level: :error,
-          description: "创建页面失败: #{@page.errors.full_messages.join(', ')}"
+          title: @page.title,
+          slug: @page.slug,
+          errors: @page.errors.full_messages.join(", ")
         )
         format.html { render :new }
         format.json { render json: @page.errors, status: :unprocessable_entity }
@@ -47,21 +50,24 @@ class Admin::PagesController < Admin::BaseController
   def update
     respond_to do |format|
       if @page.update(page_params)
-        ActivityLog.create!(
-          action: "updated",
-          target: "page",
+        ActivityLog.log!(
+          action: :updated,
+          target: :page,
           level: :info,
-          description: "更新页面: #{@page.title}"
+          title: @page.title,
+          slug: @page.slug
         )
         refresh_pages
         format.html { redirect_to admin_pages_path, notice: "Page was successfully updated." }
         format.json { render :show, status: :ok, location: @page }
       else
-        ActivityLog.create!(
-          action: "failed",
-          target: "page",
+        ActivityLog.log!(
+          action: :failed,
+          target: :page,
           level: :error,
-          description: "更新页面失败: #{@page.title} - #{@page.errors.full_messages.join(', ')}"
+          title: @page.title,
+          slug: @page.slug,
+          errors: @page.errors.full_messages.join(", ")
         )
         format.html { render :edit }
         format.json { render json: @page.errors, status: :unprocessable_entity }
@@ -72,11 +78,12 @@ class Admin::PagesController < Admin::BaseController
   def destroy
     page_title = @page.title
     @page.destroy!
-    ActivityLog.create!(
-      action: "deleted",
-      target: "page",
+    ActivityLog.log!(
+      action: :deleted,
+      target: :page,
       level: :info,
-      description: "删除页面: #{page_title}"
+      title: page_title,
+      slug: @page.slug
     )
     refresh_pages
 
@@ -88,19 +95,22 @@ class Admin::PagesController < Admin::BaseController
 
   def reorder
     if @page.insert_at(params[:position].to_i)
-      ActivityLog.create!(
-        action: "updated",
-        target: "page",
+      ActivityLog.log!(
+        action: :updated,
+        target: :page,
         level: :info,
-        description: "调整页面顺序: #{@page.title} -> 位置#{params[:position]}"
+        title: @page.title,
+        slug: @page.slug,
+        position: params[:position]
       )
       head :ok
     else
-      ActivityLog.create!(
-        action: "failed",
-        target: "page",
+      ActivityLog.log!(
+        action: :failed,
+        target: :page,
         level: :error,
-        description: "调整页面顺序失败: #{@page.title}"
+        title: @page.title,
+        slug: @page.slug
       )
       head :unprocessable_entity
     end

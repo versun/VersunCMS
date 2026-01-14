@@ -110,11 +110,11 @@ class Admin::NewsletterController < Admin::BaseController
       end
 
       # If we get here, the connection and authentication were successful
-      ActivityLog.create!(
-        action: "verified",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :verified,
+        target: :newsletter,
         level: :info,
-        description: "SMTP configuration verified successfully"
+        mode: "smtp"
       )
 
       render json: {
@@ -122,22 +122,24 @@ class Admin::NewsletterController < Admin::BaseController
         message: "SMTP configuration verified successfully!"
       }
     rescue Net::SMTPAuthenticationError, Net::SMTPFatalError => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: "SMTP verification failed: #{e.message}"
+        mode: "smtp",
+        error: e.message
       )
       render json: {
         success: false,
         error: "Authentication failed: Invalid credentials. Please check your username and password."
       }, status: :unprocessable_entity
     rescue Net::SMTPError, Errno::ECONNREFUSED, Timeout::Error => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: "SMTP verification failed: #{e.message}"
+        mode: "smtp",
+        error: e.message
       )
       error_message = if e.is_a?(Timeout::Error)
         "Connection timeout. Please check your SMTP address, port and network connection."
@@ -151,11 +153,12 @@ class Admin::NewsletterController < Admin::BaseController
         error: error_message
       }, status: :unprocessable_entity
     rescue => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: "SMTP verification failed: #{e.message}"
+        mode: "smtp",
+        error: e.message
       )
       render json: {
         success: false,

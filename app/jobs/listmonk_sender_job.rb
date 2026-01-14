@@ -8,11 +8,13 @@ class ListmonkSenderJob < ApplicationJob
   def perform(article_id)
     article = Article.find(article_id)
     listmonk = Listmonk.first
-    ActivityLog.create!(
-      action: "initiated",
-      target: "newsletter",
+    ActivityLog.log!(
+      action: :started,
+      target: :newsletter,
       level: :info,
-      description: "Performing newsletter for article #{article.title}"
+      title: article.title,
+      slug: article.slug,
+      mode: "listmonk"
     )
     return unless listmonk.present? && listmonk.list_id.present? && listmonk.template_id.present?
 

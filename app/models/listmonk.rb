@@ -33,11 +33,12 @@ class Listmonk < ApplicationRecord
         raise "Fetch Lists failed! #{response.code} - #{response.body}"
       end
     rescue => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: e.message
+        operation: "fetch_lists",
+        error: e.message
       )
       []
     end
@@ -65,11 +66,12 @@ class Listmonk < ApplicationRecord
         raise "Fetch Template failed! #{response.code} - #{response.body}"
       end
     rescue => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: e.message
+        operation: "fetch_templates",
+        error: e.message
       )
       []
     end
@@ -100,11 +102,13 @@ class Listmonk < ApplicationRecord
       campaign_id = JSON.parse(response.body)["data"]["id"] if response.is_a?(Net::HTTPSuccess)
 
       if campaign_id
-        ActivityLog.create!(
-          action: "completed",
-          target: "newsletter",
+        ActivityLog.log!(
+          action: :created,
+          target: :newsletter,
           level: :info,
-          description: "Create Campaign successfully! Title:#{article.title},Campaign ID:#{campaign_id}"
+          operation: "campaign",
+          title: article.title,
+          campaign_id: campaign_id
         )
       else
         raise "Create Campaign failed! Title:#{article.title},Code:#{response.code} - #{response.body}"
@@ -112,11 +116,13 @@ class Listmonk < ApplicationRecord
 
       campaign_id
     rescue => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: e.message
+        operation: "campaign",
+        title: article.title,
+        error: e.message
       )
       nil
     end
@@ -140,11 +146,13 @@ class Listmonk < ApplicationRecord
       end
 
       if response.is_a?(Net::HTTPSuccess)
-        ActivityLog.create!(
-          action: "completed",
-          target: "newsletter",
+        ActivityLog.log!(
+          action: :sent,
+          target: :newsletter,
           level: :info,
-          description: "Send Campaign successfully! Title:#{article.title},Campaign ID:#{campaign_id}"
+          operation: "campaign",
+          title: article.title,
+          campaign_id: campaign_id
         )
       else
         raise "Send Campaign failed! #{response.code} - #{response.body}"
@@ -152,11 +160,14 @@ class Listmonk < ApplicationRecord
 
       true
     rescue => e
-      ActivityLog.create!(
-        action: "failed",
-        target: "newsletter",
+      ActivityLog.log!(
+        action: :failed,
+        target: :newsletter,
         level: :error,
-        description: e.message
+        operation: "campaign_send",
+        title: article.title,
+        campaign_id: campaign_id,
+        error: e.message
       )
       nil
     end
