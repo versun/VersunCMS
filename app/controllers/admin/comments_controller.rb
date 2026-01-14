@@ -1,5 +1,5 @@
 class Admin::CommentsController < AdminController
-  before_action :set_comment, only: [ :show, :edit, :update, :destroy, :approve, :reject ]
+  before_action :set_comment, only: [ :show, :edit, :update, :destroy, :approve, :reject, :reply ]
 
   def index
     @comments = Comment.includes(:commentable, :article, parent: :commentable)
@@ -10,7 +10,8 @@ class Admin::CommentsController < AdminController
       @comments = @comments.where(status: params[:status])
     end
 
-    @comments = @comments.order(created_at: :desc).paginate(page: params[:page], per_page: 30)
+    @comments = @comments.reorder(Arel.sql("COALESCE(published_at, created_at) DESC"))
+                         .paginate(page: params[:page], per_page: 30)
   end
 
   def show
@@ -88,6 +89,57 @@ class Admin::CommentsController < AdminController
         description: "拒绝评论失败: #{@comment.commentable_type}##{@comment.commentable_id}"
       )
       redirect_to admin_comments_path, alert: "Failed to reject comment."
+    end
+  end
+
+  def reply
+    if @comment.platform.present?
+      redirect_to admin_comments_path, alert: "Cannot reply to external comments."
+      return
+    end
+
+    if @comment.rejected?
+      redirect_to admin_comments_path, alert: "Cannot reply to rejected comments."
+      return
+    end
+
+    commentable = @comment.commentable || @comment.display_commentable
+    unless commentable
+      redirect_to admin_comments_path, alert: "Commentable not found."
+      return
+    end
+
+    author_name = reply_author_name
+    if author_name.blank?
+      redirect_to admin_comments_path, alert: "Please set the site author name in Settings before replying."
+      return
+    end
+
+    reply_comment = commentable.comments.build(
+      parent: @comment,
+      author_name: author_name,
+      author_url: reply_author_url,
+      content: reply_params[:content],
+      status: :approved,
+      published_at: Time.current
+    )
+
+    if reply_comment.save
+      ActivityLog.create!(
+        action: "replied",
+        target: "comment",
+        level: :info,
+        description: "回复评论: #{commentable.class.name}##{commentable.id} (#{author_name})"
+      )
+      redirect_to admin_comments_path, notice: "Reply posted successfully."
+    else
+      ActivityLog.create!(
+        action: "failed",
+        target: "comment",
+        level: :error,
+        description: "回复评论失败: #{reply_comment.errors.full_messages.join(', ')}"
+      )
+      redirect_to admin_comments_path, alert: "Failed to reply: #{reply_comment.errors.full_messages.join(', ')}"
     end
   end
 
@@ -184,5 +236,22 @@ class Admin::CommentsController < AdminController
 
   def comment_params
     params.require(:comment).permit(:author_name, :author_email, :author_url, :content, :status)
+  end
+
+  def reply_params
+    params.require(:comment).permit(:content)
+  end
+
+  def reply_author_name
+    CacheableSettings.site_info[:author].to_s.strip
+  end
+
+  def reply_author_url
+    raw_url = CacheableSettings.site_info[:url].to_s.strip
+    return nil if raw_url.blank?
+
+    normalized_url = raw_url.chomp("/")
+    normalized_url = "https://#{normalized_url}" unless normalized_url.match?(%r{^https?://})
+    normalized_url
   end
 end

@@ -55,4 +55,58 @@ class Admin::CommentsControllerTest < ActionDispatch::IntegrationTest
       post batch_destroy_admin_comments_path, params: { ids: [ batch_comment.id ] }
     end
   end
+
+  test "admin comments index shows newest first" do
+    newer = Comment.create!(
+      commentable: articles(:published_article),
+      author_name: "Newest Author",
+      content: "Newest comment content",
+      published_at: Time.current
+    )
+    older = Comment.create!(
+      commentable: articles(:published_article),
+      author_name: "Older Author",
+      content: "Older comment content",
+      published_at: 3.days.ago
+    )
+
+    get admin_comments_path
+    assert_response :success
+
+    body = response.body
+    newer_index = body.index(newer.content)
+    older_index = body.index(older.content)
+    assert newer_index, "Expected to find newer comment content in response"
+    assert older_index, "Expected to find older comment content in response"
+    assert_operator newer_index, :<, older_index
+  end
+
+  test "admin can reply to a local comment using settings" do
+    parent_comment = comments(:approved_comment)
+    setting = settings(:default)
+
+    assert_difference "Comment.count", 1 do
+      post reply_admin_comment_path(parent_comment), params: { comment: { content: "Admin reply content" } }
+    end
+
+    reply = Comment.order(:created_at).last
+    assert_equal parent_comment, reply.parent
+    assert_equal parent_comment.commentable, reply.commentable
+    assert_equal setting.author, reply.author_name
+    assert_equal setting.url, reply.author_url
+    assert_equal "Admin reply content", reply.content
+    assert reply.approved?
+  end
+
+  test "admin cannot reply to rejected comments" do
+    parent_comment = comments(:approved_comment)
+    parent_comment.update!(status: :rejected)
+
+    assert_no_difference "Comment.count" do
+      post reply_admin_comment_path(parent_comment), params: { comment: { content: "Admin reply content" } }
+    end
+
+    assert_redirected_to admin_comments_path
+    assert_equal "Cannot reply to rejected comments.", flash[:alert]
+  end
 end

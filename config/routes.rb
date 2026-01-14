@@ -64,6 +64,7 @@ Rails.application.routes.draw do
       member do
         patch :approve
         patch :reject
+        post :reply
       end
     end
 

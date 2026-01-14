@@ -1,5 +1,8 @@
 <% content_for :title, "Comments|Admin" %>
 
+<% site_author = site_settings[:author].to_s.strip %>
+<% site_url = site_settings[:url].to_s.strip %>
+
 <div class="admin-comments">
   <div class="admin-toolbar">
     <div class="status-tabs">
@@ -89,6 +92,22 @@
                 </td>
                 <td class="col-content">
                   <small><%= comment.content.truncate(100) %></small>
+                  <% if comment.platform.nil? %>
+                    <details style="margin-top: 0.5rem;">
+                      <summary style="cursor: pointer; font-size: 0.85rem; color: #333;">Reply</summary>
+                      <div style="margin-top: 0.5rem;">
+                        <%= form_with url: reply_admin_comment_path(comment), method: :post, scope: :comment, local: true do |f| %>
+                          <%= f.text_area :content, required: true, rows: 3, placeholder: "Reply...", style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" %>
+                          <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <%= f.submit "Reply", style: "padding: 0.35rem 0.75rem; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" %>
+                            <% if site_author.present? %>
+                              <small style="color: #666;">as <%= site_author %><% if site_url.present? %> · <%= site_url %><% end %></small>
+                            <% end %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </details>
+                  <% end %>
                 </td>
                 <td class="col-title">
                   <% display_commentable = comment.display_commentable %>
