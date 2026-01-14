@@ -2,6 +2,7 @@ class Admin::MigratesController < Admin::BaseController
   include ActiveStorage::SetCurrent
 
   def index
+    @active_tab = migrate_tab(params[:tab])
   end
 
   def create
@@ -13,7 +14,7 @@ class Admin::MigratesController < Admin::BaseController
     when "import"
       handle_import
     else
-      redirect_to admin_migrates_path, alert: "Unsupported operation type"
+      redirect_to admin_migrates_path(tab: migrate_tab(nil)), alert: "Unsupported operation type"
     end
   rescue StandardError => e
     Rails.event.notify(
@@ -23,7 +24,7 @@ class Admin::MigratesController < Admin::BaseController
       operation_type: params[:operation_type],
       message: e.message
     )
-    redirect_to admin_migrates_path, alert: "An unexpected error occurred: #{e.message}"
+    redirect_to admin_migrates_path(tab: migrate_tab(params[:operation_type])), alert: "An unexpected error occurred: #{e.message}"
   end
 
   private
@@ -37,7 +38,7 @@ class Admin::MigratesController < Admin::BaseController
     }.fetch(export_type, nil)
 
     unless export_config
-      redirect_to admin_migrates_path, alert: "Unsupported export type" and return
+      redirect_to admin_migrates_path(tab: "export"), alert: "Unsupported export type" and return
     end
 
     export_config[:job].perform_later
@@ -49,19 +50,19 @@ class Admin::MigratesController < Admin::BaseController
     )
     flash[:notice] = export_config[:description]
 
-    redirect_to admin_migrates_path
+    redirect_to admin_migrates_path(tab: "export")
   end
 
   def handle_import
     if params[:url].present?
       # RSS导入
       ImportFromRssJob.perform_later(params[:url], params[:import_images])
-      redirect_to admin_migrates_path, notice: "RSS Import in progress, please check the logs for details"
+      redirect_to admin_migrates_path(tab: "import"), notice: "RSS Import in progress, please check the logs for details"
     elsif params[:zip_file].present?
       # ZIP文件导入
       import_from_zip
     else
-      redirect_to admin_migrates_path, alert: "Please provide either RSS URL or ZIP file for import"
+      redirect_to admin_migrates_path(tab: "import"), alert: "Please provide either RSS URL or ZIP file for import"
     end
   end
 
@@ -95,7 +96,7 @@ class Admin::MigratesController < Admin::BaseController
     # Execute import job
     ImportFromZipJob.perform_later(temp_file.to_s)
 
-    redirect_to admin_migrates_path, notice: "ZIP Import in progress, please check the logs for details"
+    redirect_to admin_migrates_path(tab: "import"), notice: "ZIP Import in progress, please check the logs for details"
   rescue StandardError => e
     Rails.event.notify(
       "admin.migrates_controller.zip_import_error",
@@ -104,8 +105,12 @@ class Admin::MigratesController < Admin::BaseController
       message: e.message,
       filename: uploaded_file&.original_filename
     )
-    redirect_to admin_migrates_path, alert: "ZIP import failed: #{e.message}"
+    redirect_to admin_migrates_path(tab: "import"), alert: "ZIP import failed: #{e.message}"
   ensure
     # 清理临时文件将在job完成后进行
+  end
+
+  def migrate_tab(value)
+    %w[export import].include?(value) ? value : "export"
   end
 end

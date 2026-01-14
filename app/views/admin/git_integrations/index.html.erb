@@ -4,7 +4,16 @@
   <h1>Git Integrations</h1>
   <p class="text-muted">配置 Git 提供商的认证信息，用于静态文件部署。</p>
 
+  <div class="admin-toolbar">
+    <div class="status-tabs">
+      <% @integrations.each do |integration| %>
+        <%= link_to integration.display_name, admin_git_integrations_path(provider: integration.provider), class: "status-tab #{@active_provider == integration.provider ? 'active' : ''}" %>
+      <% end %>
+    </div>
+  </div>
+
   <% @integrations.each do |integration| %>
+    <% next unless integration.provider == @active_provider %>
     <div class="form-section compact">
       <h2><%= integration.display_name %></h2>
       <small><%= provider_help_text(integration.provider) %></small>

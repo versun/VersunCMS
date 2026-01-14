@@ -10,6 +10,11 @@ class Admin::GitIntegrationsControllerTest < ActionDispatch::IntegrationTest
   test "index update verify and helpers" do
     get admin_git_integrations_path
     assert_response :success
+    assert_select ".status-tab.active", text: "GitHub"
+
+    get admin_git_integrations_path(provider: "gitlab")
+    assert_response :success
+    assert_select ".status-tab.active", text: "GitLab"
 
     patch admin_git_integration_path("unknown"), params: {
       git_integration: { enabled: "1" }
@@ -23,7 +28,7 @@ class Admin::GitIntegrationsControllerTest < ActionDispatch::IntegrationTest
         server_url: ""
       }
     }
-    assert_redirected_to admin_git_integrations_path
+    assert_redirected_to admin_git_integrations_path(provider: "github")
 
     patch admin_git_integration_path("github"), params: {
       git_integration: {
@@ -31,7 +36,7 @@ class Admin::GitIntegrationsControllerTest < ActionDispatch::IntegrationTest
         access_token: ""
       }
     }
-    assert_redirected_to admin_git_integrations_path
+    assert_redirected_to admin_git_integrations_path(provider: "github")
 
     post verify_admin_git_integration_path("github"), params: {
       git_integration: { access_token: "" }

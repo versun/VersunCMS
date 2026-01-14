@@ -1,6 +1,14 @@
 <div class="admin-container">
   <h1>Migrate</h1>
+
+  <div class="admin-toolbar">
+    <div class="status-tabs">
+      <%= link_to "Export", admin_migrates_path(tab: "export"), class: "status-tab #{@active_tab == 'export' ? 'active' : ''}" %>
+      <%= link_to "Import", admin_migrates_path(tab: "import"), class: "status-tab #{@active_tab == 'import' ? 'active' : ''}" %>
+    </div>
+  </div>
   
+  <% if @active_tab == "export" %>
   <div class="form-section compact">
     <h3>Export Data</h3>
     
@@ -26,7 +34,9 @@
       </div>
     </div>
   </div>
+  <% end %>
 
+  <% if @active_tab == "import" %>
   <div class="form-section compact">
     <h3>Import Data</h3>
     
@@ -68,5 +78,6 @@
       </div>
     </div>
   </div>
+  <% end %>
 
 </div>

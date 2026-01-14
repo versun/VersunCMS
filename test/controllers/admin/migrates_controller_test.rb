@@ -20,6 +20,11 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
     sign_in(@user)
     get admin_migrates_path
     assert_response :success
+    assert_select ".status-tab.active", text: "Export"
+
+    get admin_migrates_path(tab: "import")
+    assert_response :success
+    assert_select ".status-tab.active", text: "Import"
   end
 
   test "should require authentication for create" do
@@ -34,7 +39,7 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
       post admin_migrates_path, params: { operation_type: "export", export_type: "default" }
     end
 
-    assert_redirected_to admin_migrates_path
+    assert_redirected_to admin_migrates_path(tab: "export")
     assert_match "Export Initiated", flash[:notice]
   end
 
@@ -45,7 +50,7 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
       post admin_migrates_path, params: { operation_type: "export", export_type: "markdown" }
     end
 
-    assert_redirected_to admin_migrates_path
+    assert_redirected_to admin_migrates_path(tab: "export")
     assert_match "Markdown Export Initiated", flash[:notice]
   end
 
@@ -63,7 +68,7 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
       zip_file: file
     }
 
-    assert_redirected_to admin_migrates_path
+    assert_redirected_to admin_migrates_path(tab: "import")
     assert_match "ZIP", flash[:alert]
   end
 
@@ -82,7 +87,7 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to admin_migrates_path
+    assert_redirected_to admin_migrates_path(tab: "import")
     assert_match "ZIP Import in progress", flash[:notice]
   end
 
@@ -105,7 +110,7 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to admin_migrates_path
+    assert_redirected_to admin_migrates_path(tab: "import")
     assert_match "RSS Import in progress", flash[:notice]
   end
 
@@ -114,7 +119,7 @@ class Admin::MigratesControllerTest < ActionDispatch::IntegrationTest
 
     post admin_migrates_path, params: { operation_type: "invalid" }
 
-    assert_redirected_to admin_migrates_path
+    assert_redirected_to admin_migrates_path(tab: "export")
     assert_match "Unsupported operation type", flash[:alert]
   end
 

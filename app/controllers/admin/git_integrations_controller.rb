@@ -2,6 +2,7 @@ class Admin::GitIntegrationsController < Admin::BaseController
   def index
     GitIntegration.ensure_all_providers
     @integrations = GitIntegration.order(:provider)
+    @active_provider = GitIntegration::PROVIDERS.include?(params[:provider]) ? params[:provider] : "github"
   end
 
   def update
@@ -21,7 +22,7 @@ class Admin::GitIntegrationsController < Admin::BaseController
         level: :info,
         description: "更新 Git 集成设置: #{@integration.display_name}"
       )
-      redirect_to admin_git_integrations_path, notice: "#{@integration.display_name} 设置已更新。"
+      redirect_to admin_git_integrations_path(provider: provider), notice: "#{@integration.display_name} 设置已更新。"
     else
       ActivityLog.create!(
         action: "failed",
@@ -29,7 +30,7 @@ class Admin::GitIntegrationsController < Admin::BaseController
         level: :error,
         description: "更新 Git 集成设置失败: #{@integration.display_name} - #{@integration.errors.full_messages.join(', ')}"
       )
-      redirect_to admin_git_integrations_path, alert: @integration.errors.full_messages.join(", ")
+      redirect_to admin_git_integrations_path(provider: provider), alert: @integration.errors.full_messages.join(", ")
     end
   end
 

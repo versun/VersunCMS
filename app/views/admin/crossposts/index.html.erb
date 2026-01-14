@@ -1,6 +1,21 @@
 <div class="admin-container">
   <h1>Crosspost Settings</h1>
 
+  <div class="admin-toolbar">
+    <div class="status-tabs">
+      <% platform_tabs = {
+        "mastodon" => "Mastodon",
+        "twitter" => "X (Twitter)",
+        "bluesky" => "Bluesky",
+        "xiaohongshu" => "Xiaohongshu"
+      } %>
+      <% platform_tabs.each do |platform, label| %>
+        <%= link_to label, admin_crossposts_path(platform: platform), class: "status-tab #{@active_platform == platform ? 'active' : ''}" %>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @active_platform == "mastodon" %>
   <div class="form-section compact">
     <h3>Mastodon</h3>
     <small>Get credentials: Open Mastodon → Preferences → Development → New application | Scope: profile,write:statuses</small>
@@ -82,7 +97,9 @@
     <% end %>
     <div id="verify-messages-mastodon"></div>
   </div>
+  <% end %>
 
+  <% if @active_platform == "twitter" %>
   <div class="form-section compact">
     <h3>X (Twitter)</h3>
     <small>First, obtain X credentials from <%= link_to "https://developer.x.com", "https://developer.x.com", target: "_blank" %></small>
@@ -144,7 +161,9 @@
     <% end %>
     <div id="verify-messages-twitter"></div>
   </div>
+  <% end %>
 
+  <% if @active_platform == "bluesky" %>
   <div class="form-section compact">
     <h3>Bluesky</h3>
     <small>Get credentials: Log in to your Bluesky account and generate an App Password in settings.</small>
@@ -218,7 +237,9 @@
     <% end %>
     <div id="verify-messages-bluesky"></div>
   </div>
+  <% end %>
 
+  <% if @active_platform == "xiaohongshu" %>
   <div class="form-section compact">
     <h3>Xiaohongshu</h3>
     <small>No public API available. These fields are for reference and manual posting.</small>
@@ -256,6 +277,7 @@
       </div>
     <% end %>
   </div>
+  <% end %>
 
 </div>
 
