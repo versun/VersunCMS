@@ -1,25 +1,24 @@
-你收到一条新的回复
 New reply to your comment
 
-回复者 / From:
+From:
 <%= @reply.author_name.to_s %>
 
-回复内容 / Reply:
+Reply:
 <%= @reply.content.to_s %>
 
 <% if @parent&.content.present? %>
-你的评论 / Your comment:
+Your comment:
 <%= truncate(@parent.content.to_s, length: 120) %>
 
 <% end %>
 <% if @commentable_title.present? %>
-文章/页面 / Post/Page:
+Post/Page:
 <%= @commentable_title %>
 
 <% end %>
 <% if @commentable_url.present? %>
-查看详情 / View details:
+View details:
 <%= @commentable_url %>
 
 <% end %>
-此邮件由 <%= @site_title %> 自动发送。
+This email was sent automatically by <%= @site_title %>.

@@ -1,7 +1,7 @@
 require "test_helper"
 
 class CommentMailerTest < ActionMailer::TestCase
-  test "reply notification email includes bilingual content and link" do
+  test "reply notification email includes english content and link" do
     article = articles(:published_article)
     parent = Comment.create!(
       commentable: article,
@@ -20,7 +20,7 @@ class CommentMailerTest < ActionMailer::TestCase
     email = CommentMailer.reply_notification(reply, CacheableSettings.site_info)
 
     assert_equal [ "parent@example.com" ], email.to
-    assert_includes email.subject, "你收到一条新的回复"
+    assert_includes email.subject, "New reply to your comment"
     assert_includes email.subject, "Test Site"
     assert email.text_part
     assert email.html_part
@@ -28,7 +28,7 @@ class CommentMailerTest < ActionMailer::TestCase
     text_body = email.text_part.body.to_s
     html_body = email.html_part.body.to_s
 
-    assert_includes text_body, "回复内容"
+    assert_includes text_body, "Reply:"
     assert_includes text_body, "Reply content"
     assert_includes text_body, article.title
 

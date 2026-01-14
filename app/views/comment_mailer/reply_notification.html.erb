@@ -33,21 +33,21 @@
     </style>
   </head>
   <body>
-    <h2>你收到一条新的回复</h2>
-    <p class="meta">New reply to your comment</p>
+    <h2>New reply to your comment</h2>
+    <p class="meta">You have a new reply</p>
 
     <p>
-      <strong>回复者 / From:</strong>
+      <strong>From:</strong>
       <%= @reply.author_name.to_s %>
     </p>
 
-    <p><strong>回复内容 / Reply:</strong></p>
+    <p><strong>Reply:</strong></p>
     <div class="reply">
       <%= simple_format(h(@reply.content.to_s)) %>
     </div>
 
     <% if @parent&.content.present? %>
-      <p><strong>你的评论 / Your comment:</strong></p>
+      <p><strong>Your comment:</strong></p>
       <div class="reply">
         <%= simple_format(h(truncate(@parent.content.to_s, length: 120))) %>
       </div>
@@ -55,18 +55,18 @@
 
     <% if @commentable_title.present? %>
       <p>
-        <strong>文章/页面 / Post/Page:</strong>
+        <strong>Post/Page:</strong>
         <%= @commentable_title %>
       </p>
     <% end %>
 
     <% if @commentable_url.present? %>
       <p>
-        <a class="button" href="<%= @commentable_url %>">查看详情 / View details</a>
+        <a class="button" href="<%= @commentable_url %>">View details</a>
       </p>
       <p class="meta"><%= @commentable_url %></p>
     <% end %>
 
-    <p class="meta">此邮件由 <%= @site_title %> 自动发送。</p>
+    <p class="meta">This email was sent automatically by <%= @site_title %>.</p>
   </body>
 </html>
