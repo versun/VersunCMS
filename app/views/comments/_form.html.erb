@@ -36,6 +36,12 @@
         <%= f.text_field :author_name, required: true, placeholder: "Name *", class: "comment-form-input", data: is_mobile ? {} : { action: "focus->math-captcha#show" } %>
       </div>
       <div class="comment-form-field">
+        <%= f.email_field :author_email, placeholder: "邮箱（可选，用于接收回复提醒）", class: "comment-form-input" %>
+      </div>
+    </div>
+
+    <div class="comment-form-row">
+      <div class="comment-form-field">
         <%= f.url_field :author_url, placeholder: "Website (optional)", class: "comment-form-input" %>
       </div>
     </div>

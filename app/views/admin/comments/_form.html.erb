@@ -23,6 +23,11 @@
   </div>
 
   <div style="margin-bottom: 1rem;">
+    <%= f.label :author_email, "Email (optional)", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
+    <%= f.email_field :author_email, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
+  </div>
+
+  <div style="margin-bottom: 1rem;">
     <%= f.label :author_url, "Website (optional)", style: "display: block; margin-bottom: 0.25rem; font-weight: bold;" %>
     <%= f.url_field :author_url, style: "width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" %>
   </div>

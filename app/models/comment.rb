@@ -18,6 +18,7 @@ class Comment < ApplicationRecord
 
   # Optional URL validation for native comments
   validates :author_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
+  validates :author_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email" }, allow_blank: true
 
   # Validate that parent comment belongs to the same commentable
   validate :parent_belongs_to_same_commentable, if: :parent_id?
@@ -32,6 +33,8 @@ class Comment < ApplicationRecord
   scope :top_level, -> { where(parent_id: nil) }
 
   default_scope { order(published_at: :asc) }
+
+  after_commit :enqueue_reply_notification, on: [ :create, :update ]
 
   def display_commentable
     commentable || parent&.commentable || article
@@ -59,5 +62,22 @@ class Comment < ApplicationRecord
     if parent_record.commentable_type != commentable_type || parent_record.commentable_id != commentable_id
       errors.add(:parent_id, "must belong to the same #{commentable_type}")
     end
+  end
+
+  def enqueue_reply_notification
+    return unless saved_change_to_status?
+    return unless approved?
+    return unless parent_id?
+    return unless platform.nil?
+
+    parent_comment = parent
+    return unless parent_comment&.author_email.present?
+    return unless parent_comment.platform.nil?
+
+    if author_email.present? && author_email.casecmp?(parent_comment.author_email.to_s)
+      return
+    end
+
+    CommentReplyNotificationJob.perform_later(id)
   end
 end

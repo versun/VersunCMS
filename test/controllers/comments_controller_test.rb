@@ -38,6 +38,23 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, response.parsed_body["success"]
   end
 
+  test "should create comment with author_email" do
+    article = articles(:published_article)
+
+    assert_difference "Comment.count", 1 do
+      post comments_path(article_id: article.slug), params: {
+        comment: {
+          author_name: "Alice",
+          author_email: "alice@example.com",
+          content: "Nice post!"
+        }
+      }.merge(captcha_params), as: :json
+    end
+
+    assert_response :created
+    assert_equal "alice@example.com", Comment.order(:created_at).last.author_email
+  end
+
   test "shows success message after turbo submit" do
     article = articles(:published_article)
     article.update!(comment: true)
