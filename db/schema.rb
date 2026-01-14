@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_03_000022) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_13_000000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -91,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_03_000022) do
   create_table "comments", force: :cascade do |t|
     t.integer "article_id"
     t.string "author_avatar_url"
+    t.string "author_email"
     t.string "author_name", null: false
     t.string "author_url"
     t.string "author_username"

@@ -158,7 +158,7 @@ class CommentsController < ApplicationController
   end
 
   def comment_params
-    params.require(:comment).permit(:author_name, :author_url, :content, :parent_id)
+    params.require(:comment).permit(:author_name, :author_email, :author_url, :content, :parent_id)
   end
 
   def determine_redirect_path

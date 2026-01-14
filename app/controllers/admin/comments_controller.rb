@@ -183,6 +183,6 @@ class Admin::CommentsController < AdminController
   end
 
   def comment_params
-    params.require(:comment).permit(:author_name, :author_url, :content, :status)
+    params.require(:comment).permit(:author_name, :author_email, :author_url, :content, :status)
   end
 end

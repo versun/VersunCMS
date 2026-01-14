@@ -71,6 +71,56 @@ class CommentTest < ActiveSupport::TestCase
     assert @comment.valid?
   end
 
+  test "should validate author_email format" do
+    @comment.author_email = "not-an-email"
+    assert_not @comment.valid?
+    assert_includes @comment.errors[:author_email], "must be a valid email"
+  end
+
+  test "should allow blank author_email" do
+    @comment.author_email = ""
+    assert @comment.valid?
+  end
+
+  test "enqueues reply notification when approved" do
+    parent_comment = Comment.create!(
+      commentable: @article,
+      author_name: "Parent",
+      author_email: "parent@example.com",
+      content: "Parent comment"
+    )
+    reply = Comment.create!(
+      commentable: @article,
+      author_name: "Reply",
+      content: "Reply comment",
+      parent: parent_comment
+    )
+
+    assert_enqueued_with(job: CommentReplyNotificationJob, args: [ reply.id ]) do
+      reply.update!(status: :approved)
+    end
+  end
+
+  test "does not enqueue reply notification for self-reply" do
+    parent_comment = Comment.create!(
+      commentable: @article,
+      author_name: "Parent",
+      author_email: "same@example.com",
+      content: "Parent comment"
+    )
+    reply = Comment.create!(
+      commentable: @article,
+      author_name: "Reply",
+      author_email: "same@example.com",
+      content: "Reply comment",
+      parent: parent_comment
+    )
+
+    assert_no_enqueued_jobs do
+      reply.update!(status: :approved)
+    end
+  end
+
   test "should validate parent belongs to same commentable" do
     article1 = create_published_article
     article2 = create_published_article
