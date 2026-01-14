@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["providerSelect", "nativeSettings", "listmonkSettings", "verifyBtn", "verifyStatus", "listSelect", "templateSelect", "sesVerifyBtn", "sesVerifyStatus"]
-  static values = { verifyUrl: String }
+  static values = { verifyUrl: String, activeTab: String }
 
   connect() {
     this.updateSettingsVisibility()
@@ -130,14 +130,24 @@ export default class extends Controller {
   }
 
   updateSettingsVisibility() {
+    if (this.hasActiveTabValue && this.activeTabValue) {
+      if (this.hasNativeSettingsTarget) {
+        this.nativeSettingsTarget.style.display = this.activeTabValue === 'native' ? 'block' : 'none'
+      }
+      if (this.hasListmonkSettingsTarget) {
+        this.listmonkSettingsTarget.style.display = this.activeTabValue === 'listmonk' ? 'block' : 'none'
+      }
+      return
+    }
+
+    if (!this.hasProviderSelectTarget) return
     const provider = this.providerSelectTarget.value
-    
-    if (provider === 'native') {
-      this.nativeSettingsTarget.style.display = 'block'
-      this.listmonkSettingsTarget.style.display = 'none'
-    } else {
-      this.nativeSettingsTarget.style.display = 'none'
-      this.listmonkSettingsTarget.style.display = 'block'
+
+    if (this.hasNativeSettingsTarget) {
+      this.nativeSettingsTarget.style.display = provider === 'native' ? 'block' : 'none'
+    }
+    if (this.hasListmonkSettingsTarget) {
+      this.listmonkSettingsTarget.style.display = provider === 'native' ? 'none' : 'block'
     }
   }
 }

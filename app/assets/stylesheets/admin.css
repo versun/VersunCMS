@@ -635,57 +635,88 @@ table tbody tr:hover {
     margin: 0.5rem 0 0;
 }
 
-/* Activity table: minimal, dense, no-wrap */
+/* Activity table: compact, wrap to show full content */
 .admin-activity-table {
     table-layout: fixed;
+    width: 100%;
+}
+
+.admin-activity-table thead th {
+    padding: 0.45rem 0.6rem;
+    font-size: 12px;
+}
+
+.admin-activity-table tbody td {
+    padding: 0.45rem 0.6rem;
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.admin-activity-table .col-time,
+.admin-activity-table .col-level,
+.admin-activity-table .col-action,
+.admin-activity-table .col-target {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
 }
 
 .admin-activity-table th,
 .admin-activity-table td {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
+    vertical-align: top;
+}
+
+.admin-activity-table td {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .admin-activity-table .truncate {
     display: block;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 /* Column widths (information-dense defaults) */
 .admin-activity-table .col-time {
-    width: 170px;
+    width: 140px;
 }
 
 .admin-activity-table .col-level {
-    width: 78px;
+    width: 72px;
 }
 
 .admin-activity-table .col-action {
-    width: 160px;
+    width: 120px;
 }
 
 .admin-activity-table .col-target {
-    width: 220px;
+    width: 170px;
 }
 
 /* Description cell can contain text + action button */
 .admin-activity-table .col-description {
+    width: auto;
+}
+
+.admin-activity-table .col-description .description-content {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    align-items: flex-start;
+    gap: 0.35rem;
     min-width: 0;
 }
 
-.admin-activity-table .col-description .truncate {
+.admin-activity-table .col-description .description-content .truncate {
     flex: 1;
 }
 
-.admin-activity-table .col-description .btn {
+.admin-activity-table .col-description .description-content .btn {
     flex: 0 0 auto;
 }
 

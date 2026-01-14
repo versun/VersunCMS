@@ -8,6 +8,7 @@ class Admin::NewsletterControllerTest < ActionDispatch::IntegrationTest
 
   test "update accepts submit param and redirects" do
     patch admin_newsletter_path, params: {
+      tab: "native",
       newsletter_setting: {
         enabled: "1",
         provider: "native",
@@ -24,12 +25,13 @@ class Admin::NewsletterControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_redirected_to admin_newsletter_path
+    assert_redirected_to admin_newsletter_path(tab: "native")
     assert_equal "smtp.example.com", NewsletterSetting.first.smtp_address
   end
 
   test "update renders show on validation failure without error" do
     patch admin_newsletter_path, params: {
+      tab: "native",
       newsletter_setting: {
         enabled: "1",
         provider: "native",
@@ -52,6 +54,7 @@ class Admin::NewsletterControllerTest < ActionDispatch::IntegrationTest
 
   test "listmonk update failure renders show without error" do
     patch admin_newsletter_path, params: {
+      tab: "listmonk",
       listmonk: {
         url: "not-a-url",
         username: "",
@@ -68,6 +71,11 @@ class Admin::NewsletterControllerTest < ActionDispatch::IntegrationTest
   test "verify listmonk responses and update listmonk settings" do
     get admin_newsletter_path
     assert_response :success
+    assert_select ".status-tab.active", text: "General"
+
+    get admin_newsletter_path(tab: "listmonk")
+    assert_response :success
+    assert_select ".status-tab.active", text: "Listmonk"
 
     post verify_admin_newsletter_path, params: { username: "", api_key: "", url: "" }, as: :json
     assert_response :unprocessable_entity
@@ -103,6 +111,7 @@ class Admin::NewsletterControllerTest < ActionDispatch::IntegrationTest
     end
 
     patch admin_newsletter_path, params: {
+      tab: "listmonk",
       listmonk: {
         enabled: "1",
         url: "https://listmonk.example",
@@ -112,7 +121,7 @@ class Admin::NewsletterControllerTest < ActionDispatch::IntegrationTest
         template_id: 2
       }
     }
-    assert_redirected_to admin_newsletter_path
+    assert_redirected_to admin_newsletter_path(tab: "listmonk")
   end
 
   test "verify smtp handles validation and authentication errors" do

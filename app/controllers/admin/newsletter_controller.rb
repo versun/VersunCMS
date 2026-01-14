@@ -2,6 +2,7 @@ class Admin::NewsletterController < Admin::BaseController
   def show
     @newsletter_setting = NewsletterSetting.instance
     @listmonk = Listmonk.first_or_initialize
+    @active_tab = newsletter_tab(params[:tab])
 
     load_listmonk_options
   end
@@ -166,6 +167,7 @@ class Admin::NewsletterController < Admin::BaseController
   def update
     @newsletter_setting = NewsletterSetting.instance
     @listmonk = Listmonk.first_or_initialize
+    @active_tab = newsletter_tab(params[:tab])
 
     # Update newsletter setting (native email)
     if params[:newsletter_setting].present?
@@ -179,7 +181,7 @@ class Admin::NewsletterController < Admin::BaseController
       if @newsletter_setting.update(setting_params)
         # Configure ActionMailer for SMTP if native is enabled
         configure_action_mailer if @newsletter_setting.enabled? && @newsletter_setting.native?
-        redirect_to admin_newsletter_path, notice: "Newsletter settings updated successfully."
+        redirect_to admin_newsletter_path(tab: @active_tab), notice: "Newsletter settings updated successfully."
         return
       else
         load_listmonk_options
@@ -191,7 +193,7 @@ class Admin::NewsletterController < Admin::BaseController
 
     # Update listmonk settings
     if @listmonk.update(listmonk_params)
-      redirect_to admin_newsletter_path, notice: "Newsletter settings updated successfully."
+      redirect_to admin_newsletter_path(tab: @active_tab), notice: "Newsletter settings updated successfully."
     else
       load_listmonk_options
       flash.now[:alert] = @listmonk.errors.full_messages.join(", ")
@@ -245,5 +247,9 @@ class Admin::NewsletterController < Admin::BaseController
 
     @lists = @listmonk.fetch_lists || []
     @templates = @listmonk.fetch_templates || []
+  end
+
+  def newsletter_tab(value)
+    %w[general native listmonk].include?(value) ? value : "general"
   end
 end

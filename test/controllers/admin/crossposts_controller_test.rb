@@ -9,6 +9,11 @@ class Admin::CrosspostsControllerTest < ActionDispatch::IntegrationTest
   test "index update and verify flows" do
     get admin_crossposts_path
     assert_response :success
+    assert_select ".status-tab.active", text: "Mastodon"
+
+    get admin_crossposts_path(platform: "twitter")
+    assert_response :success
+    assert_select ".status-tab.active", text: "X (Twitter)"
 
     patch admin_crosspost_path("mastodon"), params: {
       crosspost: {
@@ -17,7 +22,7 @@ class Admin::CrosspostsControllerTest < ActionDispatch::IntegrationTest
         server_url: "https://mastodon.example"
       }
     }
-    assert_redirected_to admin_crossposts_path
+    assert_redirected_to admin_crossposts_path(platform: "mastodon")
 
     patch admin_crosspost_path("mastodon"), params: {
       crosspost: {
@@ -26,7 +31,7 @@ class Admin::CrosspostsControllerTest < ActionDispatch::IntegrationTest
         server_url: "https://mastodon.example"
       }
     }
-    assert_redirected_to admin_crossposts_path
+    assert_redirected_to admin_crossposts_path(platform: "mastodon")
 
     with_stubbed_verify(MastodonService, { success: true }) do
       post verify_admin_crosspost_path("mastodon"), params: {

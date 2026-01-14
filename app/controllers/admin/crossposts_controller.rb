@@ -4,6 +4,7 @@ class Admin::CrosspostsController < Admin::BaseController
     @twitter = Crosspost.twitter
     @bluesky = Crosspost.bluesky
     @xiaohongshu = Crosspost.xiaohongshu
+    @active_platform = Crosspost::PLATFORMS.include?(params[:platform]) ? params[:platform] : "mastodon"
   end
 
   def update
@@ -19,7 +20,7 @@ class Admin::CrosspostsController < Admin::BaseController
         description: "更新跨平台发布设置: #{params[:id]}"
       )
       # Rails.logger.info "Successfully updated Crosspost"
-      redirect_to admin_crossposts_path, notice: "CrossPost settings updated successfully."
+      redirect_to admin_crossposts_path(platform: params[:id]), notice: "CrossPost settings updated successfully."
     else
       ActivityLog.create!(
         action: "failed",
@@ -28,7 +29,7 @@ class Admin::CrosspostsController < Admin::BaseController
         description: "更新跨平台发布设置失败: #{params[:id]} - #{@settings.errors.full_messages.join(', ')}"
       )
       # Rails.logger.error "Failed to update Crosspost: #{@settings.errors.full_messages}"
-      redirect_to admin_crossposts_path, alert: @settings.errors.full_messages.join(", ")
+      redirect_to admin_crossposts_path(platform: params[:id]), alert: @settings.errors.full_messages.join(", ")
     end
   end
 
