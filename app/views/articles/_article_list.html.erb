@@ -1,5 +1,7 @@
 <% site_url = normalized_site_url %>
-<div class="article-list timeline">
+<% list_classes = ["article-list", "timeline"] %>
+<% list_classes << "is-home" if request.path == root_path %>
+<div class="<%= list_classes.join(' ') %>">
   <% articles.each do |article| %>
     <% article_url = "#{site_url}#{article_path(article)}" %>
     <article class="timeline-item" data-article-id="<%= article.id %>">
