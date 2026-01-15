@@ -4,7 +4,10 @@
     type="button" 
     class="mobile-menu-btn"
     data-action="click->sidebar#toggle"
-    aria-label="Toggle menu">
+    data-sidebar-target="toggle"
+    aria-label="Toggle menu"
+    aria-controls="admin-sidebar"
+    aria-expanded="false">
     <i class="fas fa-bars"></i>
   </button>
 
@@ -16,6 +19,7 @@
   </div>
 
   <aside 
+    id="admin-sidebar"
     class="admin-sidebar"
     data-sidebar-target="sidebar">
     <div class="sidebar-header">
@@ -25,7 +29,10 @@
           type="button" 
           class="sidebar-close-btn"
           data-action="click->sidebar#close"
-          aria-label="Close menu">
+          data-sidebar-target="toggle"
+          aria-label="Close menu"
+          aria-controls="admin-sidebar"
+          aria-expanded="false">
           <i class="fas fa-times"></i>
         </button>
       </div>

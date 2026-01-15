@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["sidebar", "overlay"]
+  static targets = ["sidebar", "overlay", "toggle"]
 
   connect() {
     // 点击遮罩层关闭侧边栏
@@ -21,6 +21,8 @@ export default class extends Controller {
         })
       })
     }
+
+    this.syncAria()
   }
 
   toggle() {
@@ -39,6 +41,7 @@ export default class extends Controller {
     if (this.hasOverlayTarget) {
       this.overlayTarget.classList.add("overlay-visible")
     }
+    this.syncAria()
   }
 
   close() {
@@ -49,10 +52,19 @@ export default class extends Controller {
     if (this.hasOverlayTarget) {
       this.overlayTarget.classList.remove("overlay-visible")
     }
+    this.syncAria()
   }
 
   isOpen() {
     return this.hasSidebarTarget && this.sidebarTarget.classList.contains("sidebar-open")
   }
-}
 
+  syncAria() {
+    if (!this.hasToggleTarget) return
+
+    const expanded = this.isOpen()
+    this.toggleTargets.forEach(toggle => {
+      toggle.setAttribute("aria-expanded", expanded ? "true" : "false")
+    })
+  }
+}

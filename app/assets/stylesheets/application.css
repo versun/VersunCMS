@@ -72,6 +72,76 @@ ul {
     width: 100%;
 }
 
+/* Mobile Sidebar Toggle (Public) */
+.site-container .mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.site-container .mobile-menu-btn:hover {
+    background-color: #f5f5f5;
+}
+
+.site-container .mobile-menu-btn i {
+    font-size: 18px;
+}
+
+.site-container .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.site-container .sidebar-overlay.overlay-visible {
+    display: block;
+    opacity: 1;
+}
+
+.site-container .sidebar-header-content {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.site-container .sidebar-close-btn {
+    display: none;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #111;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 18px;
+}
+
+.site-container .sidebar-close-btn:hover {
+    background-color: #f5f5f5;
+}
+
 
 /* Sidebar */
 .sidebar-header h1 {
@@ -812,28 +882,65 @@ h2 {
         gap: 16px;
         margin: 0 auto;
         width: 100%;
-        padding: 0 16px 24px;
+        padding: 3.5rem 16px 24px;
     }
 
-    .sidebar {
+    .site-container .mobile-menu-btn {
+        display: flex;
+    }
+
+    .site-container .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+        background: #fff;
+        border-right: 1px solid #e5e7eb;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+        padding: 0 0 16px;
         text-align: left;
-        padding: 16px 0 12px;
-        border-bottom: 1px solid #e6e6e6;
+        overflow-y: auto;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+    }
+
+    .site-container .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    .site-container .sidebar-header {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .site-container .sidebar-close-btn {
+        display: flex;
     }
 
     .sidebar-header h1 {
-        font-size: 1.6rem;
+        font-size: 1.45rem;
         line-height: 1.2;
+        margin-bottom: 0.35rem;
     }
 
     .sidebar-header .site-description {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: #666;
-        margin-top: 0.35rem;
+        margin-top: 0.25rem;
     }
 
     .navbar-search {
         margin-bottom: 0.75rem;
+    }
+
+    .sidebar-nav {
+        padding: 0.5rem 0;
+    }
+
+    .navbar-search {
+        padding: 0 1rem;
     }
 
     .search-input {
@@ -843,39 +950,59 @@ h2 {
     }
 
     .sidebar-nav ul {
-        display: flex;
-        justify-content: flex-start;
-        flex-wrap: nowrap;
-        gap: 12px;
-        padding: 0 0 4px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-
-    .sidebar-nav ul::-webkit-scrollbar {
-        display: none;
+        display: block;
+        padding: 0;
     }
 
     .sidebar-nav li {
-        margin-top: 0;
+        margin-top: 0.25rem;
     }
 
-    .sidebar-nav a {
-        white-space: nowrap;
+    .sidebar-nav .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        color: #555;
+        text-decoration: none;
+        transition: background-color 0.15s, color 0.15s;
+    }
+
+    .sidebar-nav .nav-link:hover {
+        background-color: #f5f5f5;
+        color: #111;
     }
 
     .social-links {
-        margin-top: 1rem;
+        margin-top: 0.75rem;
         display: flex;
         align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
+        gap: 10px;
+        flex-wrap: nowrap;
         justify-content: flex-start;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .social-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar-footer {
+        margin-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+        padding: 0.75rem 1rem 0;
     }
 
     footer {
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .main-content {
@@ -1007,6 +1134,21 @@ h2 {
 
 }
 
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .site-container .mobile-menu-btn {
+        top: 0.5rem;
+        left: 0.5rem;
+        width: 36px;
+        height: 36px;
+    }
+
+    .site-container .sidebar {
+        width: 100%;
+        max-width: 320px;
+    }
+}
+
 /* Theme Toggle Button */
 .theme-toggle {
     margin-top: 1rem;
@@ -1081,6 +1223,42 @@ h2 {
 [data-theme="dark"] .search-input:focus {
     border-color: var(--accent-color);
     outline: none;
+}
+
+[data-theme="dark"] .site-container .mobile-menu-btn {
+    background-color: #2a2a2a;
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .site-container .mobile-menu-btn:hover {
+    background-color: #333;
+}
+
+[data-theme="dark"] .site-container .sidebar {
+    background-color: var(--bg-color);
+    border-right-color: var(--border-color);
+}
+
+[data-theme="dark"] .site-container .sidebar-header {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .site-container .sidebar-footer {
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .site-container .sidebar-close-btn {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .site-container .sidebar-close-btn:hover {
+    background-color: var(--hover-bg);
+}
+
+[data-theme="dark"] .site-container .sidebar-nav .nav-link:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-color);
 }
 
 [data-theme="dark"] .sidebar-nav a {

@@ -37,10 +37,39 @@
   </head>
 
   <body>
-    <div class="site-container">
-      <aside class="sidebar">
+    <div class="site-container" data-controller="sidebar">
+      <button
+        type="button"
+        class="mobile-menu-btn"
+        data-action="click->sidebar#toggle"
+        data-sidebar-target="toggle"
+        aria-label="Toggle menu"
+        aria-controls="public-sidebar"
+        aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div
+        class="sidebar-overlay"
+        data-sidebar-target="overlay"
+        data-action="click->sidebar#close">
+      </div>
+
+      <aside id="public-sidebar" class="sidebar" data-sidebar-target="sidebar">
         <header class="sidebar-header">
-          <h1><a href="/" class="front-page-title"><%= site_settings[:title] %></a></h1>
+          <div class="sidebar-header-content">
+            <h1><a href="/" class="front-page-title"><%= site_settings[:title] %></a></h1>
+            <button
+              type="button"
+              class="sidebar-close-btn"
+              data-action="click->sidebar#close"
+              data-sidebar-target="toggle"
+              aria-label="Close menu"
+              aria-controls="public-sidebar"
+              aria-expanded="false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
           <p class="site-description"><%= site_settings[:description] %></p>
         </header>
         <div class="social-links">
