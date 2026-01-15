@@ -404,6 +404,14 @@ footer {
     text-underline-offset: 3px;
 }
 
+.article-list.timeline.is-home .post-title {
+    font-size: 1.35rem;
+}
+
+.article-list.timeline.is-home .post-title a {
+    color: #c04000;
+}
+
 .post-description {
     color: #0f1419;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
