@@ -2,7 +2,6 @@ require "test_helper"
 
 class SitemapControllerTest < ActionDispatch::IntegrationTest
   test "sitemap returns xml" do
-    sign_in(users(:admin))
     get sitemap_path(format: :xml)
     assert_response :success
     assert_equal "application/xml; charset=utf-8", response.content_type

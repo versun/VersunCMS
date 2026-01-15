@@ -1,4 +1,6 @@
 class SitemapController < ApplicationController
+  allow_unauthenticated_access
+
   def index
     respond_to do |format|
       format.xml do
