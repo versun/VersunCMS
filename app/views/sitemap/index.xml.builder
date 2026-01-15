@@ -1,5 +1,5 @@
 xml.instruct! :xml, version: "1.0", encoding: "UTF-8"
-xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/1.1" do
+xml.urlset xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9" do
   raw_site_url = site_settings[:url].to_s.strip
   site_url = raw_site_url.presence&.chomp("/")
   site_url = "https://#{site_url}" if site_url.present? && !site_url.match?(%r{^https?://})
