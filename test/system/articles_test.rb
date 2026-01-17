@@ -33,9 +33,10 @@ class ArticlesTest < ApplicationSystemTestCase
   end
 
   test "home page shows description, falls back to full content when description blank" do
+    description_text = "First line\nSecond line"
     article_with_description = create_published_article(
       title: "Article With Description",
-      description: "Only the description should be shown",
+      description: description_text,
       content: "<p>CONTENT SHOULD NOT APPEAR</p>"
     )
     article_without_description = create_published_article(
@@ -47,8 +48,12 @@ class ArticlesTest < ApplicationSystemTestCase
     visit root_path
 
     assert_text article_with_description.title
-    assert_text "Only the description should be shown"
-    assert_no_text "CONTENT SHOULD NOT APPEAR"
+    within "article[data-article-id='#{article_with_description.id}']" do
+      assert_text "First line"
+      assert_text "Second line"
+      assert_selector ".post-description p br", count: 1
+      assert_no_text "CONTENT SHOULD NOT APPEAR"
+    end
 
     assert_text article_without_description.title
     assert_text "Fallback content should appear"
