@@ -29,7 +29,7 @@
           </h2>
           <% if article.description.present? %>
             <div class="post-description">
-              <%= article.description %>
+              <%= simple_format(article.description) %>
             </div>
           <% else %>
             <div class="post-content">
@@ -40,7 +40,7 @@
           <%= render 'articles/source_reference', article: article %>
           <% if article.description.present? %>
             <div class="post-description">
-              <%= article.description %>
+              <%= simple_format(article.description) %>
             </div>
           <% else %>
             <div class="post-content">
