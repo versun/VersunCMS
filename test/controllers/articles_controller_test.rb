@@ -23,6 +23,29 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "application/xml; charset=utf-8", response.content_type
   end
 
+  test "rss uses content fallback title when missing" do
+    article = create_published_article(
+      title: nil,
+      html_content: "<p>12345678901234567890REST</p>"
+    )
+
+    get articles_path(format: :rss)
+    assert_response :success
+    assert_includes response.body, "<title>12345678901234567890</title>"
+  end
+
+  test "rss falls back to date when title and content missing" do
+    create_published_article(
+      title: nil,
+      html_content: nil,
+      created_at: Time.zone.local(2020, 1, 2, 3, 4, 5)
+    )
+
+    get articles_path(format: :rss)
+    assert_response :success
+    assert_includes response.body, "<title>2020-01-02</title>"
+  end
+
   test "should get show for published article" do
     get article_path(@article.slug)
     assert_response :success

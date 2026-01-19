@@ -29,7 +29,7 @@ class ArticlesController < ApplicationController
       }
 
       format.rss {
-        @articles = Article.published.order(created_at: :desc)
+        @articles = Article.published.includes(:rich_text_content).order(created_at: :desc)
         headers["Content-Type"] = "application/xml; charset=utf-8"
         render layout: false
       }
