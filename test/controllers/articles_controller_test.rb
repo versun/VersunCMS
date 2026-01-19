@@ -37,7 +37,7 @@ class ArticlesControllerTest < ActionDispatch::IntegrationTest
   test "rss falls back to date when title and content missing" do
     create_published_article(
       title: nil,
-      html_content: nil,
+      html_content: "<p></p>",
       created_at: Time.zone.local(2020, 1, 2, 3, 4, 5)
     )
 
