@@ -13,7 +13,8 @@ xml.rss version: "2.0",
 
     @articles.each do |article|
       xml.item do
-        xml.title article.title.presence || article.created_at.strftime("%Y-%m-%d")
+        fallback_title = article.plain_text_content.to_s.squish[0, 20]
+        xml.title article.title.presence || fallback_title.presence || article.created_at.strftime("%Y-%m-%d")
         xml.description article.description
 
         # Build content with source reference if available

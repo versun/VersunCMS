@@ -12,7 +12,7 @@ class TagsController < ApplicationController
     respond_to do |format|
       format.html
       format.rss {
-        @articles = @tag.articles.published.order(created_at: :desc)
+        @articles = @tag.articles.published.includes(:rich_text_content).order(created_at: :desc)
         headers["Content-Type"] = "application/xml; charset=utf-8"
         render layout: false
       }
