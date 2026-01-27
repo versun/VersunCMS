@@ -106,6 +106,9 @@ Rails.application.routes.draw do
     # Source reference API
     post "sources/fetch_twitter", to: "sources#fetch_twitter"
 
+    # TinyMCE editor image upload
+    post "editor_images", to: "editor_images#create"
+
     # Jobs and system monitoring
     mount MissionControl::Jobs::Engine, at: "/jobs", as: :jobs
   end

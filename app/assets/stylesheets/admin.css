@@ -310,18 +310,21 @@ select:focus {
     outline-offset: -1px;
 }
 
-/* Action Text / Trix editor (avoid global reset conflicts) */
-trix-editor ul {
-    list-style: disc;
+/* TinyMCE Editor Styles */
+.tinymce-editor {
+    width: 100%;
+    min-height: 500px;
 }
 
-trix-editor ol {
-    list-style: decimal;
+/* TinyMCE container styling */
+.tox-tinymce {
+    border-radius: 4px !important;
+    border-color: var(--border) !important;
 }
 
-trix-editor {
-    resize: vertical;
-    overflow: auto;
+/* Ensure TinyMCE editor is visible and properly sized */
+.tox-editor-container {
+    min-height: 400px;
 }
 
 textarea {

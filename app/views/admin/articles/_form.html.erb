@@ -27,7 +27,9 @@
         </div>
 
         <div class="field" id="rich_text_field" style="display: <%= form.object.html? ? 'none' : 'block' %>">
-          <%= form.rich_text_area :content %>
+          <%= form.text_area :content,
+              class: "tinymce-editor",
+              value: form.object.content.to_s %>
         </div>
 
         <div class="field" id="html_content_field" style="display: <%= form.object.html? ? 'block' : 'none' %>">
@@ -252,7 +254,8 @@
         }
         
         // 更新富文本字段的required属性（包括Action Text生成的隐藏input）
-        const richTextInputs = richTextField.querySelectorAll('input[name*="[content]"], textarea[name*="[content]"]');
+        // 注意：TinyMCE textarea 不应该有 required 属性，因为它会被隐藏
+        const richTextInputs = richTextField.querySelectorAll('input[name*="[content]"]');
         richTextInputs.forEach(function(input) {
           if (isHtml) {
             input.removeAttribute('required');
@@ -260,31 +263,62 @@
             input.setAttribute('required', 'required');
           }
         });
+
+        // 关键修复：TinyMCE textarea 永远不应该有 required 属性
+        // 因为它被 TinyMCE 隐藏（display: none），浏览器无法 focus 隐藏的 required 元素
+        const tinymceTextarea = richTextField.querySelector('textarea.tinymce-editor');
+        if (tinymceTextarea) {
+          tinymceTextarea.removeAttribute('required');
+        }
       }
       
-      // 表单提交前，移除所有隐藏字段的required属性，避免浏览器验证错误
+      // 表单提交前处理
       form.addEventListener('submit', function(e) {
         const isHtml = contentTypeSelect.value === 'html';
-        
-        // 移除所有隐藏容器中的required字段
-        const hiddenContainers = isHtml ? [richTextField] : [htmlContentField];
-        hiddenContainers.forEach(function(container) {
-          if (container && container.style.display === 'none') {
-            const inputs = container.querySelectorAll('input, textarea');
-            inputs.forEach(function(input) {
-              input.removeAttribute('required');
-            });
-          }
+
+        // 同步 TinyMCE 内容到 textarea（如果不是 HTML 模式）
+        if (!isHtml && typeof tinymce !== 'undefined') {
+          tinymce.triggerSave();
+        }
+
+        // 关键修复：移除所有 textarea 的 required 属性
+        // TinyMCE 隐藏的 textarea 会导致浏览器验证错误 "An invalid form control is not focusable"
+        const allTextareas = form.querySelectorAll('textarea[name*="[content]"]');
+        allTextareas.forEach(function(textarea) {
+          textarea.removeAttribute('required');
         });
-        
-        // 额外检查：移除所有隐藏的content相关字段的required属性
-        const allContentInputs = form.querySelectorAll('input[name*="[content]"], textarea[name*="[content]"]');
-        allContentInputs.forEach(function(input) {
-          const container = input.closest('#rich_text_field, #html_content_field');
-          if (container && container.style.display === 'none') {
-            input.removeAttribute('required');
+
+        // 自定义验证：检查内容是否为空
+        if (!isHtml) {
+          // Rich Text 模式：检查 TinyMCE 内容
+          let content = '';
+          if (typeof tinymce !== 'undefined') {
+            const editor = tinymce.get('article_content');
+            if (editor) {
+              content = editor.getContent().trim();
+            }
           }
-        });
+          // 如果 TinyMCE 未加载，检查 textarea 的值
+          if (!content) {
+            const textarea = form.querySelector('textarea[name="article[content]"]');
+            if (textarea && textarea.value.trim()) {
+              content = textarea.value.trim();
+            }
+          }
+          if (!content) {
+            e.preventDefault();
+            alert('Content cannot be blank');
+            return false;
+          }
+        } else {
+          // HTML 模式：检查 html_content
+          const htmlTextarea = form.querySelector('textarea[name="article[html_content]"]');
+          if (!htmlTextarea || !htmlTextarea.value.trim()) {
+            e.preventDefault();
+            alert('HTML content cannot be blank');
+            return false;
+          }
+        }
       });
       
       contentTypeSelect.addEventListener('change', toggleFields);
