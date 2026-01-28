@@ -3,6 +3,9 @@ class Redirect < ApplicationRecord
   validates :replacement, presence: true
   validate :validate_regex_pattern
 
+  after_save :clear_redirect_cache
+  after_destroy :clear_redirect_cache
+
   scope :enabled, -> {
     # Handle both boolean and string/integer values for SQLite compatibility
     where("enabled = ? OR enabled = ? OR enabled = ?", true, 1, "1")
@@ -38,6 +41,10 @@ class Redirect < ApplicationRecord
   end
 
   private
+
+  def clear_redirect_cache
+    Rails.cache.delete("redirect_middleware/enabled_redirects")
+  end
 
   def compiled_regex
     @compiled_regex ||= Regexp.new(regex)

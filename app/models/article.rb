@@ -92,11 +92,24 @@ class Article < ApplicationRecord
 
   # 根据content_type返回相应的内容
   def rendered_content
-    if html?
-      html_content
+    raw_html = if html?
+      sanitize_html(html_content)
     else
-      content
+      content.to_s
     end
+
+    # Add loading="lazy" to all images
+    add_lazy_loading_to_images(raw_html.to_s)
+  end
+
+  # Sanitize HTML content to remove dangerous tags while preserving allowed tags
+  def sanitize_html(html)
+    return "" if html.blank?
+    sanitizer = Rails::Html::SafeListSanitizer.new
+    # Use allowed tags similar to ApplicationHelper#allowed_html_tags
+    allowed_tags = %w[p br div span h1 h2 h3 h4 h5 h6 a img ul ol li dl dt dd table thead tbody tfoot tr th td caption colgroup col strong b em i u s strike del ins mark small blockquote q cite pre code kbd samp var hr figure figcaption article section aside header footer nav main details summary abbr address time sub sup ruby rt rp iframe video audio source]
+    allowed_attributes = %w[href src alt title class id style target rel width height colspan rowspan loading controls autoplay loop muted frameborder allow allowfullscreen]
+    sanitizer.sanitize(html, tags: allowed_tags, attributes: allowed_attributes)
   end
 
   # 获取内容的纯文本版本（用于社交媒体等）
@@ -296,5 +309,13 @@ class Article < ApplicationRecord
     end
   end
 
-  private
+  def add_lazy_loading_to_images(html)
+    return html if html.blank?
+
+    doc = Nokogiri::HTML5.fragment(html)
+    doc.css("img").each do |img|
+      img.set_attribute("loading", "lazy") unless img["loading"].present?
+    end
+    doc.to_html.html_safe
+  end
 end

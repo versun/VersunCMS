@@ -59,7 +59,14 @@ module ApplicationHelper
   def safe_html_content(html_content)
     return "".html_safe if html_content.blank?
 
-    sanitize(html_content.to_s, tags: allowed_html_tags, attributes: allowed_html_attributes)
+    sanitized = sanitize(html_content.to_s, tags: allowed_html_tags, attributes: allowed_html_attributes)
+
+    # Add loading="lazy" to all images for better performance
+    doc = Nokogiri::HTML5.fragment(sanitized)
+    doc.css("img").each do |img|
+      img.set_attribute("loading", "lazy") unless img["loading"].present?
+    end
+    doc.to_html.html_safe
   end
 
   private

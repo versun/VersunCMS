@@ -182,6 +182,8 @@ class Admin::NewsletterController < Admin::BaseController
       end
 
       if @newsletter_setting.update(setting_params)
+        # Clear newsletter setting cache
+        CacheableSettings.refresh_newsletter_setting
         # Configure ActionMailer for SMTP if native is enabled
         configure_action_mailer if @newsletter_setting.enabled? && @newsletter_setting.native?
         redirect_to admin_newsletter_path(tab: @active_tab), notice: "Newsletter settings updated successfully."

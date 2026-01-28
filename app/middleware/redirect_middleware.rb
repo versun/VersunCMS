@@ -33,10 +33,11 @@ class RedirectMiddleware
   private
 
   def find_matching_redirect(path)
-    # Use all redirects and filter by enabled? method to handle string/boolean values
-    Redirect.all.find do |redirect|
-      next unless redirect.enabled?
-      redirect.match?(path)
+    # Cache enabled redirects to avoid hitting database on every request
+    enabled_redirects = Rails.cache.fetch("redirect_middleware/enabled_redirects", expires_in: 5.minutes) do
+      Redirect.all.to_a.select(&:enabled?)
     end
+
+    enabled_redirects.find { |redirect| redirect.match?(path) }
   end
 end

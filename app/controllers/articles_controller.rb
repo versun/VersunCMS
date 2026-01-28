@@ -8,20 +8,20 @@ class ArticlesController < ApplicationController
     respond_to do |format|
       format.html {
         @page = params[:page].present? ? params[:page].to_i : 1
-        @per_page = 20
+        @per_page = 10
 
         if params[:q].present?
           # 使用SQLite搜索
           @articles = Article.search_content(params[:q])
                              .published
-                             .includes(:rich_text_content)
+                             .includes(:rich_text_content, :tags)
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
           @total_count = @articles.total_entries
         else
           # 不搜索，只分页
           @articles = Article.published
-                             .includes(:rich_text_content)
+                             .includes(:rich_text_content, :tags)
                              .order(created_at: :desc)
                              .paginate(page: @page, per_page: @per_page)
           @total_count = @articles.total_entries
@@ -29,7 +29,7 @@ class ArticlesController < ApplicationController
       }
 
       format.rss {
-        @articles = Article.published.includes(:rich_text_content).order(created_at: :desc)
+        @articles = Article.published.includes(:rich_text_content, :tags).order(created_at: :desc)
         headers["Content-Type"] = "application/xml; charset=utf-8"
         render layout: false
       }
@@ -111,7 +111,12 @@ class ArticlesController < ApplicationController
   private
 
   def set_article
-    @article = Article.find_by(slug: params[:slug])
+    @article = Article.includes(
+      :rich_text_content,
+      :tags,
+      :social_media_posts,
+      comments: [:replies]
+    ).find_by(slug: params[:slug])
   end
 
   def article_params

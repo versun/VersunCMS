@@ -4,7 +4,7 @@
 <% depth = local_assigns[:depth] || 0 %>
 <% max_depth = 5 %>
 
-<% 
+<%
   border_color = case type
   when 'mastodon' then '#6364FF'
   when 'bluesky' then '#0085FF'
@@ -23,7 +23,7 @@
         <%= comment.author_name.to_s.first.upcase %>
       </div>
     <% end %>
-    
+
     <div style="flex: 1; min-width: 0;">
       <div style="margin-bottom: <%= depth > 0 ? '0.125rem' : '0.25rem' %>;">
         <% if comment.author_url.present? %>
@@ -31,11 +31,11 @@
         <% else %>
           <strong style="font-size: <%= depth > 0 ? '0.8rem' : '0.875rem' %>; color: #111;"><%= comment.author_name %></strong>
         <% end %>
-        
+
         <% if type != 'local' && comment.author_username.present? %>
           <span style="color: #666; font-size: <%= depth > 0 ? '0.7rem' : '0.8rem' %>; margin-left: 0.25rem;">@<%= comment.author_username %></span>
         <% end %>
-        
+
         <small style="color: #999; margin-left: 0.5rem; font-size: <%= depth > 0 ? '0.7rem' : '0.75rem' %>;">
           <%= time_ago_in_words(comment.published_at) %> ago
           <% if type != 'local' %>
@@ -43,16 +43,16 @@
           <% end %>
         </small>
       </div>
-      
+
       <div style="color: #333; line-height: <%= depth > 0 ? '1.4' : '1.5' %>; font-size: <%= depth > 0 ? '0.8rem' : '0.875rem' %>; margin-bottom: <%= depth > 0 ? '0.25rem' : '0.5rem' %>;">
         <%= sanitize comment.content, tags: %w[p br a span], attributes: %w[href class rel target] %>
       </div>
 
       <% # Only show reply button for local comments and if not at max depth %>
       <% if type == 'local' && depth < max_depth %>
-        <button 
-          type="button" 
-          class="reply-button" 
+        <button
+          type="button"
+          class="reply-button"
           data-comment-id="<%= comment.id %>"
           style="background: none; border: none; color: #666; font-size: <%= depth > 0 ? '0.7rem' : '0.75rem' %>; cursor: pointer; padding: 0.125rem 0; text-decoration: underline;"
           onclick="showReplyForm(<%= comment.id %>)">
@@ -63,18 +63,19 @@
   </div>
 
   <% # Render replies for both local and external platform comments %>
-  <% if comment.replies.any? %>
-    <div class="replies" style="margin-top: <%= depth > 0 ? '0.5rem' : '0.75rem' %>;">
-      <% # For local comments, only show approved replies %>
-      <% if type == 'local' %>
-        <% comment.replies.approved.order(published_at: :asc).each do |reply| %>
-          <%= render 'comments/comment', comment_item: { type: 'local', data: reply }, depth: depth + 1 %>
-        <% end %>
-      <% else %>
-        <% # For external platform comments, show all replies from the same platform %>
-        <% comment.replies.where(platform: type).order(published_at: :asc).each do |reply| %>
-          <%= render 'comments/comment', comment_item: { type: type, data: reply }, depth: depth + 1 %>
-        <% end %>
+  <% # Use preloaded replies - filter in Ruby to avoid N+1 %>
+  <% preloaded_replies = comment.replies.to_a %>
+  <%
+    filtered_replies = if type == 'local'
+      preloaded_replies.select { |r| r.approved? }.sort_by(&:published_at)
+    else
+      preloaded_replies.select { |r| r.platform == type }.sort_by(&:published_at)
+    end
+  %>
+  <% if filtered_replies.any? %>
+    <div class="replies" style="margin-top: <%= depth > 0 ? '0.5rem' : '0.75rem' %>">
+      <% filtered_replies.each do |reply| %>
+        <%= render 'comments/comment', comment_item: { type: type, data: reply }, depth: depth + 1 %>
       <% end %>
     </div>
   <% end %>
@@ -86,4 +87,3 @@
     </div>
   <% end %>
 </div>
-

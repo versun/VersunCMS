@@ -31,7 +31,17 @@ class Admin::BaseController < ApplicationController
     @status = params[:status] || "all"
 
     filtered_posts = filter_by_status(scope)
-    filtered_posts.paginate(page: @page, per_page: @per_page).order(sort_by => :desc)
+    filtered_posts = apply_model_includes(filtered_posts)
+    filtered_posts.paginate(page: @page, per_page: @per_page)
+                  .order(sort_by => :desc)
+  end
+
+  def apply_model_includes(scope)
+    model_class = scope.model
+    includes = [:comments]
+    includes << :tags if model_class.reflect_on_association(:tags)
+    includes << :social_media_posts if model_class.reflect_on_association(:social_media_posts)
+    scope.includes(includes)
   end
 
   def filter_by_status(posts)

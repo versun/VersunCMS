@@ -14,12 +14,13 @@
 <% if @page.comment? %>
   <hr>
   <div id="comments-section">
-    <% # Only show local approved comments for pages %>
-    <% local_comments = @page.comments.local.approved.top_level %>
+    <% # Use preloaded comments - filter in Ruby %>
+    <% preloaded_comments = @page.comments.to_a %>
+    <% local_comments = preloaded_comments.select { |c| c.platform.nil? && c.approved? && c.parent_id.nil? } %>
 
     <% if local_comments.any? %>
       <div style="margin-top: 2rem; margin-bottom: 1.5rem;">
-        <% total_count = @page.comments.local.approved.count %>
+        <% total_count = preloaded_comments.count { |c| c.platform.nil? && c.approved? } %>
         <h3 style="margin-bottom: 1rem; color: #333; font-size: 1.125rem;">Comments (<%= total_count %>)</h3>
       </div>
       

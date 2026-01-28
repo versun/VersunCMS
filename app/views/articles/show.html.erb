@@ -58,7 +58,7 @@
     <h2><%= @article.title %></h2>
   </div>
   <small class="article-meta">
-  <% social_posts = @article.social_media_posts.where(platform: Crosspost::PLATFORMS) %>
+  <% social_posts = @article.social_media_posts.select { |post| Crosspost::PLATFORMS.include?(post.platform) } %>
   <% if social_posts.any? %>
       <span class="social-label">also posted on:</span>
       <% social_posts.each do |post| %>
@@ -127,26 +127,32 @@
     <%= render 'articles/source_reference' %>
   <% end %>
   <div class="article-content">
-    <%= @article.html? ? safe_html_content(@article.rendered_content) : @article.rendered_content %>
+    <%= @article.rendered_content %>
   </div>
 </article>
 
 <% if @article.comment? %>
 <div id="comments-section">
-  <% # Prepare all comments from all sources - only top level comments %>
+  <% # Use preloaded comments - filter in Ruby to avoid N+1 queries %>
+  <% preloaded_comments = @article.comments.to_a %>
   <% all_comments = [] %>
-  <% # Local approved top-level comments only %>
-  <% all_comments += @article.comments.local.approved.top_level.map do |c| %>
-  <%   { type: 'local', data: c } %>
-  <% end %>
-  <% # External platform comments - only top-level to avoid duplicate rendering %>
-  <% all_comments += @article.comments.mastodon.top_level.map { |c| { type: 'mastodon', data: c } } %>
-  <% all_comments += @article.comments.bluesky.top_level.map { |c| { type: 'bluesky', data: c } } %>
-  <% all_comments += @article.comments.twitter.top_level.map { |c| { type: 'twitter', data: c } } %>
+
+  <% # Local approved top-level comments %>
+  <% local_comments = preloaded_comments.select { |c| c.platform.nil? && c.approved? && c.parent_id.nil? } %>
+  <% all_comments += local_comments.map { |c| { type: 'local', data: c } } %>
+
+  <% # External platform comments - only top-level %>
+  <% mastodon_comments = preloaded_comments.select { |c| c.platform == 'mastodon' && c.parent_id.nil? } %>
+  <% bluesky_comments = preloaded_comments.select { |c| c.platform == 'bluesky' && c.parent_id.nil? } %>
+  <% twitter_comments = preloaded_comments.select { |c| c.platform == 'twitter' && c.parent_id.nil? } %>
+
+  <% all_comments += mastodon_comments.map { |c| { type: 'mastodon', data: c } } %>
+  <% all_comments += bluesky_comments.map { |c| { type: 'bluesky', data: c } } %>
+  <% all_comments += twitter_comments.map { |c| { type: 'twitter', data: c } } %>
 
   <% if all_comments.any? %>
     <div style="margin-top: 2rem; margin-bottom: 1.5rem;">
-      <% total_count = @article.comments.local.approved.count + @article.comments.mastodon.count + @article.comments.bluesky.count + @article.comments.twitter.count %>
+      <% total_count = preloaded_comments.count { |c| (c.platform.nil? && c.approved?) || c.platform.present? } %>
       <h3 style="margin-bottom: 1rem; color: #333; font-size: 1.125rem;">Comments (<%= total_count %>)</h3>
     </div>
     

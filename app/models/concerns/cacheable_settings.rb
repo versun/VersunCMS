@@ -39,5 +39,23 @@ module CacheableSettings
   def self.refresh_all
     refresh_site_info
     refresh_navbar_items
+    refresh_newsletter_setting
+  end
+
+  # Cache key version: v1
+  # Cached fields: enabled, native
+  # Remember to bump version if changing the returned hash structure
+  def self.newsletter_setting
+    Rails.cache.fetch("newsletter_setting:v1", expires_in: 1.hour) do
+      setting = NewsletterSetting.first
+      {
+        enabled: setting&.enabled || false,
+        native: setting&.native? || false
+      }
+    end
+  end
+
+  def self.refresh_newsletter_setting
+    Rails.cache.delete("newsletter_setting:v1")
   end
 end

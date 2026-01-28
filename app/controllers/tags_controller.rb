@@ -2,17 +2,17 @@ class TagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
 
   def index
-    @tags = Tag.alphabetical.all
+    @tags = Tag.alphabetical.includes(:articles).all
   end
 
   def show
     @tag = Tag.find_by!(slug: params[:slug])
-    @articles = @tag.articles.published.order(created_at: :desc).paginate(page: params[:page], per_page: 20)
+    @articles = @tag.articles.published.includes(:rich_text_content, :tags).order(created_at: :desc).paginate(page: params[:page], per_page: 20)
 
     respond_to do |format|
       format.html
       format.rss {
-        @articles = @tag.articles.published.includes(:rich_text_content).order(created_at: :desc)
+        @articles = @tag.articles.published.includes(:rich_text_content, :tags).order(created_at: :desc)
         headers["Content-Type"] = "application/xml; charset=utf-8"
         render layout: false
       }

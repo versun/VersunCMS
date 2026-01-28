@@ -15,7 +15,7 @@
               <%= tag.name %>
             </div>
             <div style="font-size: 0.85rem; color: #666;">
-              <%= pluralize(tag.articles.published.count, 'article') %>
+              <%= pluralize(tag.articles.count { |a| a.status == 'publish' }, 'article') %>
             </div>
           </div>
         <% end %>

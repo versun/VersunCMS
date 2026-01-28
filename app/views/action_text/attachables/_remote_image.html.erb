@@ -4,7 +4,7 @@
   <% is_valid = url.present? && !(url.start_with?('attachments/') && !url.include?('.')) %>
   
   <% if is_valid %>
-    <%= image_tag(url, width: remote_image.width, height: remote_image.height) %>
+    <%= image_tag(url, width: remote_image.width, height: remote_image.height, loading: "lazy") %>
   <% else %>
     <div class="attachment--missing" style="padding: 20px; border: 1px dashed #ccc; text-align: center; color: #666; background-color: #f9f9f9;">
       <p>图片链接已损坏或不存在</p>

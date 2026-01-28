@@ -26,8 +26,8 @@
 
 <%# Newsletter subscription form - only show on index page when newsletter is enabled and using native mail %>
 <% if current_page?(root_path) %>
-  <% newsletter_setting = NewsletterSetting.instance %>
-  <% if newsletter_setting.enabled? && newsletter_setting.native? %>
+  <% newsletter_setting = CacheableSettings.newsletter_setting %>
+  <% if newsletter_setting[:enabled] && newsletter_setting[:native] %>
     <div class="newsletter-subscription" data-controller="newsletter-subscription math-captcha" data-action="submit->newsletter-subscription#submit" data-math-captcha-max-value="10">
       <%= form_with url: subscriptions_path, method: :post, data: { newsletter_subscription_target: "form", turbo: false, action: "submit->math-captcha#ensureValid" } do |form| %>
         <% captcha = math_captcha_challenge(max: 10) %>
