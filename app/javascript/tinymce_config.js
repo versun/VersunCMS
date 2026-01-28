@@ -21,6 +21,11 @@ function initTinyMCE() {
     toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code | removeformat | help',
     content_style: 'body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; }',
 
+    // URL handling - keep absolute URLs
+    relative_urls: false,
+    remove_script_host: false,
+    convert_urls: false,
+
     // Image upload configuration
     images_upload_url: '/admin/editor_images',
     images_upload_credentials: true,
