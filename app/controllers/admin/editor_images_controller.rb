@@ -20,8 +20,7 @@ class Admin::EditorImagesController < Admin::BaseController
     blob = ActiveStorage::Blob.create_and_upload!(
       io: uploaded_file.to_io,
       filename: filename,
-      content_type: uploaded_file.content_type,
-      metadata: { custom: "tinymce_upload" }
+      content_type: uploaded_file.content_type
     )
 
     # Generate the URL for the uploaded image
