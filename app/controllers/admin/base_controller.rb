@@ -38,7 +38,7 @@ class Admin::BaseController < ApplicationController
 
   def apply_model_includes(scope)
     model_class = scope.model
-    includes = [:comments]
+    includes = [ :comments ]
     includes << :tags if model_class.reflect_on_association(:tags)
     includes << :social_media_posts if model_class.reflect_on_association(:social_media_posts)
     scope.includes(includes)

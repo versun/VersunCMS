@@ -115,7 +115,7 @@ class ArticlesController < ApplicationController
       :rich_text_content,
       :tags,
       :social_media_posts,
-      comments: [:replies]
+      comments: [ :replies ]
     ).find_by(slug: params[:slug])
   end
 

@@ -84,7 +84,7 @@ class PagesController < ApplicationController
   private
 
   def set_Page
-    @page = Page.includes(comments: [:replies]).find_by(slug: params[:slug])
+    @page = Page.includes(comments: [ :replies ]).find_by(slug: params[:slug])
   end
 
   def page_params
