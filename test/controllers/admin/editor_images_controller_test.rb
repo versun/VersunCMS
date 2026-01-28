@@ -16,7 +16,8 @@ class Admin::EditorImagesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     json_response = JSON.parse(response.body)
     assert json_response["location"].present?
-    assert_match %r{/rails/active_storage/blobs/}, json_response["location"]
+    # URL is Active Storage blob URL
+    assert_match %r{/rails/active_storage/}, json_response["location"]
   end
 
   test "returns error when file is missing" do

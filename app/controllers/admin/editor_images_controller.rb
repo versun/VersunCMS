@@ -23,9 +23,15 @@ class Admin::EditorImagesController < Admin::BaseController
       content_type: uploaded_file.content_type
     )
 
-    # Generate the URL for the uploaded image
-    # Use full URL (with host) to avoid path resolution issues in TinyMCE
-    image_url = Rails.application.routes.url_helpers.rails_blob_url(blob, host: request.host_with_port)
+    # Generate a permanent URL that never expires
+    # Using rails_blob_url which redirects to actual storage
+    # This URL is permanent - it uses signed_id but only for lookup, not expiration
+    image_url = Rails.application.routes.url_helpers.rails_blob_url(
+      blob,
+      host: request.host,
+      port: request.port != 80 && request.port != 443 ? request.port : nil,
+      protocol: request.protocol
+    )
 
     render json: { location: image_url }
   rescue => e
