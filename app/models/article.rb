@@ -62,23 +62,71 @@ class Article < ApplicationRecord
 
   # 提取文章内容中的第一张图片，用于crosspost
   def first_image_attachment
-    return nil unless content.present?
-    return nil unless content.body.respond_to?(:attachables)
+    # 首先尝试从 ActionText attachables 中查找（Trix 编辑器上传的图片）
+    if content.present? && content.body.respond_to?(:attachables)
+      attachable = content.body.attachables.find do |a|
+        if a.is_a?(ActiveStorage::Blob)
+          a.content_type&.start_with?("image/")
+        elsif a.class.name == "ActionText::Attachables::RemoteImage"
+          url = a.try(:url)
+          url.present? && url.is_a?(String)
+        else
+          false
+        end
+      end
+      return attachable if attachable
+    end
 
-    # 查找第一个图片附件（支持 ActiveStorage::Blob 和 RemoteImage）
-    content.body.attachables.find do |attachable|
-      # 检查是否是 ActiveStorage::Blob 且是图片类型
-      if attachable.is_a?(ActiveStorage::Blob)
-        attachable.content_type&.start_with?("image/")
-      # 或者是 RemoteImage 且有有效的URL
-      elsif attachable.class.name == "ActionText::Attachables::RemoteImage"
-        # 验证RemoteImage有valid URL
-        url = attachable.try(:url)
-        url.present? && url.is_a?(String)
-      else
-        false
+    # 对于 TinyMCE 编辑器，从 HTML 中提取第一个图片 URL
+    html = html? ? html_content : content.to_s
+    return nil if html.blank?
+
+    # 解析 HTML 查找第一个 img 标签
+    doc = Nokogiri::HTML5.fragment(html)
+    img = doc.at_css("img")
+    return nil unless img
+
+    src = img["src"].to_s.strip
+    return nil if src.blank?
+
+    # 如果是 ActiveStorage 的 blob URL，尝试找到对应的 Blob
+    blob = find_blob_from_url(src)
+    return blob if blob
+
+    # 否则返回 RemoteImage-like 对象
+    RemoteImageWrapper.new(src)
+  end
+
+  # 从 ActiveStorage URL 中查找 Blob
+  def find_blob_from_url(url)
+    return nil if url.blank?
+
+    # 匹配 /rails/active_storage/blobs/redirect/:signed_id/:filename
+    # 或 /rails/active_storage/blobs/proxy/:signed_id/:filename
+    # 或 /rails/active_storage/blobs/:signed_id/:filename (旧格式)
+    # signed_id 格式: message--signature (URL-safe base64 包含 A-Z, a-z, 0-9, -, _, = 和 -- 分隔符)
+    if url =~ /\/rails\/active_storage\/blobs\/[^\/]+\/([A-Za-z0-9_-]+(?:={0,2})--[A-Za-z0-9_-]+)/
+      signed_id = $1
+      begin
+        blob = ActiveStorage::Blob.find_signed(signed_id)
+        return blob if blob&.content_type&.start_with?("image/")
+      rescue => e
+        Rails.logger.warn "Failed to find blob from signed_id: #{signed_id}, error: #{e.message}"
       end
     end
+
+    # 匹配 /rails/active_storage/representations/.../:blob_id/...
+    if url =~ /\/rails\/active_storage\/representations\/[^\/]+\/([^\/]+)/
+      blob_id = $1
+      begin
+        blob = ActiveStorage::Blob.find_by(id: blob_id)
+        return blob if blob&.content_type&.start_with?("image/")
+      rescue => e
+        Rails.logger.warn "Failed to find blob from blob_id: #{blob_id}, error: #{e.message}"
+      end
+    end
+
+    nil
   end
 
   # Virtual attribute for tag list (comma-separated tags)
@@ -317,5 +365,26 @@ class Article < ApplicationRecord
       img.set_attribute("loading", "lazy") unless img["loading"].present?
     end
     doc.to_html.html_safe
+  end
+end
+
+# Wrapper class for remote image URLs extracted from HTML content
+# This class provides a compatible interface with ActionText::Attachables::RemoteImage
+# so that social media services can handle both types uniformly
+class RemoteImageWrapper
+  attr_reader :url
+
+  def initialize(url)
+    @url = url
+  end
+
+  # Allow accessing url via try method (compatible with ActionText::Attachables::RemoteImage)
+  def try(method_name)
+    method_name == :url ? @url : nil
+  end
+
+  # Return class name as string for type checking (matches ActionText::Attachables::RemoteImage)
+  def self.name
+    "ActionText::Attachables::RemoteImage"
   end
 end

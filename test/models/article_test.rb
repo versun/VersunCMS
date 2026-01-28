@@ -264,6 +264,65 @@ class ArticleTest < ActiveSupport::TestCase
     assert_equal "fallback desc", fallback_article.seo_meta_description
   end
 
+  test "extracts TinyMCE images from HTML content for crosspost" do
+    # Create blob for TinyMCE uploaded image
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("fake-tinymce-image"),
+      filename: "tinymce-image.png",
+      content_type: "image/png"
+    )
+
+    # Simulate TinyMCE content with image URL inserted
+    image_url = Rails.application.routes.url_helpers.rails_blob_url(blob, host: "example.com")
+    tinymce_article = Article.create!(
+      title: "TinyMCE Article",
+      slug: "tinymce-article",
+      status: :publish,
+      content: "<p>Hello World</p><img src='#{image_url}' alt='test image'><p>More content</p>",
+      description: "tinymce desc"
+    )
+
+    # first_image_attachment should find the blob from TinyMCE image URL
+    result = tinymce_article.first_image_attachment
+    assert result.is_a?(ActiveStorage::Blob), "Expected ActiveStorage::Blob but got #{result.class}"
+    assert_equal blob.id, result.id
+
+    # SEO meta image should also work
+    assert_equal Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true), tinymce_article.seo_meta_image
+  end
+
+  test "extracts remote images from HTML when blob not found" do
+    remote_article = Article.create!(
+      title: "Remote Image Article",
+      slug: "remote-image-article",
+      status: :publish,
+      content: '<p>Check this out</p><img src="https://example.com/external-image.jpg" alt="external"><p>End</p>',
+      description: "remote desc"
+    )
+
+    # first_image_attachment should return RemoteImageWrapper for external URL
+    result = remote_article.first_image_attachment
+    assert result.is_a?(RemoteImageWrapper), "Expected RemoteImageWrapper but got #{result.class}"
+    assert_equal "https://example.com/external-image.jpg", result.url
+    assert_equal "ActionText::Attachables::RemoteImage", result.class.name
+
+    # SEO meta image should return the remote URL
+    assert_equal "https://example.com/external-image.jpg", remote_article.seo_meta_image
+  end
+
+  test "handles articles without images for crosspost" do
+    no_image_article = Article.create!(
+      title: "No Image Article",
+      slug: "no-image-article",
+      status: :publish,
+      content: "<p>Just plain text content</p>",
+      description: "no image desc"
+    )
+
+    assert_nil no_image_article.first_image_attachment
+    assert_nil no_image_article.seo_meta_image
+  end
+
   test "handles scheduling helpers, crosspost checks, and post cleanup" do
     setting = settings(:default)
     original_zone = setting.time_zone
