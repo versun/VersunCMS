@@ -1,5 +1,21 @@
 require "simplecov"
+
+if ENV["TEST_ENV_NUMBER"].to_s.empty?
+  at_exit do
+    resultset_path = File.join(SimpleCov.coverage_path, ".resultset.json")
+    SimpleCov.collate([resultset_path], "rails") if File.exist?(resultset_path)
+  end
+end
+
 SimpleCov.start "rails"
+
+process_label = ENV["TEST_ENV_NUMBER"].to_s
+process_label = "main" if process_label.empty?
+SimpleCov.command_name "minitest-#{process_label}"
+
+SimpleCov.at_exit do
+  SimpleCov.result
+end
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
