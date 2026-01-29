@@ -3,7 +3,7 @@ require "simplecov"
 if ENV["TEST_ENV_NUMBER"].to_s.empty?
   at_exit do
     resultset_path = File.join(SimpleCov.coverage_path, ".resultset.json")
-    SimpleCov.collate([resultset_path], "rails") if File.exist?(resultset_path)
+    SimpleCov.collate([ resultset_path ], "rails") if File.exist?(resultset_path)
   end
 end
 
